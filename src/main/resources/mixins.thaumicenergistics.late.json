@@ -4,7 +4,7 @@
   "package": "thaumicenergistics.mixin",
   "refmap": "mixins.thaumicenergistics.refmap.json",
   "plugin": "thaumicenergistics.mixin.core.MixinConfigPlugin",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_25",
   "mixins": [
   ],
   "client": [

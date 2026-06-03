@@ -1,7 +1,9 @@
 package thaumicenergistics.util;
 
-import appeng.api.networking.crafting.ICraftingPatternDetails;
-import appeng.helpers.PatternHelper;
+import ae2.api.crafting.IPatternDetails;
+import ae2.api.stacks.AEItemKey;
+import ae2.api.stacks.AEKey;
+import ae2.api.stacks.GenericStack;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -12,7 +14,9 @@ import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -122,27 +126,34 @@ public abstract class KnowledgeCoreUtil {
      * @param knowledgeCore Knowledge Core to extract from
      * @param slot          The Knowledge Core slot to read from
      * @param world         The world we'll craft it in
-     * @return ICraftingPatternDetails instance to send to AE2.
+     * @return IPatternDetails instance to send to AE2.
      */
-    public static ICraftingPatternDetails getAEPattern(ItemStack knowledgeCore, int slot, World world) {
+    public static IPatternDetails getAEPattern(ItemStack knowledgeCore, int slot, World world) {
         Recipe recipe = getRecipe(knowledgeCore, slot);
         return getAEPattern(recipe, world);
     }
 
     /**
-     * Method to extract a ICraftingPatternDetails instance from a Knowledge Core recipe, to use with AE2
+     * Method to extract an IPatternDetails instance from a Knowledge Core recipe, to use with AE2
      *
      * @param recipe Recipe to extract from
      * @param world  The world we'll craft it in
-     * @return ICraftingPatternDetails instance to send to AE2.
+     * @return IPatternDetails instance to send to AE2.
      * @throws IllegalArgumentException If the recipe slot is empty, it lets AE2 deal with it, which currently means you'll get an exception indirectly
      */
-    public static ICraftingPatternDetails getAEPattern(Recipe recipe, World world) {
-        ItemStack AEPatternStack;
-        if (recipe == null)
-            AEPatternStack = ThEApi.instance().items().knowledgeCore().maybeStack(1).orElseThrow(RuntimeException::new);
-        else AEPatternStack = recipe.toAEPatternStack();
-        return new PatternHelper(AEPatternStack, world);
+    public static IPatternDetails getAEPattern(Recipe recipe, World world) {
+        if (recipe == null) {
+            throw new IllegalArgumentException("Knowledge core recipe cannot be null");
+        }
+        return new KnowledgeCorePatternDetails(recipe);
+    }
+
+    public static Recipe getRecipe(ItemStack knowledgeCoreStack, IPatternDetails patternDetails) {
+        GenericStack output = patternDetails == null ? null : patternDetails.getPrimaryOutput();
+        if (output == null || !(output.what() instanceof AEItemKey)) {
+            return null;
+        }
+        return getRecipe(knowledgeCoreStack, ((AEItemKey) output.what()).toStack((int) Math.min(output.amount(), Integer.MAX_VALUE)));
     }
 
     public static class Recipe {
@@ -210,6 +221,83 @@ public abstract class KnowledgeCoreUtil {
             nbt.setBoolean("substitute", false);
             stack.setTagCompound(nbt);
             return stack;
+        }
+    }
+
+    public static class KnowledgeCorePatternDetails implements IPatternDetails {
+        private final Recipe recipe;
+        private final AEItemKey definition;
+        private final IInput[] inputs;
+        private final List<GenericStack> outputs;
+
+        public KnowledgeCorePatternDetails(Recipe recipe) {
+            this.recipe = recipe;
+            this.definition = AEItemKey.of(recipe.toAEPatternStack());
+            this.inputs = buildInputs(recipe);
+            this.outputs = Collections.singletonList(new GenericStack(AEItemKey.of(recipe.getResult()), recipe.getResult().getCount()));
+        }
+
+        public Recipe getRecipe() {
+            return this.recipe;
+        }
+
+        @Override
+        public AEItemKey getDefinition() {
+            return this.definition;
+        }
+
+        @Override
+        public IInput[] getInputs() {
+            return this.inputs;
+        }
+
+        @Override
+        public List<GenericStack> getOutputs() {
+            return this.outputs;
+        }
+
+        private static IInput[] buildInputs(Recipe recipe) {
+            List<IInput> inputs = new ArrayList<>();
+            ThEInternalInventory normalInputs = recipe.getIngredientPart(false);
+            for (int slot = 0; slot < normalInputs.getSizeInventory(); slot++) {
+                ItemStack stack = normalInputs.getStackInSlot(slot);
+                if (!stack.isEmpty()) {
+                    inputs.add(new ItemPatternInput(stack));
+                }
+            }
+            return inputs.toArray(new IInput[0]);
+        }
+    }
+
+    private static class ItemPatternInput implements IPatternDetails.IInput {
+        private final AEItemKey key;
+        private final long amount;
+        private final GenericStack[] possibleInputs;
+
+        private ItemPatternInput(ItemStack stack) {
+            this.key = AEItemKey.of(stack);
+            this.amount = stack.getCount();
+            this.possibleInputs = new GenericStack[]{new GenericStack(this.key, this.amount)};
+        }
+
+        @Override
+        public GenericStack[] possibleInputs() {
+            return this.possibleInputs;
+        }
+
+        @Override
+        public long getMultiplier() {
+            return this.amount;
+        }
+
+        @Override
+        public boolean isValid(AEKey key, World world) {
+            return this.key.equals(key);
+        }
+
+        @Override
+        public AEKey getRemainingKey(AEKey key) {
+            return null;
         }
     }
 }

@@ -1,15 +1,19 @@
 package thaumicenergistics.integration.thaumcraft;
 
-import appeng.api.AEApi;
+import ae2.api.ids.AEItemIds;
+import ae2.core.definitions.AEBlocks;
+import ae2.core.definitions.AEItems;
+import ae2.core.definitions.AEParts;
 import com.google.common.base.Preconditions;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.registries.IForgeRegistryEntry;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumcraft.api.ThaumcraftApi;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
@@ -65,9 +69,9 @@ public class ThEThaumcraft implements IThEIntegration {
         ScanningManager.addScannableThing(new ScanMod("f_AECORE", ModGlobals.MOD_ID_AE2));
 
         TheorycraftManager.registerCard(CardTinkerAE.class);
-        if (AEApi.instance().definitions().blocks().controller().maybeBlock().isPresent())
+        if (AEBlocks.CONTROLLER.block() != null)
             TheorycraftManager.registerAid(new AidMEController());
-        else if (AEApi.instance().definitions().blocks().drive().maybeBlock().isPresent())
+        else if (AEBlocks.DRIVE.block() != null)
             TheorycraftManager.registerAid(new AidMEDrive());
         this.registerArcaneRecipes();
         this.registerInfusionRecipes();
@@ -77,11 +81,11 @@ public class ThEThaumcraft implements IThEIntegration {
         ResourceLocation recipeGroup = new ResourceLocation("");
 
         List<ItemStack> certusQuartz = new ArrayList<>(Arrays.asList(CraftingHelper.getIngredient("crystalCertusQuartz").getMatchingStacks()));
-        certusQuartz.add(AEApi.instance().definitions().materials().certusQuartzCrystalCharged().maybeStack(1).orElse(ItemStack.EMPTY));
-        certusQuartz.add(AEApi.instance().definitions().materials().purifiedCertusQuartzCrystal().maybeStack(1).orElse(ItemStack.EMPTY));
+        certusQuartz.add(AEItems.CERTUS_QUARTZ_CRYSTAL_CHARGED.stack());
+        certusQuartz.add(this.aeItemStack(AEItemIds.PURIFIED_CERTUS_QUARTZ_CRYSTAL));
 
         List<ItemStack> netherQuartz = new ArrayList<>(Arrays.asList(CraftingHelper.getIngredient("gemQuartz").getMatchingStacks()));
-        netherQuartz.add(AEApi.instance().definitions().materials().purifiedNetherQuartzCrystal().maybeStack(1).orElse(ItemStack.EMPTY));
+        netherQuartz.add(this.aeItemStack(AEItemIds.PURIFIED_NETHER_QUARTZ_CRYSTAL));
 
         ThEApi.instance().items().coalescenceCore().maybeStack(2).ifPresent(stack ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "coalescence_core"), new ShapedArcaneRecipe(
@@ -98,9 +102,9 @@ public class ThEThaumcraft implements IThEIntegration {
                         'Q',
                         Ingredient.fromStacks(certusQuartz.toArray(new ItemStack[0])),
                         'F',
-                        AEApi.instance().definitions().materials().fluixDust().maybeStack(1).orElse(ItemStack.EMPTY),
+                        AEItems.FLUIX_DUST.stack(),
                         'L',
-                        AEApi.instance().definitions().materials().logicProcessor().maybeStack(1).orElse(ItemStack.EMPTY)
+                        AEItems.LOGIC_PROCESSOR.stack()
                 )));
         ThEApi.instance().items().diffusionCore().maybeStack(2).ifPresent(stack ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "diffusion_core"), new ShapedArcaneRecipe(
@@ -117,9 +121,9 @@ public class ThEThaumcraft implements IThEIntegration {
                         'Q',
                         Ingredient.fromStacks(netherQuartz.toArray(new ItemStack[0])),
                         'F',
-                        AEApi.instance().definitions().materials().fluixDust().maybeStack(1).orElse(ItemStack.EMPTY),
+                        AEItems.FLUIX_DUST.stack(),
                         'L',
-                        AEApi.instance().definitions().materials().logicProcessor().maybeStack(1).orElse(ItemStack.EMPTY)
+                        AEItems.LOGIC_PROCESSOR.stack()
                 )));
 
         ThEApi.instance().items().essentiaComponent1k().maybeStack(1).ifPresent(stack -> {
@@ -137,7 +141,7 @@ public class ThEThaumcraft implements IThEIntegration {
                     'Q',
                     Ingredient.fromStacks(certusQuartz.toArray(new ItemStack[0])),
                     'P',
-                    AEApi.instance().definitions().materials().logicProcessor().maybeStack(1).orElse(ItemStack.EMPTY)
+                    AEItems.LOGIC_PROCESSOR.stack()
             ));
             this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_1k"));
         });
@@ -156,9 +160,9 @@ public class ThEThaumcraft implements IThEIntegration {
                     'C',
                     ThEApi.instance().items().essentiaComponent1k().maybeStack(1).orElse(ItemStack.EMPTY),
                     'P',
-                    AEApi.instance().definitions().materials().calcProcessor().maybeStack(1).orElse(ItemStack.EMPTY),
+                    AEItems.CALCULATION_PROCESSOR.stack(),
                     'G',
-                    AEApi.instance().definitions().blocks().quartzGlass().maybeBlock().orElse(Blocks.GLASS)
+                    AEBlocks.QUARTZ_GLASS.block()
             ));
             this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_4k"));
         });
@@ -177,9 +181,9 @@ public class ThEThaumcraft implements IThEIntegration {
                     'C',
                     ThEApi.instance().items().essentiaComponent4k().maybeStack(1).orElse(ItemStack.EMPTY),
                     'P',
-                    AEApi.instance().definitions().materials().engProcessor().maybeStack(1).orElse(ItemStack.EMPTY),
+                    AEItems.ENGINEERING_PROCESSOR.stack(),
                     'G',
-                    AEApi.instance().definitions().blocks().quartzGlass().maybeBlock().orElse(Blocks.GLASS)
+                    AEBlocks.QUARTZ_GLASS.block()
             ));
         });
         ThEApi.instance().items().essentiaComponent64k().maybeStack(1).ifPresent(stack -> {
@@ -197,9 +201,9 @@ public class ThEThaumcraft implements IThEIntegration {
                     'C',
                     ThEApi.instance().items().essentiaComponent16k().maybeStack(1).orElse(ItemStack.EMPTY),
                     'P',
-                    AEApi.instance().definitions().materials().engProcessor().maybeStack(1).orElse(ItemStack.EMPTY),
+                    AEItems.ENGINEERING_PROCESSOR.stack(),
                     'G',
-                    AEApi.instance().definitions().blocks().quartzGlass().maybeBlock().orElse(Blocks.GLASS)
+                    AEBlocks.QUARTZ_GLASS.block()
             ));
             this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_64k"));
         });
@@ -248,8 +252,8 @@ public class ThEThaumcraft implements IThEIntegration {
                         new AspectList(),
                         item,
                         Ingredient.fromStacks(
-                                AEApi.instance().definitions().blocks().iface().maybeStack(1).orElse(ItemStack.EMPTY),
-                                AEApi.instance().definitions().parts().iface().maybeStack(1).orElse(ItemStack.EMPTY)
+                                AEBlocks.INTERFACE.stack(),
+                                AEParts.INTERFACE.stack()
                         ),
                         Blocks.PISTON,
                         Blocks.STICKY_PISTON,
@@ -265,7 +269,7 @@ public class ThEThaumcraft implements IThEIntegration {
                     ItemsTC.salisMundus,
                     ThEApi.instance().items().diffusionCore().maybeStack(1).orElse(ItemStack.EMPTY),
                     ThEApi.instance().items().coalescenceCore().maybeStack(1).orElse(ItemStack.EMPTY),
-                    AEApi.instance().definitions().materials().logicProcessor().maybeStack(1).orElse(ItemStack.EMPTY),
+                    AEItems.LOGIC_PROCESSOR.stack(),
                     "itemIlluminatedPanel"
             ));
         });
@@ -276,9 +280,9 @@ public class ThEThaumcraft implements IThEIntegration {
                         50,
                         new AspectList(),
                         arcane,
-                        AEApi.instance().definitions().parts().terminal().maybeStack(1).orElse(ItemStack.EMPTY),
+                        AEParts.TERMINAL.stack(),
                         BlocksTC.arcaneWorkbench,
-                        AEApi.instance().definitions().materials().calcProcessor().maybeStack(1).orElse(ItemStack.EMPTY)
+                        AEItems.CALCULATION_PROCESSOR.stack()
                 )));
         ThEApi.instance().items().arcaneInscriber().maybeItem().ifPresent(inscriber ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "arcane_inscriber"), new ShapelessArcaneRecipe(
@@ -287,9 +291,9 @@ public class ThEThaumcraft implements IThEIntegration {
                         50,
                         new AspectList().add(Aspect.AIR, 1).add(Aspect.EARTH, 1).add(Aspect.FIRE, 1).add(Aspect.WATER, 1).add(Aspect.ORDER, 1).add(Aspect.ENTROPY, 1),
                         inscriber,
-                        AEApi.instance().definitions().parts().patternTerminal().maybeStack(1).orElse(ItemStack.EMPTY),
+                        AEParts.PATTERN_ENCODING_TERMINAL.stack(),
                         BlocksTC.arcaneWorkbench,
-                        AEApi.instance().definitions().materials().engProcessor().maybeStack(1).orElse(ItemStack.EMPTY)
+                        AEItems.ENGINEERING_PROCESSOR.stack()
                 )));
         ThEApi.instance().items().upgradeArcane().maybeItem().ifPresent(upgrade -> {
             ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "upgrade_arcane"), new ShapelessArcaneRecipe(
@@ -298,7 +302,7 @@ public class ThEThaumcraft implements IThEIntegration {
                     25,
                     new AspectList(),
                     upgrade,
-                    AEApi.instance().definitions().materials().advCard().maybeStack(1).orElse(ItemStack.EMPTY),
+                    AEItems.ADVANCED_CARD.stack(),
                     BlocksTC.arcaneWorkbenchCharger
             ));
         });
@@ -313,13 +317,13 @@ public class ThEThaumcraft implements IThEIntegration {
                         "LBL",
                         "GPG",
                         'G',
-                        AEApi.instance().definitions().blocks().quartzVibrantGlass().maybeBlock().orElse(Blocks.GLASS),
+                        AEBlocks.QUARTZ_VIBRANT_GLASS.block(),
                         'L',
                         "dyeBlue",
                         'B',
                         ItemsTC.brain,
                         'P',
-                        AEApi.instance().definitions().materials().calcProcessor().maybeStack(1).orElse(ItemStack.EMPTY)
+                        AEItems.CALCULATION_PROCESSOR.stack()
                 )));
     }
 
@@ -330,7 +334,7 @@ public class ThEThaumcraft implements IThEIntegration {
                         stack,
                         2,
                         new AspectList().add(Aspect.MECHANISM, 25).add(Aspect.MAGIC, 25).add(Aspect.EXCHANGE, 20),
-                        AEApi.instance().definitions().blocks().iface().maybeBlock().orElseThrow(() -> new NullPointerException("Missing interface block for recipe")),
+                        AEBlocks.INTERFACE.block(),
                         ThEApi.instance().items().coalescenceCore().maybeStack(1).orElse(ItemStack.EMPTY),
                         ItemsTC.salisMundus,
                         ThEApi.instance().items().coalescenceCore().maybeStack(1).orElse(ItemStack.EMPTY),
@@ -342,7 +346,7 @@ public class ThEThaumcraft implements IThEIntegration {
                         stack,
                         6,
                         new AspectList().add(Aspect.CRAFT, 64).add(Aspect.EXCHANGE, 32).add(Aspect.AURA, 16).add(Aspect.MAGIC, 16).add(Aspect.METAL, 8).add(Aspect.CRYSTAL, 8),
-                        AEApi.instance().definitions().blocks().molecularAssembler().maybeBlock().orElseThrow(() -> new NullPointerException("Missing molecular assembler block for recipe")),
+                        AEBlocks.MOLECULAR_ASSEMBLER.block(),
                         ThEApi.instance().items().coalescenceCore().maybeStack(1).orElse(ItemStack.EMPTY),
                         TCUtil.getCrystalWithAspect(Aspect.AIR),
                         TCUtil.getCrystalWithAspect(Aspect.WATER),
@@ -357,8 +361,13 @@ public class ThEThaumcraft implements IThEIntegration {
     }
 
     private void addFakeCrafting(ResourceLocation resourceLocation) {
-        IForgeRegistryEntry entry = ForgeUtil.getRegistryEntry(IRecipe.class, resourceLocation);
+        /*IForgeRegistryEntry entry = ForgeUtil.getRegistryEntry(IRecipe.class, resourceLocation);
         Preconditions.checkNotNull(entry);
-        ThaumcraftApi.addFakeCraftingRecipe(entry.getRegistryName(), entry);
+        ThaumcraftApi.addFakeCraftingRecipe(entry.getRegistryName(), entry);*/
+    }
+
+    private ItemStack aeItemStack(ResourceLocation id) {
+        Item item = Item.REGISTRY.getObject(id);
+        return item == null ? ItemStack.EMPTY : new ItemStack(item);
     }
 }

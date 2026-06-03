@@ -1,7 +1,15 @@
 package thaumicenergistics.config;
 
-import appeng.api.config.*;
-import appeng.api.util.IConfigManager;
+import ae2.api.config.AccessRestriction;
+import ae2.api.config.RedstoneMode;
+import ae2.api.config.Setting;
+import ae2.api.config.Settings;
+import ae2.api.config.SortDir;
+import ae2.api.config.SortOrder;
+import ae2.api.config.StorageFilter;
+import ae2.api.config.ViewItems;
+import ae2.api.util.IConfigManager;
+import thaumicenergistics.integration.appeng.util.ThEConfigManager;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -13,7 +21,7 @@ import java.util.HashMap;
  * @author Alex811
  */
 public final class AESettings {
-    private static final HashMap<SUBJECT, HashMap<Settings, Enum<?>>> SETTINGS = new HashMap<>();
+    private static final HashMap<SUBJECT, HashMap<Setting<?>, Enum<?>>> SETTINGS = new HashMap<>();
 
     public enum SUBJECT {
         ARCANE_TERMINAL,
@@ -39,14 +47,23 @@ public final class AESettings {
         addSetting(SUBJECT.ESSENTIA_STORAGE_BUS, Settings.STORAGE_FILTER, StorageFilter.EXTRACTABLE_ONLY);
     }
 
-    private static void addSetting(SUBJECT settingSubject, Settings setting, Enum<?> def) {
+    private static void addSetting(SUBJECT settingSubject, Setting<?> setting, Enum<?> def) {
         if (!SETTINGS.containsKey(settingSubject))
             SETTINGS.put(settingSubject, new HashMap<>());
         SETTINGS.get(settingSubject).put(setting, def);
     }
 
     public static void registerSettings(@Nullable SUBJECT settingSubject, @Nonnull IConfigManager configManager) {
-        if (settingSubject != null)
-            SETTINGS.get(settingSubject).forEach(configManager::registerSetting);
+        if (settingSubject != null && configManager instanceof ThEConfigManager)
+            SETTINGS.get(settingSubject).forEach((setting, value) -> registerSetting((ThEConfigManager) configManager, setting, value));
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void registerSetting(ThEConfigManager configManager, Setting<?> setting, Enum<?> value) {
+        registerSettingUnchecked(configManager, (Setting) setting, value);
+    }
+
+    private static <T extends Enum<T>> void registerSettingUnchecked(ThEConfigManager configManager, Setting<T> setting, Enum<?> value) {
+        configManager.registerSetting(setting, setting.getEnumClass().cast(value));
     }
 }

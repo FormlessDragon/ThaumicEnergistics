@@ -1,6 +1,6 @@
 package thaumicenergistics.util;
 
-import appeng.api.config.TerminalStyle;
+import ae2.api.config.TerminalStyle;
 import net.minecraft.item.ItemStack;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
@@ -8,6 +8,7 @@ import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.item.ItemDummyAspect;
 
 import java.util.EnumSet;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 /**
@@ -36,6 +37,11 @@ public class ThEUtil {
 
     @SuppressWarnings("unchecked")
     public static <T extends Enum<?>> T rotateEnum(T e, EnumSet<? extends T> options, boolean backwards) {
+        return rotateEnum(e, (Set<? extends T>) options, backwards);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends Enum<?>> T rotateEnum(T e, Set<? extends T> options, boolean backwards) {
         if (e == null || options == null)
             return e;
         Object[] optArr = options.toArray();

@@ -1,6 +1,6 @@
 package thaumicenergistics.integration.invtweaks;
 
-import invtweaks.api.InvTweaksAPI;
+import api.java.invtweaks.api.InvTweaksAPI;
 import net.minecraftforge.fml.common.Loader;
 import thaumicenergistics.integration.IThEIntegration;
 import thaumicenergistics.util.ThELog;

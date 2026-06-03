@@ -1,7 +1,6 @@
 package thaumicenergistics.part;
 
-import appeng.api.parts.IPartModel;
-import appeng.api.parts.PartItemStack;
+import ae2.api.parts.IPartModel;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -10,12 +9,13 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.config.AESettings;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.integration.appeng.ThEPartModel;
+import thaumicenergistics.integration.appeng.compat.ThEPartItemStack;
 import thaumicenergistics.item.part.ItemArcaneTerminal;
 import thaumicenergistics.util.AEUtil;
 import thaumicenergistics.util.ForgeUtil;
@@ -55,7 +55,7 @@ public class PartArcaneTerminal extends PartSharedTerminal {
     public PartArcaneTerminal(ItemArcaneTerminal item, ModGUIs gui) {
         super(item, gui);
         this.craftingInventory = new ThEInternalInventory("matrix", 15, 64);
-        this.upgradeInventory = new ThEUpgradeInventory("upgrades", 1, 1, this.getItemStack(PartItemStack.NETWORK));
+        this.upgradeInventory = new ThEUpgradeInventory("upgrades", 1, 1, this.getItemStack(ThEPartItemStack.NETWORK));
     }
 
     @Override
@@ -73,13 +73,13 @@ public class PartArcaneTerminal extends PartSharedTerminal {
     }
 
     @Override
-    public void getDrops(List<ItemStack> list, boolean b) {
-        super.getDrops(list, b);
+    public void addPartDrop(List<ItemStack> list, boolean b) {
+        super.addPartDrop(list, b);
         list.addAll(ItemHandlerUtil.getInventoryAsList(this.getInventoryByName("crafting")));
     }
 
     @Override
-    public boolean onActivate(EntityPlayer player, EnumHand hand, Vec3d pos) {
+    public boolean onUseItemOn(ItemStack itemStack, EntityPlayer player, EnumHand hand, Vec3d pos) {
         if ((player.isSneaking() && AEUtil.isWrench(player.getHeldItem(hand), player, this.getTile().getPos())))
             return false;
 

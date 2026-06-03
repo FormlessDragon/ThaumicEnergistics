@@ -1,15 +1,12 @@
 package thaumicenergistics.part;
 
-import appeng.api.AEApi;
-import appeng.api.config.RedstoneMode;
-import appeng.api.config.Settings;
-import appeng.api.config.Upgrades;
-import appeng.api.implementations.IUpgradeableHost;
-import appeng.api.networking.IGridNode;
-import appeng.api.networking.ticking.IGridTickable;
-import appeng.api.networking.ticking.TickRateModulation;
-import appeng.api.parts.PartItemStack;
-import appeng.api.util.AECableType;
+import ae2.api.config.RedstoneMode;
+import ae2.api.config.Settings;
+import ae2.api.networking.IGridNode;
+import ae2.api.networking.ticking.IGridTickable;
+import ae2.api.networking.ticking.TickRateModulation;
+import ae2.api.storage.MEStorage;
+import ae2.api.util.AECableType;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
@@ -19,7 +16,9 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumcraft.api.aspects.IAspectContainer;
-import thaumicenergistics.api.storage.IEssentiaStorageChannel;
+import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
+import thaumicenergistics.integration.appeng.compat.ThEPartItemStack;
+import thaumicenergistics.integration.appeng.compat.Upgrades;
 import thaumicenergistics.item.ItemPartBase;
 import thaumicenergistics.util.EssentiaFilter;
 import thaumicenergistics.util.inventory.ThEUpgradeInventory;
@@ -33,7 +32,7 @@ import java.util.List;
  * @author BrockWS
  * @author Alex811
  */
-public abstract class PartSharedEssentiaBus extends PartBase implements IGridTickable, IUpgradeableHost {
+public abstract class PartSharedEssentiaBus extends PartBase implements IGridTickable {
 
     public EssentiaFilter config;
     public ThEUpgradeInventory upgrades;
@@ -53,7 +52,7 @@ public abstract class PartSharedEssentiaBus extends PartBase implements IGridTic
                 PartSharedEssentiaBus.this.host.markForSave();
             }
         };
-        this.upgrades = new ThEUpgradeInventory("upgrades", upgradeSlots, 1, this.getItemStack(PartItemStack.NETWORK)) {
+        this.upgrades = new ThEUpgradeInventory("upgrades", upgradeSlots, 1, this.getItemStack(ThEPartItemStack.NETWORK)) {
             @Override
             public void markDirty() {
                 super.markDirty();
@@ -114,9 +113,9 @@ public abstract class PartSharedEssentiaBus extends PartBase implements IGridTic
 
     @Nullable
     public TileEntity getConnectedTE() {
-        TileEntity self = this.host.getTile();
+        TileEntity self = this.host.getTileEntity();
         World w = self.getWorld();
-        BlockPos pos = self.getPos().offset(this.side.getFacing());
+        BlockPos pos = self.getPos().offset(this.side);
         if (getLoadedChunk(w, pos) != null) {
             return w.getTileEntity(pos);
         }
@@ -135,8 +134,14 @@ public abstract class PartSharedEssentiaBus extends PartBase implements IGridTic
                 .getLoadedChunk(pos.getX() >> 4, pos.getZ() >> 4);
     }
 
-    protected IEssentiaStorageChannel getChannel() {
-        return AEApi.instance().storage().getStorageChannel(IEssentiaStorageChannel.class);
+    @Nullable
+    protected MEStorage getNetworkStorage() {
+        IGridNode node = this.getGridNode();
+        if (node == null || !node.isActive() || node.grid() == null) {
+            return null;
+        }
+
+        return SupergiantEssentiaUtil.getNetworkStorage(node.grid());
     }
 
     public EssentiaFilter getConfig() {
@@ -187,7 +192,7 @@ public abstract class PartSharedEssentiaBus extends PartBase implements IGridTic
     @Nonnull
     @Override
     public TickRateModulation tickingRequest(@Nonnull IGridNode node, int ticksSinceLastCall) {
-        return (this.canWork() && this.workAllowedByRedstone()) ? this.doWork() : TickRateModulation.IDLE;
+        return (node.isActive() && this.canWork() && this.workAllowedByRedstone()) ? this.doWork() : TickRateModulation.IDLE;
     }
 
     protected abstract TickRateModulation doWork();
@@ -195,11 +200,11 @@ public abstract class PartSharedEssentiaBus extends PartBase implements IGridTic
     protected RedstoneMode getRSMode() {
         if (!hasRedstoneCard())
             return RedstoneMode.IGNORE;
-        return (RedstoneMode) this.getConfigManager().getSetting(Settings.REDSTONE_CONTROLLED);
+        return this.getConfigManager().getSetting(Settings.REDSTONE_CONTROLLED);
     }
 
     protected boolean hasRedstone() {
-        return this.host.hasRedstone(this.side);
+        return this.host.hasRedstone();
     }
 
     protected boolean workAllowedByRedstone() {

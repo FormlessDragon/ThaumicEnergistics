@@ -1,5 +1,8 @@
 package thaumicenergistics.block;
 
+import ae2.api.stacks.AEKey;
+import ae2.api.stacks.KeyCounter;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.entity.player.EntityPlayer;
@@ -12,7 +15,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.common.registry.GameRegistry;
-import thaumicenergistics.api.storage.IAEEssentiaStack;
+import thaumicenergistics.api.stacks.AEEssentiaKey;
 import thaumicenergistics.client.render.IThEModel;
 import thaumicenergistics.tile.TileInfusionProvider;
 
@@ -42,10 +45,15 @@ public class BlockInfusionProvider extends BlockNetwork implements IThEModel {
         if (te instanceof TileInfusionProvider) {
             TileInfusionProvider inf = (TileInfusionProvider) te;
             if (player.isSneaking()) {
-                if (inf.getStoredAspects() != null && !inf.getStoredAspects().isEmpty()) {
+                KeyCounter storedAspects = inf.getStoredAspects();
+                if (!storedAspects.isEmpty()) {
                     player.sendMessage(new TextComponentString("Stored Aspects:"));
-                    for (IAEEssentiaStack stack : inf.getStoredAspects())
-                        player.sendMessage(new TextComponentString(stack.getAspect().getName() + " = " + stack.getStackSize()));
+                    for (Object2LongMap.Entry<AEKey> stack : storedAspects) {
+                        if (stack.getKey() instanceof AEEssentiaKey) {
+                            AEEssentiaKey key = (AEEssentiaKey) stack.getKey();
+                            player.sendMessage(new TextComponentString(key.getAspect().getName() + " = " + stack.getLongValue()));
+                        }
+                    }
                 } else {
                     player.sendMessage(new TextComponentString("No aspects found"));
                 }

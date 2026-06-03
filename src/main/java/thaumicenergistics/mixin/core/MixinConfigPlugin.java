@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import net.minecraft.launchwrapper.Launch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 
 // https://github.com/embeddedt/VintageFix/blob/15291a5829ead82cf7dde9b482a2a2cc95ea45b7/src/main/java/org/embeddedt/vintagefix/core/MixinConfigPlugin.java
 public class MixinConfigPlugin implements IMixinConfigPlugin {
-    private static final Logger LOGGER = LogManager.getLogger(Reference.NAME + " Mixin Loader");
+    private static final Logger LOGGER = LogManager.getLogger(Reference.MOD_NAME + " Mixin Loader");
 
     private static final String PACKAGE_PREFIX = "thaumicenergistics.";
 

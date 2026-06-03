@@ -1,19 +1,19 @@
 package thaumicenergistics.definitions;
 
-import appeng.api.definitions.IBlockDefinition;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
+import thaumicenergistics.api.definitions.IThEBlockDefinition;
 
 import java.util.Optional;
 
 /**
  * @author BrockWS
  */
-public class ThEBlockDefinition extends ThEItemDefinition implements IBlockDefinition {
+public class ThEBlockDefinition extends ThEItemDefinition implements IThEBlockDefinition {
 
     private Block block;
 
@@ -35,6 +35,11 @@ public class ThEBlockDefinition extends ThEItemDefinition implements IBlockDefin
     @Override
     public Optional<ItemStack> maybeStack(int i) {
         return this.maybeBlock().map(block -> new ItemStack(block, i));
+    }
+
+    @Override
+    public Optional<ItemStack> maybeStack(int stackSize, int damage) {
+        return this.maybeBlock().map(block -> new ItemStack(block, stackSize, damage));
     }
 
     @Override

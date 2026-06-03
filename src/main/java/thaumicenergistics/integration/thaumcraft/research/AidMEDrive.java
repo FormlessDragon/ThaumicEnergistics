@@ -1,6 +1,6 @@
 package thaumicenergistics.integration.thaumcraft.research;
 
-import appeng.api.AEApi;
+import ae2.core.definitions.AEBlocks;
 import thaumcraft.api.research.theorycraft.ITheorycraftAid;
 import thaumcraft.api.research.theorycraft.TheorycraftCard;
 
@@ -9,7 +9,7 @@ public class AidMEDrive implements ITheorycraftAid {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Override
     public Object getAidObject() {
-        return AEApi.instance().definitions().blocks().drive().maybeBlock().get();
+        return AEBlocks.DRIVE.block();
     }
 
     @SuppressWarnings("unchecked")

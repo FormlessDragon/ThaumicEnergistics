@@ -1,10 +1,10 @@
 {
   "textures": {
-    "sides": "appliedenergistics2:parts/import_bus_sides",
-    "sidesStatus": "appliedenergistics2:parts/monitor_sides_status",
-    "back": "appliedenergistics2:parts/monitor_back",
+    "sides": "ae2:part/import_bus_sides",
+    "sidesStatus": "ae2:part/monitor_sides_status",
+    "back": "ae2:part/monitor_back",
     "front": "thaumicenergistics:part/essentia_import_bus_face",
-    "particle": "appliedenergistics2:parts/monitor_back"
+    "particle": "ae2:part/monitor_back"
   },
   "elements": [
     {

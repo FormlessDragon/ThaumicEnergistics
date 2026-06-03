@@ -1,51 +1,43 @@
 package thaumicenergistics.client.gui.helpers;
 
-import appeng.api.config.SearchBoxMode;
-import appeng.api.config.SortDir;
-import appeng.api.config.SortOrder;
-import appeng.api.config.ViewItems;
-import appeng.api.storage.IStorageChannel;
-import appeng.api.storage.data.IAEFluidStack;
-import appeng.api.storage.data.IAEItemStack;
-import appeng.api.storage.data.IAEStack;
-import appeng.api.storage.data.IItemList;
-import appeng.core.AEConfig;
-import appeng.util.Platform;
+import ae2.api.config.SortDir;
+import ae2.api.config.SortOrder;
+import ae2.api.config.ViewItems;
+import ae2.api.stacks.AEKey;
+import ae2.api.stacks.KeyCounter;
+import ae2.core.AEConfig;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.item.ItemStack;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.api.config.PrefixSetting;
+import thaumicenergistics.api.config.SearchBoxMode;
 import thaumicenergistics.integration.jei.ThEJEI;
-import thaumicenergistics.util.AEUtil;
 import thaumicenergistics.util.TCUtil;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static appeng.api.config.Settings.SEARCH_TOOLTIPS;
-import static appeng.api.config.ViewItems.CRAFTABLE;
-import static appeng.api.config.ViewItems.STORED;
-import static appeng.api.config.YesNo.NO;
+import static ae2.api.config.ViewItems.CRAFTABLE;
+import static ae2.api.config.ViewItems.STORED;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.regex.Pattern.UNICODE_CASE;
 
 /**
- * Based on ItemRepo and FluidRepo
- *
- * @author BrockWS
- * @author Alex811
+ * Terminal repository backed by key-based display rows.
  */
-public class MERepo<T extends IAEStack<T>> {
+public class MERepo {
 
-    private final IItemList<T> list;
-    /**
-     * Contains all stacks currently in the view.
-     */
-    private ArrayList<T> view = new ArrayList<>();
+    private final Map<AEKey, TerminalDisplayStack> list = new LinkedHashMap<>();
+    private ArrayList<TerminalDisplayStack> view = new ArrayList<>();
     private String searchString = "";
     private String innerSearch = "";
     private ViewItems viewMode;
@@ -64,12 +56,15 @@ public class MERepo<T extends IAEStack<T>> {
     private boolean resort = true;
     private boolean changed = false;
 
-    public MERepo(Class<? extends IStorageChannel<T>> clazz) {
-        this.list = AEUtil.getList(clazz);
+    public MERepo() {
         this.viewMode = ViewItems.ALL;
         this.sortDir = SortDir.ASCENDING;
         this.sortOrder = SortOrder.NAME;
         this.searchBoxMode = ThEApi.instance().config().searchBoxMode();
+    }
+
+    public MERepo(Class<?> ignored) {
+        this();
     }
 
     public void updateView() {
@@ -119,11 +114,6 @@ public class MERepo<T extends IAEStack<T>> {
             ThEJEI.setSearchText(searchString);
         }
 
-        // DISABLED = Don't search and ignore what it starts with
-        // REQUIRE_PREFIX = If search starts with prefix, drop prefix and search ONLY by that search
-        // ENABLED = Always search and add to result
-        // ENABLED WITH SEARCH = Act like REQUIRE_PREFIX
-
         switch (modSearchSetting) {
             case ENABLED:
                 searchMod = true;
@@ -149,7 +139,7 @@ public class MERepo<T extends IAEStack<T>> {
                     searchSpecific = true;
                     searchAspect = true;
 
-                    searchMod = false; // Set to false so when MOD is ENABLED but we want to only search aspects
+                    searchMod = false;
                 default:
             }
         }
@@ -165,87 +155,95 @@ public class MERepo<T extends IAEStack<T>> {
             }
         }
 
-        // Can't use non-final in lambdas....
         final Pattern p = pattern;
         final boolean finalSearchSpecific = searchSpecific;
         final boolean searchByMod = searchMod;
         final boolean searchByAspect = searchAspect;
 
-        newArrayList(list).stream()
-                .filter(t ->
-                        !(this.getViewMode() == CRAFTABLE && !t.isCraftable()) ||
-                                !(this.getViewMode() == STORED && t.getStackSize() == 0)
-                )
+        newArrayList(list.values()).stream()
+                .filter(t -> this.getViewMode() != CRAFTABLE || t.craftable())
+                .filter(t -> this.getViewMode() != STORED || t.stackSize() > 0)
                 .filter(t -> searchByQuery(finalSearchSpecific, searchByAspect, searchByMod, t, p))
                 .forEach(t -> {
-                    T stack = t.copy();
+                    TerminalDisplayStack stack = t.copy();
                     if (this.getViewMode().equals(CRAFTABLE)) {
-                        if (!stack.isCraftable())
+                        if (!stack.craftable())
                             return;
-                        stack.setStackSize(0);
-                    } else if (this.getViewMode().equals(STORED) && stack.getStackSize() < 1) {
+                        stack = new TerminalDisplayStack(stack.key(), 0, true);
+                    } else if (this.getViewMode().equals(STORED) && stack.stackSize() < 1) {
                         return;
                     }
                     this.view.add(stack);
                 });
 
-        ThEItemSorters.setDirection(sortDir);
-        ThEItemSorters.init();
-
         view.sort(getComparator(sortOrder));
     }
 
-    private static Comparator<IAEStack<?>> getComparator(SortOrder sortBy) {
-        Comparator<IAEStack<?>> c;
+    private Comparator<TerminalDisplayStack> getComparator(SortOrder sortBy) {
+        Comparator<TerminalDisplayStack> comparator;
 
         if (sortBy == SortOrder.MOD) {
-            c = ThEItemSorters.CONFIG_BASED_SORT_BY_MOD;
+            comparator = Comparator.comparing((TerminalDisplayStack stack) -> stack.key().getModId(), String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(MERepo::displayName, String.CASE_INSENSITIVE_ORDER);
         } else if (sortBy == SortOrder.AMOUNT) {
-            c = ThEItemSorters.CONFIG_BASED_SORT_BY_SIZE;
+            comparator = Comparator.comparingLong(TerminalDisplayStack::stackSize).reversed();
         } else if (sortBy == SortOrder.INVTWEAKS) {
-            c = ThEItemSorters.CONFIG_BASED_SORT_BY_INV_TWEAKS;
+            comparator = Comparator.comparing(MERepo::displayName, String.CASE_INSENSITIVE_ORDER);
         } else {
-            c = ThEItemSorters.CONFIG_BASED_SORT_BY_NAME;
+            comparator = Comparator.comparing(MERepo::displayName, String.CASE_INSENSITIVE_ORDER);
         }
-        return c;
+
+        if (this.sortDir == SortDir.DESCENDING) {
+            comparator = comparator.reversed();
+        }
+        return comparator;
     }
 
     public boolean searchByQuery(boolean searchSpecific,
                                  boolean searchByAspect,
                                  boolean searchByMod,
-                                 T t,
+                                 TerminalDisplayStack stack,
                                  Pattern pattern) {
         if (searchSpecific) {
             if (searchByAspect) {
-                return searchAspects(t, pattern);
+                return searchAspects(stack, pattern);
             } else if (searchByMod) {
-                return searchMod(t, pattern);
+                return searchMod(stack, pattern);
             }
         } else {
-            if (searchByAspect && searchAspects(t, pattern))
+            if (searchByAspect && searchAspects(stack, pattern))
                 return true;
-            if (searchByMod && searchMod(t, pattern))
+            if (searchByMod && searchMod(stack, pattern))
                 return true;
-            return searchName(t, pattern) || searchTooltip(t, pattern);
+            return searchName(stack, pattern) || searchTooltip(stack, pattern);
         }
 
         return true;
     }
 
-    public void postUpdate(T stack) {
-        T existing = this.list.findPrecise(stack);
-        if (existing != null) { // Already exists in the list
-            existing.reset();
-            existing.add(stack);
-        } else { // Doesn't exist in the list yet
-            this.list.add(stack);
+    public void postUpdate(TerminalDisplayStack stack) {
+        if (stack == null || stack.key() == null) {
+            return;
         }
-
+        this.list.put(stack.key(), stack.copy());
         changed = true;
     }
 
-    public T getReferenceStack(int i) {
-        int scroll = (int) Math.max(Math.min(this.scrollBar.getCurrentPosition(), Math.ceil((double) this.view.size() / this.rowSize)), 0);
+    public void postUpdate(KeyCounter counter) {
+        for (Object2LongMap.Entry<AEKey> entry : counter) {
+            this.postUpdate(entry.getKey(), entry.getLongValue(), false);
+        }
+    }
+
+    public void postUpdate(AEKey key, long amount, boolean craftable) {
+        this.postUpdate(TerminalDisplayStacks.of(key, amount, craftable));
+    }
+
+    public TerminalDisplayStack getReferenceStack(int i) {
+        int scroll = 0;
+        if (this.scrollBar != null) {
+            scroll = (int) Math.max(Math.min(this.scrollBar.getCurrentPosition(), Math.ceil((double) this.view.size() / this.rowSize)), 0);
+        }
         i += scroll * this.rowSize;
         if (i < this.view.size())
             return this.view.get(i);
@@ -257,7 +255,8 @@ public class MERepo<T extends IAEStack<T>> {
     }
 
     public void clear() {
-        this.list.resetStatus();
+        this.list.clear();
+        this.changed = true;
     }
 
     public void setScrollBar(GuiScrollBar scrollBar) {
@@ -316,21 +315,19 @@ public class MERepo<T extends IAEStack<T>> {
         this.searchBoxMode = searchBoxMode;
     }
 
-    private boolean searchName(T stack, Pattern p) {
-        return p.matcher(Platform.getItemDisplayName(stack)).find();
+    private boolean searchName(TerminalDisplayStack stack, Pattern p) {
+        return p.matcher(displayName(stack)).find();
     }
 
-    private boolean searchTooltip(T stack, Pattern p) {
-        boolean terminalSearchToolTips = AEConfig.instance().getConfigManager()
-                .getSetting(SEARCH_TOOLTIPS) != NO;
+    private boolean searchTooltip(TerminalDisplayStack stack, Pattern p) {
+        boolean terminalSearchToolTips = AEConfig.instance().isSearchModNameInTooltips();
 
-        // Returning false means we don't display, so if the config for
-        // tooltips is off, return true - i.e. always keep
         if (!terminalSearchToolTips) {
             return true;
         }
 
-        List<String> tooltip = Platform.getTooltip(stack);
+        ItemStack itemStack = stack.asItemStackRepresentation();
+        List<String> tooltip = itemStack.getTooltip(null, ITooltipFlag.TooltipFlags.NORMAL);
         for (String line : tooltip) {
             if (p.matcher(line).find()) {
                 return true;
@@ -339,20 +336,23 @@ public class MERepo<T extends IAEStack<T>> {
         return false;
     }
 
-    private boolean searchMod(T stack, Pattern p) {
-        if (stack instanceof IAEItemStack)
-            return p.matcher(Platform.getModId((IAEItemStack) stack)).find();
-        if (stack instanceof IAEFluidStack)
-            return p.matcher(Platform.getModId((IAEFluidStack) stack)).find();
-        return true;
+    private boolean searchMod(TerminalDisplayStack stack, Pattern p) {
+        return p.matcher(stack.key().getModId()).find();
     }
 
-    private boolean searchAspects(T stack, Pattern p) {
+    private boolean searchAspects(TerminalDisplayStack stack, Pattern p) {
         AspectList aspects = TCUtil.getItemAspects(stack.asItemStackRepresentation());
         if (aspects == null || aspects.size() < 1)
             return false;
         final Pattern pf = p;
         Stream<Aspect> stream = aspects.aspects.keySet().stream();
         return stream.anyMatch(aspect -> pf.matcher(aspect.getName()).find());
+    }
+
+    private static String displayName(TerminalDisplayStack stack) {
+        if (stack == null || stack.key() == null) {
+            return "";
+        }
+        return stack.key().getDisplayName().getFormattedText();
     }
 }

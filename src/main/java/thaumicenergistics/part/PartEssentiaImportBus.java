@@ -1,32 +1,32 @@
 package thaumicenergistics.part;
 
-import appeng.api.config.Actionable;
-import appeng.api.networking.IGridNode;
-import appeng.api.networking.storage.IStorageGrid;
-import appeng.api.networking.ticking.TickRateModulation;
-import appeng.api.networking.ticking.TickingRequest;
-import appeng.api.parts.IPartCollisionHelper;
-import appeng.api.parts.IPartModel;
-import appeng.api.storage.IMEMonitor;
+import ae2.api.config.Actionable;
+import ae2.api.networking.IGridNode;
+import ae2.api.networking.ticking.TickRateModulation;
+import ae2.api.networking.ticking.TickingRequest;
+import ae2.api.parts.IPartCollisionHelper;
+import ae2.api.parts.IPartModel;
+import ae2.api.storage.MEStorage;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
-import thaumicenergistics.api.EssentiaStack;
+import thaumicenergistics.api.stacks.EssentiaStack;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.api.storage.IAEEssentiaStack;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.config.AESettings;
 import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.integration.appeng.AEEssentiaStack;
+import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
 import thaumicenergistics.integration.appeng.ThEPartModel;
 import thaumicenergistics.item.part.ItemEssentiaImportBus;
 import thaumicenergistics.util.AEUtil;
 import thaumicenergistics.util.ForgeUtil;
+import thaumicenergistics.util.ThELog;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -60,7 +60,7 @@ public class PartEssentiaImportBus extends PartSharedEssentiaBus {
     @Nonnull
     @Override
     public TickingRequest getTickingRequest(@Nonnull IGridNode node) {
-        return new TickingRequest(ThEApi.instance().config().tickTimeEssentiaImportBusMin(), ThEApi.instance().config().tickTimeEssentiaImportBusMax(), false, false);
+        return new TickingRequest(ThEApi.instance().config().tickTimeEssentiaImportBusMin(), ThEApi.instance().config().tickTimeEssentiaImportBusMax(), false);
     }
 
     @Override
@@ -88,23 +88,35 @@ public class PartEssentiaImportBus extends PartSharedEssentiaBus {
             return TickRateModulation.IDLE;
         }
 
+        MEStorage storage = this.getNetworkStorage();
+        if (storage == null) {
+            return TickRateModulation.IDLE;
+        }
+
         for (Aspect aspect : aspects) {
             if (this.config.hasAspects() && !this.config.isInFilter(aspect)) // Check filter
                 continue;
             EssentiaStack inContainer = new EssentiaStack(aspect, Math.min(container.containerContains(aspect), this.calculateAmountToSend()));
 
-            IStorageGrid storageGrid = this.getGridNode().getGrid().getCache(IStorageGrid.class);
-            IMEMonitor<IAEEssentiaStack> storage = storageGrid.getInventory(this.getChannel());
-
-            AEEssentiaStack toInsert = AEEssentiaStack.fromEssentiaStack(inContainer);
-            if (storage.canAccept(toInsert)) {
-                IAEEssentiaStack notInserted = storage.injectItems(toInsert, Actionable.SIMULATE, this.source);
-                if (notInserted != null && notInserted.getStackSize() > 0) {
-                    toInsert.decStackSize(notInserted.getStackSize());
+            long simulated = SupergiantEssentiaUtil.insert(storage, aspect, inContainer.getAmount(), Actionable.SIMULATE, this.source);
+            if (simulated > 0) {
+                int amountToInsert = (int) Math.min(simulated, inContainer.getAmount());
+                if (!container.takeFromContainer(inContainer.getAspect(), amountToInsert)) {
+                    continue;
                 }
-                container.takeFromContainer(toInsert.getAspect(), (int) toInsert.getStackSize());
-                storage.injectItems(toInsert, Actionable.MODULATE, this.source);
-                return TickRateModulation.FASTER;
+
+                long inserted = SupergiantEssentiaUtil.insert(storage, aspect, amountToInsert, Actionable.MODULATE, this.source);
+                if (inserted >= amountToInsert) {
+                    return TickRateModulation.FASTER; // Only do one every tick
+                }
+
+                int remaining = amountToInsert - (int) inserted;
+                if (remaining > 0 && container.addToContainer(aspect, remaining) > 0) {
+                    ThELog.warn("EssentiaImportBus could not roll back all {} essentia after a partial ME insert at {}", aspect.getTag(), this.hostTile != null ? this.hostTile.getPos() : "unknown");
+                }
+                if (inserted > 0) {
+                    return TickRateModulation.FASTER; // Only do one every tick
+                }
             }
         }
         return TickRateModulation.SLOWER;
@@ -122,7 +134,7 @@ public class PartEssentiaImportBus extends PartSharedEssentiaBus {
     }
 
     @Override
-    public boolean onActivate(EntityPlayer player, EnumHand hand, Vec3d vec3d) {
+    public boolean onUseItemOn(ItemStack itemStack, EntityPlayer player, EnumHand hand, Vec3d vec3d) {
         if ((player.isSneaking() && AEUtil.isWrench(player.getHeldItem(hand), player, this.getTile().getPos())))
             return false;
 

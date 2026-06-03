@@ -1,21 +1,23 @@
 package thaumicenergistics.network.packets;
 
-import appeng.api.storage.data.IAEItemStack;
-import appeng.util.item.AEItemStack;
+import ae2.api.stacks.AEItemKey;
+import ae2.api.stacks.AEKey;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import thaumicenergistics.client.gui.helpers.TerminalDisplayStack;
+import thaumicenergistics.client.gui.helpers.TerminalDisplayStacks;
 import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.client.gui.part.GuiArcaneTerminal;
 import thaumicenergistics.util.ThELog;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.BufferOverflowException;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,93 +33,104 @@ public class PacketMEItemUpdate implements IMessage {
     private static final int OPERATION_BYTE_LIMIT = 2 * 1024;
     private static final int TEMP_BUFFER_SIZE = 1024;
 
-    private final List<IAEItemStack> list;
-
-    private final ByteBuf data;
-
-    private final GZIPOutputStream compressFrame;
+    private final List<TerminalDisplayStack> list;
 
     private int writtenBytes = 0;
     private boolean empty = true;
+    private boolean clearExisting = true;
 
     public PacketMEItemUpdate() throws IOException {
         this.list = new ArrayList<>();
-
-        this.data = Unpooled.buffer(OPERATION_BYTE_LIMIT);
-        compressFrame = new GZIPOutputStream(new OutputStream() {
-            @Override
-            public void write(int value) {
-                data.writeByte(value);
-            }
-        });
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
-//        ThELog.info("fromBytes Readable Bytes : " + buf.readableBytes());
-//        ThELog.info("fromBytes isReadable : " + buf.isReadable());
         if (!buf.isReadable()) {
             return;
         }
-        try (GZIPInputStream gzReader = new GZIPInputStream(new InputStream() {
-            @Override
-            public int read() throws IOException {
-                if (buf.readableBytes() <= 0) {
-                    return -1;
-                }
-
-                return buf.readByte() & 0xff;
-            }
-        })) {
-            ByteBuf uncompressed = Unpooled.buffer(buf.readableBytes());
+        byte[] compressed = new byte[buf.readableBytes()];
+        buf.readBytes(compressed);
+        try (GZIPInputStream gzReader = new GZIPInputStream(new ByteArrayInputStream(compressed))) {
+            ByteArrayOutputStream uncompressed = new ByteArrayOutputStream();
             byte[] tmp = new byte[TEMP_BUFFER_SIZE];
-            while (gzReader.available() != 0) {
+            while (true) {
                 int bytes = gzReader.read(tmp);
                 if (bytes > 0) {
-                    uncompressed.writeBytes(tmp, 0, bytes);
+                    uncompressed.write(tmp, 0, bytes);
+                } else if (bytes < 0) {
+                    break;
                 }
             }
-            while (uncompressed.readableBytes() > 0) {
-                this.list.add(AEItemStack.fromPacket(uncompressed));
+            PacketBuffer packetBuffer = new PacketBuffer(io.netty.buffer.Unpooled.wrappedBuffer(uncompressed.toByteArray()));
+            this.clearExisting = packetBuffer.readBoolean();
+            int rows = packetBuffer.readVarInt();
+            for (int i = 0; i < rows; i++) {
+                AEKey key = AEKey.readKey(packetBuffer);
+                long amount = packetBuffer.readLong();
+                boolean craftable = packetBuffer.readBoolean();
+                if (key instanceof AEItemKey) {
+                    this.list.add(TerminalDisplayStacks.of(key, amount, craftable));
+                }
             }
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             ThELog.error("fromBytes IOException", e);
+            this.list.clear();
+            this.clearExisting = true;
         }
         this.empty = this.list.isEmpty();
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
-        if (!data.isReadable()) {
-            ThELog.info("No readable bytes, skipping");
-            return;
-        }
         try {
-            compressFrame.close();
-            data.capacity(data.readableBytes());
-            if (data.array().length > 2 * 1024 * 1024) {
-                throw new IllegalArgumentException("Sorry, ThE made a " + data.array().length + " byte packet by accident!");
+            PacketBuffer packetBuffer = new PacketBuffer(io.netty.buffer.Unpooled.buffer(Math.max(OPERATION_BYTE_LIMIT, this.list.size() * 32)));
+            packetBuffer.writeBoolean(this.clearExisting);
+            packetBuffer.writeVarInt(this.list.size());
+            for (TerminalDisplayStack stack : this.list) {
+                AEKey.writeKey(packetBuffer, stack.key());
+                packetBuffer.writeLong(stack.stackSize());
+                packetBuffer.writeBoolean(stack.craftable());
             }
-//            ThELog.info("toBytes Readable Bytes : " + data.readableBytes());
-            buf.writeBytes(data);
+            byte[] uncompressed = new byte[packetBuffer.readableBytes()];
+            packetBuffer.readBytes(uncompressed);
+            ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+            try (GZIPOutputStream gzWriter = new GZIPOutputStream(compressed)) {
+                gzWriter.write(uncompressed);
+            }
+            if (compressed.size() > 2 * 1024 * 1024) {
+                throw new IllegalArgumentException("Sorry, ThE made a " + compressed.size() + " byte packet by accident!");
+            }
+            buf.writeBytes(compressed.toByteArray());
         } catch (IOException e) {
             ThELog.error("toBytes IOException", e);
         }
     }
 
-    public void appendStack(IAEItemStack stack) throws IOException, BufferOverflowException {
+    public void appendStack(TerminalDisplayStack stack) throws IOException, BufferOverflowException {
+        if (stack == null || !(stack.key() instanceof AEItemKey)) {
+            return;
+        }
 
-        ByteBuf tmp = Unpooled.buffer(OPERATION_BYTE_LIMIT);
-        stack.writeToPacket(tmp);
-
-        compressFrame.flush();
-        if (writtenBytes + tmp.readableBytes() > UNCOMPRESSED_PACKET_BYTE_LIMIT) {
+        int estimatedBytes = OPERATION_BYTE_LIMIT;
+        if (writtenBytes + estimatedBytes > UNCOMPRESSED_PACKET_BYTE_LIMIT) {
             throw new BufferOverflowException();
         } else {
-            writtenBytes += tmp.readableBytes();
-            compressFrame.write(tmp.array(), 0, tmp.readableBytes());
+            writtenBytes += estimatedBytes;
+            this.list.add(stack.copy());
             this.empty = false;
         }
+    }
+
+    public void appendStack(AEKey key, long amount, boolean craftable) throws IOException, BufferOverflowException {
+        this.appendStack(TerminalDisplayStacks.of(key, amount, craftable));
+    }
+
+    public void setClearExisting(boolean clearExisting) {
+        this.clearExisting = clearExisting;
+    }
+
+    public boolean shouldClearExisting() {
+        return this.clearExisting;
     }
 
     public static class Handler implements IMessageHandler<PacketMEItemUpdate, IMessage> {
@@ -127,11 +140,11 @@ public class PacketMEItemUpdate implements IMessage {
             FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(() -> {
                 if (Minecraft.getMinecraft().currentScreen instanceof GuiArcaneTerminal) {
                     GuiArcaneTerminal gui = (GuiArcaneTerminal) Minecraft.getMinecraft().currentScreen;
-                    gui.onMEStorageUpdate(message.list);
+                    gui.onMEStorageUpdate(message.list, message.clearExisting);
                 }
                 if (Minecraft.getMinecraft().currentScreen instanceof GuiArcaneInscriber) {
                     GuiArcaneInscriber gui = (GuiArcaneInscriber) Minecraft.getMinecraft().currentScreen;
-                    gui.onMEStorageUpdate(message.list);
+                    gui.onMEStorageUpdate(message.list, message.clearExisting);
                 }
             });
             return null;

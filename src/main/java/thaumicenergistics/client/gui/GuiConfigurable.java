@@ -1,14 +1,12 @@
 package thaumicenergistics.client.gui;
 
-import appeng.client.gui.widgets.GuiImgButton;
 import net.minecraft.client.gui.GuiButton;
-import org.lwjgl.input.Mouse;
+import thaumicenergistics.client.gui.component.GuiImgButton;
 import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.ContainerBaseConfigurable;
 import thaumicenergistics.integration.appeng.util.ThEConfigManager;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketSettingChange;
-import thaumicenergistics.util.ThEUtil;
 
 import java.io.IOException;
 
@@ -36,8 +34,7 @@ public abstract class GuiConfigurable extends GuiBase {
     protected void actionPerformed(GuiButton button) {
         if (button instanceof GuiImgButton) {
             GuiImgButton btn = (GuiImgButton) button;
-            Enum currentValue = btn.getCurrentValue();
-            Enum next = ThEUtil.rotateEnum(currentValue, btn.getSetting().getPossibleValues(), Mouse.isButtonDown(1));
+            Enum<?> next = btn.getNextValue(org.lwjgl.input.Mouse.isButtonDown(1));
             btn.set(next);
             if (!imgBtnActionOverride(btn, next))
                 PacketHandler.sendToServer(new PacketSettingChange(btn.getSetting(), next));
@@ -51,7 +48,7 @@ public abstract class GuiConfigurable extends GuiBase {
      * @param next the new value of the button
      * @return true if you handled the action, to skip sending {@link PacketSettingChange} to the server
      */
-    protected boolean imgBtnActionOverride(GuiImgButton btn, Enum next) {
+    protected boolean imgBtnActionOverride(GuiImgButton btn, Enum<?> next) {
         return false;
     }
 

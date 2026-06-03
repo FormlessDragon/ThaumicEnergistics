@@ -1,21 +1,20 @@
 package thaumicenergistics.client.gui.part;
 
-import appeng.api.config.AccessRestriction;
-import appeng.api.config.ActionItems;
-import appeng.api.config.Settings;
-import appeng.api.config.StorageFilter;
-import appeng.client.gui.widgets.GuiImgButton;
-import appeng.client.gui.widgets.GuiTabButton;
-import appeng.core.localization.GuiText;
+import ae2.api.config.ActionItems;
+import ae2.api.config.Settings;
+import ae2.core.localization.GuiText;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.util.ResourceLocation;
 import thaumicenergistics.api.ThEApi;
+import thaumicenergistics.client.gui.component.GuiImgButton;
 import thaumicenergistics.container.part.ContainerEssentiaStorageBus;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketEssentiaFilterAction;
 import thaumicenergistics.network.packets.PacketOpenGUI;
+
+import static thaumicenergistics.config.ThESettings.actions;
 
 /**
  * @author BrockWS
@@ -25,7 +24,7 @@ public class GuiEssentiaStorageBus extends GuiSharedEssentiaBus {
 
     private GuiImgButton clearButton;
     private GuiImgButton partitionButton;
-    private GuiTabButton priorityButton;
+    private GuiButton priorityButton;
 
     public GuiEssentiaStorageBus(ContainerEssentiaStorageBus container) {
         super(container);
@@ -37,14 +36,14 @@ public class GuiEssentiaStorageBus extends GuiSharedEssentiaBus {
     @Override
     public void initGui() {
         super.initGui();
-        this.priorityButton = new GuiTabButton(this.guiLeft + 154, this.guiTop, 2 + 4 * 16, GuiText.Priority.getLocal(), this.itemRender);
-        this.clearButton = new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 8, Settings.ACTIONS, ActionItems.CLOSE);
-        this.partitionButton = new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 28, Settings.ACTIONS, ActionItems.WRENCH);
+        this.priorityButton = new GuiButton(0, this.guiLeft + 154, this.guiTop, 24, 20, GuiText.Priority.getLocal());
+        this.clearButton = new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 8, actions(), ActionItems.CLOSE);
+        this.partitionButton = new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 28, actions(), ActionItems.COG);
         this.addButton(this.priorityButton);
         this.addButton(this.clearButton);
         this.addButton(this.partitionButton);
-        this.addButton(new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 48, Settings.ACCESS, AccessRestriction.READ_WRITE));
-        this.addButton(new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 68, Settings.STORAGE_FILTER, StorageFilter.EXTRACTABLE_ONLY));
+        this.addButton(new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 48, Settings.ACCESS, this.container.getConfigManager().getSetting(Settings.ACCESS)));
+        this.addButton(new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 68, Settings.STORAGE_FILTER, this.container.getConfigManager().getSetting(Settings.STORAGE_FILTER)));
     }
 
     @Override

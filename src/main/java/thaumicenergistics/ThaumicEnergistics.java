@@ -1,12 +1,10 @@
 package thaumicenergistics;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayer;
+import ae2.api.stacks.AEKeyTypes;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -16,22 +14,22 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.core.CommonProxy;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.api.IThEBlocks;
 import thaumicenergistics.api.IThEItems;
 import thaumicenergistics.api.IThEUpgrades;
 import thaumicenergistics.api.ThEApi;
+import thaumicenergistics.api.stacks.AEEssentiaKeys;
 import thaumicenergistics.client.ThEItemColors;
 import thaumicenergistics.client.gui.GuiHandler;
-import thaumicenergistics.client.render.ArcaneAssemblerRenderer;
 import thaumicenergistics.command.CommandAddVis;
 import thaumicenergistics.command.CommandDrainVis;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.integration.ThEIntegrationLoader;
 import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.ForgeUtil;
 
 /**
@@ -41,9 +39,12 @@ import thaumicenergistics.util.ForgeUtil;
  *
  * @author Nividica
  */
-@Mod(modid = Reference.MOD_ID, name = Reference.NAME, version = Reference.VERSION, dependencies = ModGlobals.MOD_DEPENDENCIES)
+@Mod(modid = Reference.MOD_ID, name = Reference.MOD_NAME, version = Reference.VERSION, dependencies = ModGlobals.MOD_DEPENDENCIES)
 @Mod.EventBusSubscriber
 public class ThaumicEnergistics {
+
+    private static final String CLIENT_PROXY = "thaumicenergistics.core.ClientProxy";
+    private static final String COMMON_PROXY = "thaumicenergistics.core.CommonProxy";
 
     /**
      * Singleton instance
@@ -54,13 +55,13 @@ public class ThaumicEnergistics {
     /**
      * Proxy class that runs code that should be strictly on the physical client
      */
-    @SidedProxy
-    public static IProxy proxy;
+    @SidedProxy(clientSide = CLIENT_PROXY, serverSide = COMMON_PROXY)
+    public static CommonProxy proxy;
 
     /**
      * Thaumic Energistics Logger
      */
-    public static Logger LOGGER;
+    public static Logger LOGGER = LogManager.getLogger(Reference.MOD_NAME);
 
     /**
      * Called before the load event.
@@ -69,14 +70,23 @@ public class ThaumicEnergistics {
      */
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        ThaumicEnergistics.LOGGER = event.getModLog();
+        LOGGER.info("{} preInit", Reference.MOD_NAME);
         ThEApi.instance(); // Make sure to init the api
+        registerEssentiaKeyType();
         MinecraftForge.EVENT_BUS.register(this);
         PacketHandler.register();
 
         proxy.preInit(event);
 
         ThEIntegrationLoader.preInit();
+    }
+
+    private static void registerEssentiaKeyType() {
+        boolean registered = AEKeyTypes.getAll().stream()
+                .anyMatch(type -> AEEssentiaKeys.ID.equals(type.getId()));
+        if (!registered) {
+            AEKeyTypes.register(AEEssentiaKeys.INSTANCE);
+        }
     }
 
     /**
@@ -144,33 +154,4 @@ public class ThaumicEnergistics {
             ConfigManager.sync(Reference.MOD_ID, Config.Type.INSTANCE);
     }
 
-    public static class ClientProxy implements IProxy {
-        public void init(FMLInitializationEvent event) {
-            // Init TESR
-            ClientRegistry.bindTileEntitySpecialRenderer(TileArcaneAssembler.class, new ArcaneAssemblerRenderer());
-        }
-
-        public EntityPlayer getPlayerEntFromCtx(MessageContext ctx) {
-            return ctx.side.isClient() ? Minecraft.getMinecraft().player : ctx.getServerHandler().player;
-        }
-    }
-
-    public static class ServerProxy implements IProxy {
-        public EntityPlayer getPlayerEntFromCtx(MessageContext ctx) {
-            return ctx.getServerHandler().player;
-        }
-    }
-
-    public interface IProxy {
-        default void preInit(FMLPreInitializationEvent event) {
-        }
-
-        default void init(FMLInitializationEvent event) {
-        }
-
-        default void postInit(FMLPostInitializationEvent event) {
-        }
-
-        EntityPlayer getPlayerEntFromCtx(MessageContext ctx);
-    }
 }

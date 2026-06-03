@@ -1,6 +1,6 @@
 package thaumicenergistics.container.crafting;
 
-import appeng.container.implementations.ContainerCraftAmount;
+import ae2.container.implementations.ContainerCraftAmount;
 import net.minecraft.entity.player.InventoryPlayer;
 import thaumicenergistics.part.PartSharedTerminal;
 

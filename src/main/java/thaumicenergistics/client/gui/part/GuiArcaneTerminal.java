@@ -1,13 +1,14 @@
 package thaumicenergistics.client.gui.part;
 
-import appeng.api.config.*;
-import appeng.api.storage.channels.IItemStorageChannel;
-import appeng.api.storage.data.IAEItemStack;
-import appeng.api.storage.data.IAEStack;
-import appeng.api.util.IConfigManager;
-import appeng.client.gui.widgets.GuiImgButton;
-import appeng.client.gui.widgets.GuiTabButton;
-import appeng.core.localization.GuiText;
+import ae2.api.config.TerminalStyle;
+import ae2.api.config.ActionItems;
+import ae2.api.config.Setting;
+import ae2.api.config.Settings;
+import ae2.api.config.SortDir;
+import ae2.api.config.SortOrder;
+import ae2.api.config.ViewItems;
+import ae2.api.util.IConfigManager;
+import ae2.core.localization.GuiText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.resources.I18n;
@@ -15,13 +16,16 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Slot;
 import net.minecraft.util.ResourceLocation;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import thaumicenergistics.api.ThEApi;
+import thaumicenergistics.api.config.SearchBoxMode;
+import thaumicenergistics.client.gui.component.GuiImgButton;
 import thaumicenergistics.client.gui.component.GuiSearchField;
 import thaumicenergistics.client.gui.helpers.GuiScrollBar;
 import thaumicenergistics.client.gui.helpers.MERepo;
+import thaumicenergistics.client.gui.helpers.TerminalDisplayStack;
 import thaumicenergistics.config.ThEConfig;
 import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.part.ContainerArcaneTerminal;
@@ -39,11 +43,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static thaumicenergistics.config.ThESettings.actions;
+import static thaumicenergistics.config.ThESettings.searchMode;
+
 /**
  * @author BrockWS
  * @author Alex811
  */
-public class GuiArcaneTerminal extends GuiAbstractTerminal<IAEItemStack, IItemStorageChannel> {
+public class GuiArcaneTerminal extends GuiAbstractTerminal {
 
     protected ContainerArcaneTerminal container;
 
@@ -55,7 +62,7 @@ public class GuiArcaneTerminal extends GuiAbstractTerminal<IAEItemStack, IItemSt
     private GuiImgButton searchModeButton;
     private GuiImgButton terminalSizeButton;
     private GuiImgButton clearButton;
-    private GuiTabButton craftingStatusBtn;
+    private GuiButton craftingStatusBtn;
     private boolean isAutoFocus = false;
     private static String memoryText = "";
 
@@ -68,7 +75,7 @@ public class GuiArcaneTerminal extends GuiAbstractTerminal<IAEItemStack, IItemSt
         super(container);
         this.container = container;
         this.fontRenderer = Minecraft.getMinecraft().fontRenderer;
-        this.repo = new MERepo<>(IItemStorageChannel.class);
+        this.repo = new MERepo();
     }
 
     public void initSearchField() {
@@ -126,12 +133,11 @@ public class GuiArcaneTerminal extends GuiAbstractTerminal<IAEItemStack, IItemSt
         this.sortByButton = new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 8, Settings.SORT_BY, cm.getSetting(Settings.SORT_BY));
         this.viewItemsButton = new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 28, Settings.VIEW_MODE, cm.getSetting(Settings.VIEW_MODE));
         this.sortDirButton = new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 48, Settings.SORT_DIRECTION, cm.getSetting(Settings.SORT_DIRECTION));
-        this.searchModeButton = new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 68, Settings.SEARCH_MODE, ThEApi.instance().config().searchBoxMode());
+        this.searchModeButton = new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 68, searchMode(), ThEApi.instance().config().searchBoxMode());
         this.terminalSizeButton = new GuiImgButton(this.getGuiLeft() - 18, this.getGuiTop() + 88, Settings.TERMINAL_STYLE, ThEApi.instance().config().terminalStyle());
-        this.clearButton = new GuiImgButton(this.getGuiLeft() + 87, this.getGuiTop() + this.getYSize() - 156, Settings.ACTIONS, ActionItems.STASH);
+        this.clearButton = new GuiImgButton(this.getGuiLeft() + 87, this.getGuiTop() + this.getYSize() - 156, actions(), ActionItems.STASH);
         this.clearButton.setHalfSize(true);
-        this.craftingStatusBtn = new GuiTabButton(this.guiLeft + 170, this.guiTop - 4, 2 + 11 * 16, GuiText.CraftingStatus.getLocal(), this.itemRender);
-        this.craftingStatusBtn.setHideEdge(13);
+        this.craftingStatusBtn = new GuiButton(0, this.guiLeft + 170, this.guiTop - 4, 24, 20, "C");
 
         this.addButton(this.sortByButton);
         this.addButton(this.viewItemsButton);
@@ -226,7 +232,7 @@ public class GuiArcaneTerminal extends GuiAbstractTerminal<IAEItemStack, IItemSt
         if (slot instanceof SlotME) {
             // Send to server for processing
             ActionType action = null;
-            IAEStack stack = null;
+            TerminalDisplayStack stack = null;
 
             switch (type) {
                 case PICKUP:
@@ -235,7 +241,7 @@ public class GuiArcaneTerminal extends GuiAbstractTerminal<IAEItemStack, IItemSt
 
                     if (stack != null &&
                             action == ActionType.PICKUP_OR_SETDOWN &&
-                            stack.getStackSize() == 0 &&
+                            stack.stackSize() == 0 &&
                             player.inventory.getItemStack().isEmpty() &&
                             sufficientVis())
                         action = ActionType.AUTO_CRAFT;
@@ -301,7 +307,7 @@ public class GuiArcaneTerminal extends GuiAbstractTerminal<IAEItemStack, IItemSt
     }
 
     @Override
-    public void updateSetting(Settings setting, Enum value) {
+    public void updateSetting(Setting<?> setting, Enum<?> value) {
         super.updateSetting(setting, value);
 
         IConfigManager cm = this.getConfigManager();
@@ -327,23 +333,38 @@ public class GuiArcaneTerminal extends GuiAbstractTerminal<IAEItemStack, IItemSt
             PacketHandler.sendToServer(new PacketOpenGUI(ModGUIs.AE2_CRAFT_STATUS, this.container.getPartPos(), this.container.getPartSide()));
             return;
         }
+        if (button == this.searchModeButton) {
+            SearchBoxMode next = this.nextSearchBoxMode(Mouse.isButtonDown(1));
+            this.searchModeButton.set(next);
+            ThEConfig.client.searchBoxMode = next;
+            ThEConfig.save();
+            this.initSearchField();
+            return;
+        }
         super.actionPerformed(button);
     }
 
     @Override
-    protected boolean imgBtnActionOverride(GuiImgButton btn, Enum next) {
+    protected boolean imgBtnActionOverride(GuiImgButton btn, Enum<?> next) {
         if (btn.getSetting() == Settings.TERMINAL_STYLE) {
             ThEConfig.client.terminalStyle = (TerminalStyle) next;
             ThEConfig.save();
             this.reload();
             return true;
-        } else if (btn.getSetting() == Settings.SEARCH_MODE) {
-            ThEConfig.client.searchBoxMode = (SearchBoxMode) next;
+        } else if (btn.getSetting() == searchMode()) {
+            ThEConfig.client.searchBoxMode = SearchBoxMode.valueOf(next.name());
             ThEConfig.save();
             this.initSearchField();
             return true;
         }
         return false;
+    }
+
+    private SearchBoxMode nextSearchBoxMode(boolean backwards) {
+        SearchBoxMode current = ThEApi.instance().config().searchBoxMode();
+        SearchBoxMode[] modes = SearchBoxMode.values();
+        int offset = backwards ? -1 : 1;
+        return modes[(current.ordinal() + offset + modes.length) % modes.length];
     }
 
     @Override
@@ -369,13 +390,20 @@ public class GuiArcaneTerminal extends GuiAbstractTerminal<IAEItemStack, IItemSt
     private void addTerminalSlots(int offsetX, int offsetY) {
         for (int r = 0; r < this.rows; r++) {
             for (int c = 0; c < 9; c++) {
-                this.addMESlot(new SlotME<>(this.repo, c + r * 9, offsetX + c * 18, offsetY + r * 18));
+                this.addMESlot(new SlotME(this.repo, c + r * 9, offsetX + c * 18, offsetY + r * 18));
             }
         }
     }
 
-    public void onMEStorageUpdate(List<IAEItemStack> list) {
-        for (IAEItemStack stack : list)
+    public void onMEStorageUpdate(List<TerminalDisplayStack> list) {
+        this.onMEStorageUpdate(list, true);
+    }
+
+    public void onMEStorageUpdate(List<TerminalDisplayStack> list, boolean clearExisting) {
+        if (clearExisting) {
+            this.repo.clear();
+        }
+        for (TerminalDisplayStack stack : list)
             this.repo.postUpdate(stack);
         this.repo.updateView();
         this.updateScroll();

@@ -1,7 +1,5 @@
 package thaumicenergistics.container.block;
 
-import appeng.api.networking.IGridNode;
-import appeng.api.networking.events.MENetworkCraftingPatternChange;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
@@ -72,9 +70,8 @@ public class ContainerArcaneAssembler extends ContainerBase {
         @ParametersAreNonnullByDefault
         public void sendSlotContents(Container containerToSend, int slotInd, ItemStack stack) {
             if (slotInd == 0 && opened && ForgeUtil.isServer()) {
-                IGridNode node = ContainerArcaneAssembler.this.TE.getActionableNode();
                 ContainerArcaneAssembler.this.playCoreSound(ContainerArcaneAssembler.this.player);
-                node.getGrid().postEvent(new MENetworkCraftingPatternChange(ContainerArcaneAssembler.this.TE, node)); // update ME system available patterns
+                ContainerArcaneAssembler.this.TE.init();
             }
             opened = true;
         }
@@ -101,7 +98,7 @@ public class ContainerArcaneAssembler extends ContainerBase {
         Item item = itemStack.getItem();
         if (item instanceof ItemKnowledgeCore)
             ItemHandlerUtil.quickMoveSlot(this.getInventory("cores"), slot);
-        else if (item instanceof ItemMaterial || item instanceof appeng.items.materials.ItemMaterial)
+        else if (item instanceof ItemMaterial || item instanceof ae2.items.materials.MaterialItem)
             ItemHandlerUtil.quickMoveSlot(this.getInventory("upgrades"), slot);
     }
 }

@@ -1,10 +1,10 @@
 package thaumicenergistics.integration.theoneprobe;
 
-import mcjty.theoneprobe.api.*;
+import api.java.mcjty.theoneprobe.api.*;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.part.PartBase;
 
 /**
@@ -19,7 +19,7 @@ public class PartTOPDisplayOverride implements IBlockDisplayOverride {
                     .item(part.getRepr())
                     .vertical()
                     .itemLabel(part.getRepr())
-                    .text(TextStyleClass.MODNAME + Reference.NAME);
+                    .text(TextStyleClass.MODNAME + Reference.MOD_NAME);
             return true;
         }
         return false;

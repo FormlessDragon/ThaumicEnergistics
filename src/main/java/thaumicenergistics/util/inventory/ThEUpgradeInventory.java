@@ -1,10 +1,9 @@
 package thaumicenergistics.util.inventory;
 
-import appeng.api.config.Upgrades;
-import appeng.api.implementations.items.IUpgradeModule;
 import net.minecraft.item.ItemStack;
 import thaumicenergistics.api.IThEUpgrade;
 import thaumicenergistics.api.ThEApi;
+import thaumicenergistics.integration.appeng.compat.Upgrades;
 import thaumicenergistics.item.ItemKnowledgeCore;
 import thaumicenergistics.util.ForgeUtil;
 
@@ -41,7 +40,7 @@ public class ThEUpgradeInventory extends ThEInternalInventory {
     public boolean isItemValidForSlot(int index, ItemStack stack) {
         if (stack.getItem() instanceof ItemKnowledgeCore && !isKnowledgeCoreSlot())
             return false;
-        if (!(stack.getItem() instanceof IUpgradeModule) && !ThEApi.instance().upgrades().getUpgrade(stack).isPresent())
+        if (!Upgrades.fromStack(stack).isPresent() && !ThEApi.instance().upgrades().getUpgrade(stack).isPresent())
             return false;
         if (this.upgradable == null) // If the item/block/part that this is attached to is null, then just allow without checking max allowed
             return true;
@@ -60,8 +59,9 @@ public class ThEUpgradeInventory extends ThEInternalInventory {
 
         if (o instanceof ItemStack) {
             ItemStack stack = (ItemStack) o;
-            if (stack.getItem() instanceof IUpgradeModule) { // AE Upgrade
-                o = ((IUpgradeModule) stack.getItem()).getType(stack);
+            Optional<Upgrades> aeUpgrade = Upgrades.fromStack(stack);
+            if (aeUpgrade.isPresent()) {
+                o = aeUpgrade.get();
             } else {
                 Optional<IThEUpgrade> upgrade = ThEApi.instance().upgrades().getUpgrade(stack);
                 if (upgrade.isPresent())
@@ -79,13 +79,8 @@ public class ThEUpgradeInventory extends ThEInternalInventory {
             ThEApi.instance().upgrades().getUpgrade(stack).ifPresent(upgrade -> this.cachedUpgrades.put(upgrade, this.cachedUpgrades.getOrDefault(upgrade, 0) + stack.getCount()));
 
             // Check if its a AE2 Upgrade, and if it is cache it
-            if (stack.getItem() instanceof IUpgradeModule) {
-                IUpgradeModule item = (IUpgradeModule) stack.getItem();
-                Upgrades upgrade = item.getType(stack);
-                if (upgrade == null)
-                    return;
-                this.cachedUpgrades.put(upgrade, this.cachedUpgrades.getOrDefault(upgrade, 0) + stack.getCount());
-            }
+            Upgrades.fromStack(stack).ifPresent(upgrade ->
+                    this.cachedUpgrades.put(upgrade, this.cachedUpgrades.getOrDefault(upgrade, 0) + stack.getCount()));
         });
         this.cached = true;
     }
@@ -93,14 +88,11 @@ public class ThEUpgradeInventory extends ThEInternalInventory {
     private int getMaxUpgrades(ItemStack upgradeStack) {
         AtomicInteger max = new AtomicInteger(0);
         ThEApi.instance().upgrades().getUpgrade(upgradeStack).ifPresent(upgrade -> max.set(upgrade.getSupported(this.upgradable)));
-        if (upgradeStack.getItem() instanceof IUpgradeModule) {
-            Upgrades upgrade = ((IUpgradeModule) upgradeStack.getItem()).getType(upgradeStack);
-            if (upgrade != null) {
-                Stream<ItemStack> stream = upgrade.getSupported().keySet().stream();
-                Optional<ItemStack> upgradable = stream.filter(o -> ForgeUtil.areItemStacksEqual(this.upgradable, o)).findFirst();
-                upgradable.ifPresent(stack -> max.set(upgrade.getSupported().getOrDefault(upgradable.get(), 0)));
-            }
-        }
+        Upgrades.fromStack(upgradeStack).ifPresent(upgrade -> {
+            Stream<ItemStack> stream = upgrade.getSupported().keySet().stream();
+            Optional<ItemStack> upgradable = stream.filter(o -> ForgeUtil.areItemStacksEqual(this.upgradable, o)).findFirst();
+            max.set(upgradable.map(upgrade.getSupported()::get).orElseGet(() -> upgrade.getSupported(this.upgradable)));
+        });
         return max.get();
     }
 }

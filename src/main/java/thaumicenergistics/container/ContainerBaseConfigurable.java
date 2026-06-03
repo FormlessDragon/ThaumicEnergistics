@@ -1,7 +1,7 @@
 package thaumicenergistics.container;
 
-import appeng.api.config.Settings;
-import appeng.api.util.IConfigurableObject;
+import ae2.api.config.Setting;
+import ae2.api.util.IConfigurableObject;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IContainerListener;
@@ -38,11 +38,11 @@ public abstract class ContainerBaseConfigurable extends ContainerBase implements
                 // If the Player listener is not attached yet, no sense doing the checks
                 return;
             }
-            for (Settings setting : this.serverConfigManager.getSettings()) {
-                Enum<?> server = this.serverConfigManager.getSetting(setting);
-                Enum<?> client = this.clientConfigManager.getSetting(setting);
+            for (Setting<?> setting : this.serverConfigManager.getSettings()) {
+                Enum<?> server = getSetting(this.serverConfigManager, setting);
+                Enum<?> client = getSetting(this.clientConfigManager, setting);
                 if (client != server) {
-                    this.clientConfigManager.putSetting(setting, server);
+                    putSetting(this.clientConfigManager, setting, server);
                     for (IContainerListener player : this.listeners)
                         if (player instanceof EntityPlayerMP) {
                             PacketHandler.sendToPlayer((EntityPlayerMP) player, new PacketSettingChange(setting, server));
@@ -56,5 +56,19 @@ public abstract class ContainerBaseConfigurable extends ContainerBase implements
     @Override
     public ThEConfigManager getConfigManager() {
         return ForgeUtil.isClient() ? this.clientConfigManager : this.serverConfigManager;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Enum<?> getSetting(ThEConfigManager configManager, Setting<?> setting) {
+        return configManager.getSetting((Setting) setting);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void putSetting(ThEConfigManager configManager, Setting<?> setting, Enum<?> value) {
+        putSettingUnchecked(configManager, (Setting) setting, value);
+    }
+
+    private static <T extends Enum<T>> void putSettingUnchecked(ThEConfigManager configManager, Setting<T> setting, Enum<?> value) {
+        configManager.putSetting(setting, setting.getEnumClass().cast(value));
     }
 }

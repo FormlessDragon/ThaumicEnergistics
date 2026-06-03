@@ -1,7 +1,5 @@
 package thaumicenergistics.container.part;
 
-import appeng.api.config.Upgrades;
-import appeng.api.implementations.items.IUpgradeModule;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IInventory;
@@ -16,6 +14,7 @@ import thaumicenergistics.container.IPartContainer;
 import thaumicenergistics.container.slot.SlotGhost;
 import thaumicenergistics.container.slot.SlotGhostEssentia;
 import thaumicenergistics.container.slot.SlotUpgrade;
+import thaumicenergistics.integration.appeng.compat.Upgrades;
 import thaumicenergistics.item.ItemMaterial;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketEssentiaFilter;
@@ -56,7 +55,7 @@ public abstract class ContainerSharedEssentiaBus extends ContainerBaseConfigurab
             this.addSlotToContainer(new SlotUpgrade(handler, i, offsetX, offsetY + 18 * i) {
                 @Override
                 public boolean isItemValid(ItemStack stack) {
-                    return stack.getItem() instanceof IUpgradeModule && super.isItemValid(stack);
+                    return Upgrades.fromStack(stack).isPresent() && super.isItemValid(stack);
                 }
             });
         }
@@ -98,7 +97,7 @@ public abstract class ContainerSharedEssentiaBus extends ContainerBaseConfigurab
     @Override
     protected void handleQuickMove(Slot slot, ItemStack itemStack) {
         Item item = itemStack.getItem();
-        if (item instanceof ItemMaterial || item instanceof appeng.items.materials.ItemMaterial)
+        if (item instanceof ItemMaterial || item instanceof ae2.items.materials.MaterialItem)
             ItemHandlerUtil.quickMoveSlot(this.part.getInventoryByName("upgrades"), slot);
         else if (item instanceof IEssentiaContainerItem) {
             EssentiaFilter config = this.part.getConfig();

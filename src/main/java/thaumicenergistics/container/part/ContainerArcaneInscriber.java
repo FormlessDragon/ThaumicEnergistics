@@ -1,9 +1,8 @@
 package thaumicenergistics.container.part;
 
-import appeng.api.config.Actionable;
-import appeng.api.storage.IMEMonitorHandlerReceiver;
-import appeng.api.storage.data.IAEItemStack;
-import appeng.api.util.IConfigurableObject;
+import ae2.api.config.Actionable;
+import ae2.api.util.IConfigurableObject;
+import ae2.api.storage.MEStorage;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -34,7 +33,7 @@ import thaumicenergistics.util.inventory.ThEInternalInventory;
 /**
  * @author Alex811
  */
-public class ContainerArcaneInscriber extends ContainerArcaneTerminal implements IMEMonitorHandlerReceiver<IAEItemStack>, ICraftingContainer, IConfigurableObject {
+public class ContainerArcaneInscriber extends ContainerArcaneTerminal implements ICraftingContainer, IConfigurableObject {
 
     public boolean recipeIsArcane = false;
 
@@ -51,8 +50,10 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerminal implements
             boolean currentIsBlank = ((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
             ItemStack result = this.getInventory("result").getStackInSlot(0);
             if (packet.action == ActionType.MOVE_GHOST_ITEM) {
-                this.getInventory("crafting")
-                        .insertItem(packet.index, packet.requestedStack.asItemStackRepresentation(), false);
+                if (packet.requestedKey != null) {
+                    this.getInventory("crafting")
+                            .insertItem(packet.index, packet.requestedKey.wrapForDisplayOrFilter(), false);
+                }
             } else if (packet.action == ActionType.KNOWLEDGE_CORE_ADD && !result.isEmpty() && this.recipeIsArcane) {
                 if (currentIsBlank)
                     ThEApi.instance().items().knowledgeCore().maybeStack(1).ifPresent(newCore -> {
@@ -130,14 +131,9 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerminal implements
             if (stack.isEmpty()) continue;
 
             ThELog.debug("Adding {} for {}", stack.getDisplayName(), slot);
-            IAEItemStack aeStack = this.channel.createStack(stack);
-            if (aeStack == null) {
-                ThELog.warn("Failed to create IAEItemStack for {}, report to developer!", stack.toString());
-                continue;
-            }
-            IAEItemStack aeExtract = AEUtil.inventoryExtract(aeStack, this.monitor, this.part.source, null, Actionable.SIMULATE);
-            if (aeExtract != null && aeExtract.getStackSize() > 0) {
-                ItemStack aeExtractStack = aeExtract.createItemStack();
+            MEStorage storage = this.getNetworkStorage();
+            ItemStack aeExtractStack = storage == null ? ItemStack.EMPTY : this.extractItem(storage, stack, stack.getCount(), Actionable.SIMULATE);
+            if (!aeExtractStack.isEmpty()) {
                 if (mustBeSingle) aeExtractStack.setCount(1);
                 crafting.insertItem(slot, aeExtractStack, false);
             }

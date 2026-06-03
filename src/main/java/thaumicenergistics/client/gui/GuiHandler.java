@@ -1,10 +1,10 @@
 package thaumicenergistics.client.gui;
 
-import appeng.api.parts.IPart;
-import appeng.api.parts.IPartHost;
-import appeng.api.util.AEPartLocation;
+import ae2.api.parts.IPart;
+import ae2.api.parts.IPartHost;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.IGuiHandler;
@@ -40,7 +40,7 @@ public class GuiHandler implements IGuiHandler {
         GuiHandler.openGUI(gui, player, pos, null);
     }
 
-    public static void openGUI(ModGUIs gui, EntityPlayer player, BlockPos pos, AEPartLocation side) {
+    public static void openGUI(ModGUIs gui, EntityPlayer player, BlockPos pos, EnumFacing side) {
         if (gui == null)
             throw new IllegalArgumentException("gui cannot be null!");
         else if (player == null)
@@ -52,9 +52,9 @@ public class GuiHandler implements IGuiHandler {
             player.openGui(ThaumicEnergistics.INSTANCE, GuiHandler.calculateOrdinal(gui, side), player.getEntityWorld(), 0, 0, 0);
     }
 
-    public static int calculateOrdinal(ModGUIs gui, AEPartLocation side) {
+    public static int calculateOrdinal(ModGUIs gui, EnumFacing side) {
         if (side == null)
-            side = AEPartLocation.UP;
+            side = EnumFacing.UP;
         return (gui.ordinal() << 4) | side.ordinal();
     }
 
@@ -62,11 +62,11 @@ public class GuiHandler implements IGuiHandler {
         return ModGUIs.values()[ordinal >> 4];
     }
 
-    public static AEPartLocation getSideFromOrdinal(int ordinal) {
-        return AEPartLocation.fromOrdinal(ordinal & 7);
+    public static EnumFacing getSideFromOrdinal(int ordinal) {
+        return EnumFacing.values()[ordinal & 7];
     }
 
-    public static IPart getPartFromWorld(World world, BlockPos pos, AEPartLocation side) {
+    public static IPart getPartFromWorld(World world, BlockPos pos, EnumFacing side) {
         TileEntity te = world.getTileEntity(pos);
         if (te instanceof IPartHost) {
             return ((IPartHost) te).getPart(side);
@@ -79,7 +79,7 @@ public class GuiHandler implements IGuiHandler {
     public Object getServerGuiElement(int ordinal, EntityPlayer player, World world, int x, int y, int z) {
         TileEntity te = null;
         ModGUIs guiID = GuiHandler.getGUIFromOrdinal(ordinal);
-        AEPartLocation side = GuiHandler.getSideFromOrdinal(ordinal);
+        EnumFacing side = GuiHandler.getSideFromOrdinal(ordinal);
         BlockPos pos = new BlockPos(x, y, z);
         IPart part = GuiHandler.getPartFromWorld(world, pos, side);
         if (part == null) te = world.getTileEntity(pos);
@@ -121,7 +121,7 @@ public class GuiHandler implements IGuiHandler {
     public Object getClientGuiElement(int ordinal, EntityPlayer player, World world, int x, int y, int z) {
         TileEntity te = null;
         ModGUIs guiID = GuiHandler.getGUIFromOrdinal(ordinal);
-        AEPartLocation side = GuiHandler.getSideFromOrdinal(ordinal);
+        EnumFacing side = GuiHandler.getSideFromOrdinal(ordinal);
         BlockPos pos = new BlockPos(x, y, z);
         IPart part = GuiHandler.getPartFromWorld(world, pos, side);
         if (part == null) te = world.getTileEntity(pos);
@@ -142,11 +142,11 @@ public class GuiHandler implements IGuiHandler {
             case ARCANE_INSCRIBER:
                 return new GuiArcaneInscriber(new ContainerArcaneInscriber(player, (PartArcaneInscriber) part));
             case AE2_CRAFT_AMOUNT:
-                return new GuiCraftAmountBridge(player, (PartSharedTerminal) part);
+                return new GuiCraftAmountBridge(new ContainerCraftAmountBridge(player.inventory, (PartSharedTerminal) part), player.inventory, (PartSharedTerminal) part);
             case AE2_CRAFT_CONFIRM:
-                return new GuiCraftConfirmBridge(player.inventory, (PartSharedTerminal) part);
+                return new GuiCraftConfirmBridge(new ContainerCraftConfirmBridge(player.inventory, (PartSharedTerminal) part), player.inventory, (PartSharedTerminal) part);
             case AE2_CRAFT_STATUS:
-                return new GuiCraftingStatusBridge(player.inventory, (PartSharedTerminal) part);
+                return new GuiCraftingStatusBridge(new ContainerCraftingStatusBridge(player.inventory, (PartSharedTerminal) part), player.inventory, (PartSharedTerminal) part);
             case AE2_PRIORITY:
                 return new GuiPriorityBridge(player, (PartEssentiaStorageBus) part);
             case KNOWLEDGE_CORE_ADD:

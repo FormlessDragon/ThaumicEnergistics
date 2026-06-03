@@ -1,26 +1,26 @@
 package thaumicenergistics.part;
 
-import appeng.api.config.Actionable;
-import appeng.api.networking.IGridNode;
-import appeng.api.networking.storage.IStorageGrid;
-import appeng.api.networking.ticking.TickRateModulation;
-import appeng.api.networking.ticking.TickingRequest;
-import appeng.api.parts.IPartCollisionHelper;
-import appeng.api.parts.IPartModel;
-import appeng.api.storage.IMEMonitor;
+import ae2.api.config.Actionable;
+import ae2.api.networking.IGridNode;
+import ae2.api.networking.ticking.TickRateModulation;
+import ae2.api.networking.ticking.TickingRequest;
+import ae2.api.parts.IPartCollisionHelper;
+import ae2.api.parts.IPartModel;
+import ae2.api.storage.MEStorage;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.IAspectContainer;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.api.storage.IAEEssentiaStack;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.config.AESettings;
 import thaumicenergistics.init.ModGUIs;
+import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
 import thaumicenergistics.integration.appeng.ThEPartModel;
 import thaumicenergistics.item.part.ItemEssentiaExportBus;
 import thaumicenergistics.util.AEUtil;
@@ -63,7 +63,7 @@ public class PartEssentiaExportBus extends PartSharedEssentiaBus {
     @Nonnull
     @Override
     public TickingRequest getTickingRequest(@Nonnull IGridNode node) {
-        return new TickingRequest(ThEApi.instance().config().tickTimeEssentiaExportBusMin(), ThEApi.instance().config().tickTimeEssentiaExportBusMax(), false, false);
+        return new TickingRequest(ThEApi.instance().config().tickTimeEssentiaExportBusMin(), ThEApi.instance().config().tickTimeEssentiaExportBusMax(), false);
     }
 
     @Override
@@ -85,8 +85,10 @@ public class PartEssentiaExportBus extends PartSharedEssentiaBus {
             return TickRateModulation.IDLE;
         }
 
-        IStorageGrid storageGrid = this.getGridNode().getGrid().getCache(IStorageGrid.class);
-        IMEMonitor<IAEEssentiaStack> storage = storageGrid.getInventory(this.getChannel());
+        MEStorage storage = this.getNetworkStorage();
+        if (storage == null) {
+            return TickRateModulation.IDLE;
+        }
 
         for (Aspect aspect : this.config) { // Gather a list of aspects that can be put into the container
             if (aspect == null)
@@ -94,19 +96,27 @@ public class PartEssentiaExportBus extends PartSharedEssentiaBus {
             // Can container hold the aspect + does ae2 hold the aspect
             if (!container.doesContainerAccept(aspect))
                 continue;
-            if (!AEUtil.doesStorageContain(storage, aspect))
+
+            int amountToSend = this.calculateAmountToSend();
+            long available = SupergiantEssentiaUtil.extract(storage, aspect, amountToSend, Actionable.SIMULATE, this.source);
+            if (available <= 0)
                 continue;
 
-            // Simulate extract from ae2
-            IAEEssentiaStack extracted = storage.extractItems(AEUtil.getAEStackFromAspect(aspect, this.calculateAmountToSend()), Actionable.SIMULATE, this.source);
+            int requested = (int) Math.min(available, amountToSend);
+            long extracted = SupergiantEssentiaUtil.extract(storage, aspect, requested, Actionable.MODULATE, this.source);
+            if (extracted <= 0) {
+                continue;
+            }
+
             // Try to add to container, since we can't simulate it
             int notAdded;
             // FIXME: Remove after issue fixed in TC.
             // https://github.com/Nividica/ThaumicEnergistics/issues/361
             // https://github.com/Azanor/thaumcraft-beta/issues/1604
             try {
-                notAdded = container.addToContainer(extracted.getAspect(), (int) extracted.getStackSize());
+                notAdded = container.addToContainer(aspect, (int) extracted);
             } catch (NullPointerException ignored) {
+                SupergiantEssentiaUtil.insert(storage, aspect, extracted, Actionable.MODULATE, this.source);
                 if (!reportedWarning)
                     ThELog.warn("container.addToContainer threw a NullPointerException. Thaumcraft Bug. Nividica/ThaumicEnergistics#361. Remove EssentiaExportBus from {}", this.hostTile != null ? this.hostTile.getPos() : connectedTE.getPos());
                 reportedWarning = true;
@@ -114,14 +124,15 @@ public class PartEssentiaExportBus extends PartSharedEssentiaBus {
             }
             reportedWarning = false;
             // Couldn't contain it all
-            extracted.decStackSize(notAdded);
+            int accepted = (int) extracted - notAdded;
 
-            if (extracted.getStackSize() == 0) {
+            if (accepted <= 0) {
+                SupergiantEssentiaUtil.insert(storage, aspect, extracted, Actionable.MODULATE, this.source);
                 continue;
             }
-
-            // Only remove from system the amount the container accepted
-            storage.extractItems(extracted, Actionable.MODULATE, this.source);
+            if (notAdded > 0) {
+                SupergiantEssentiaUtil.insert(storage, aspect, notAdded, Actionable.MODULATE, this.source);
+            }
             return TickRateModulation.FASTER; // Only do one every tick
         }
 
@@ -140,7 +151,7 @@ public class PartEssentiaExportBus extends PartSharedEssentiaBus {
     }
 
     @Override
-    public boolean onActivate(EntityPlayer player, EnumHand hand, Vec3d vec3d) {
+    public boolean onUseItemOn(ItemStack itemStack, EntityPlayer player, EnumHand hand, Vec3d vec3d) {
         if ((player.isSneaking() && AEUtil.isWrench(player.getHeldItem(hand), player, this.getTile().getPos())))
             return false;
 

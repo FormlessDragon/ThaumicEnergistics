@@ -7,7 +7,7 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.network.packets.*;
 import thaumicenergistics.util.ThELog;
 
@@ -42,7 +42,6 @@ public class PacketHandler {
         PacketHandler.INSTANCE.registerMessage(PacketSettingChange.HandlerServer.class, PacketSettingChange.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketJEIRecipe.Handler.class, PacketJEIRecipe.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketOpenGUI.Handler.class, PacketOpenGUI.class, PacketHandler.nextID(), Side.SERVER);
-        PacketHandler.INSTANCE.registerMessage(PacketCraftRequest.Handler.class, PacketCraftRequest.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketSubscribe.Handler.class, PacketSubscribe.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketEssentiaFilterAction.Handler.class, PacketEssentiaFilterAction.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketAssemblerGUIUpdateRequest.Handler.class, PacketAssemblerGUIUpdateRequest.class, PacketHandler.nextID(), Side.SERVER);

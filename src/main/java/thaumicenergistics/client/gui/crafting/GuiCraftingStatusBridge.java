@@ -1,42 +1,17 @@
 package thaumicenergistics.client.gui.crafting;
 
-import appeng.client.gui.implementations.GuiCraftingStatus;
-import appeng.client.gui.widgets.GuiTabButton;
-import net.minecraft.client.gui.GuiButton;
+import ae2.client.gui.me.crafting.GuiCraftingStatus;
+import ae2.client.gui.style.GuiStyleManager;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
-import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.network.packets.PacketOpenGUI;
+import thaumicenergistics.container.crafting.ContainerCraftingStatusBridge;
 import thaumicenergistics.part.PartSharedTerminal;
-
-import java.io.IOException;
 
 /**
  * @author BrockWS
  */
 public class GuiCraftingStatusBridge extends GuiCraftingStatus {
 
-    private final PartSharedTerminal part;
-    private GuiTabButton backButton;
-
-    public GuiCraftingStatusBridge(InventoryPlayer inventoryPlayer, PartSharedTerminal part) {
-        super(inventoryPlayer, part);
-        this.part = part;
-        ReflectionHelper.setPrivateValue(GuiCraftingStatus.class, this, part.getRepr(), "myIcon");
-    }
-
-    @Override
-    public void initGui() {
-        super.initGui();
-        this.backButton = ReflectionHelper.getPrivateValue(GuiCraftingStatus.class, this, "originalGuiBtn");
-    }
-
-    @Override
-    protected void actionPerformed(GuiButton btn) throws IOException {
-        if (btn == this.backButton) {
-            PacketHandler.sendToServer(new PacketOpenGUI(this.part.getGui(), this.part.getLocation().getPos(), this.part.side));
-            return;
-        }
-        super.actionPerformed(btn);
+    public GuiCraftingStatusBridge(ContainerCraftingStatusBridge container, InventoryPlayer inventoryPlayer, PartSharedTerminal part) {
+        super(container, inventoryPlayer, null, GuiStyleManager.loadStyleDoc("crafting_status"));
     }
 }
