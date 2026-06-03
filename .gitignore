@@ -1,12 +1,5 @@
 #IDE
 .idea/*
-*.iml
-!.idea/codeStyles
-#!.idea/compiler.xml
-!.idea/encodings.xml
-!.idea/externalDependencies.xml
-!.idea/runConfigurations
-!.idea/vcs.xml
 
 #Java
 target
@@ -23,3 +16,4 @@ run/
 *.zip
 
 docs/
+archive/
