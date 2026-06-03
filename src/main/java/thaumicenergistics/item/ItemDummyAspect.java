@@ -8,14 +8,14 @@ import net.minecraft.util.NonNullList;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumcraft.api.aspects.Aspect;
 import thaumicenergistics.client.render.DummyAspectRenderer;
 import thaumicenergistics.client.render.IThEModel;
 
 /**
  * A dummy item that uses the aspect icon for its icon
- * Used by AEEssentiaStack
+ * Used as an item representation for essentia display rows.
  * <p>
  * TODO: Render item based on Aspect Image + Colour
  *

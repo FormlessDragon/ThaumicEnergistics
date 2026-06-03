@@ -1,12 +1,13 @@
 package thaumicenergistics.integration.appeng.grid;
 
-import appeng.api.networking.IGridHost;
-import appeng.api.util.DimensionalCoord;
+import ae2.api.networking.IGridNode;
+import thaumicenergistics.integration.appeng.compat.DimensionalCoord;
 
 /**
  * @author BrockWS
  */
-public interface IThEGridHost extends IGridHost {
+public interface IThEGridHost {
+    IGridNode getGridNode();
 
     DimensionalCoord getLocation();
 

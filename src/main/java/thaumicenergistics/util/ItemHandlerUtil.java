@@ -3,6 +3,7 @@ package thaumicenergistics.util;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -15,6 +16,12 @@ import java.util.stream.IntStream;
  * @author Alex811
  */
 public class ItemHandlerUtil {
+    public static void setStackInSlot(IItemHandler handler, int slot, ItemStack stack) {
+        if (handler instanceof IItemHandlerModifiable) {
+            ((IItemHandlerModifiable) handler).setStackInSlot(slot, stack);
+        }
+    }
+
     @Nonnull
     public static ItemStack insert(IItemHandler handler, ItemStack stack) {
         return ItemHandlerUtil.insert(handler, stack, false);

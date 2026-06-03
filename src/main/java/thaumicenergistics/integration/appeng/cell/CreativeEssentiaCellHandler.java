@@ -1,13 +1,9 @@
 package thaumicenergistics.integration.appeng.cell;
 
-import appeng.api.AEApi;
-import appeng.api.storage.ICellHandler;
-import appeng.api.storage.ICellInventoryHandler;
-import appeng.api.storage.ISaveProvider;
-import appeng.api.storage.IStorageChannel;
-import appeng.api.storage.data.IAEStack;
+import ae2.api.storage.cells.ICellHandler;
+import ae2.api.storage.cells.ISaveProvider;
+import ae2.api.storage.cells.StorageCell;
 import net.minecraft.item.ItemStack;
-import thaumicenergistics.api.storage.IEssentiaStorageChannel;
 import thaumicenergistics.item.ItemCreativeEssentiaCell;
 
 /**
@@ -21,21 +17,7 @@ public class CreativeEssentiaCellHandler implements ICellHandler {
     }
 
     @Override
-    public <T extends IAEStack<T>> ICellInventoryHandler<T> getCellInventory(ItemStack stack, ISaveProvider container, IStorageChannel<T> channel) {
-        return channel == this.getEssentiaStorageChannel() ? CreativeEssentiaCellInventory.getCell(stack, container) : null;
-    }
-
-    @Override
-    public <T extends IAEStack<T>> int getStatusForCell(ItemStack is, ICellInventoryHandler<T> handler) {
-        return 2;
-    }
-
-    @Override
-    public <T extends IAEStack<T>> double cellIdleDrain(ItemStack is, ICellInventoryHandler<T> handler) {
-        return 0;
-    }
-
-    private IStorageChannel getEssentiaStorageChannel() {
-        return AEApi.instance().storage().getStorageChannel(IEssentiaStorageChannel.class);
+    public StorageCell getCellInventory(ItemStack stack, ISaveProvider saveProvider) {
+        return this.isCell(stack) ? new CreativeEssentiaCellInventory(stack) : null;
     }
 }

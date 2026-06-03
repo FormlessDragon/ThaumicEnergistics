@@ -1,13 +1,13 @@
 package thaumicenergistics.part;
 
-import appeng.api.parts.IPartModel;
-import appeng.api.parts.PartItemStack;
+import ae2.api.parts.IPartModel;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.integration.appeng.ThEPartModel;
+import thaumicenergistics.integration.appeng.compat.ThEPartItemStack;
 import thaumicenergistics.item.part.ItemArcaneInscriber;
 import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
@@ -35,7 +35,7 @@ public class PartArcaneInscriber extends PartArcaneTerminal {
 
     public PartArcaneInscriber(ItemArcaneInscriber item) {
         super(item, ModGUIs.ARCANE_INSCRIBER);
-        this.upgradeInventory = new ThEKnowledgeCoreInventory("upgrades", 1, 1, this.getItemStack(PartItemStack.NETWORK));
+        this.upgradeInventory = new ThEKnowledgeCoreInventory("upgrades", 1, 1, this.getItemStack(ThEPartItemStack.NETWORK));
     }
 
     @Nonnull
@@ -50,7 +50,7 @@ public class PartArcaneInscriber extends PartArcaneTerminal {
     }
 
     @Override
-    public void getDrops(List<ItemStack> list, boolean b) {
+    public void addPartDrop(List<ItemStack> list, boolean b) {
         list.addAll(ItemHandlerUtil.getInventoryAsList(this.getInventoryByName("upgrades")));
     }
 }

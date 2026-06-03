@@ -1,12 +1,14 @@
 package thaumicenergistics.part;
 
-import appeng.api.parts.IPartCollisionHelper;
-import appeng.api.storage.IMEMonitor;
-import appeng.api.storage.IStorageChannel;
-import appeng.api.storage.ITerminalHost;
-import appeng.api.storage.data.IAEStack;
-import appeng.me.GridAccessException;
+import ae2.container.ISubGui;
+import ae2.api.parts.IPartCollisionHelper;
+import ae2.api.storage.ILinkStatus;
+import ae2.api.storage.MEStorage;
+import ae2.api.storage.ITerminalHost;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.integration.appeng.grid.GridUtil;
 import thaumicenergistics.item.ItemPartBase;
@@ -40,13 +42,28 @@ public abstract class PartSharedTerminal extends PartBase implements ITerminalHo
     }
 
     @Override
-    public <T extends IAEStack<T>> IMEMonitor<T> getInventory(IStorageChannel<T> channel) {
+    public MEStorage getInventory() {
         try {
-            return GridUtil.getStorageGrid(this).getInventory(channel);
-        } catch (GridAccessException e) {
+            return GridUtil.getStorageGrid(this).getInventory();
+        } catch (thaumicenergistics.integration.appeng.compat.GridAccessException e) {
             // Ignored
         }
         return null;
+    }
+
+    @Override
+    public ILinkStatus getLinkStatus() {
+        return ILinkStatus.ofManagedNode(this.managedGridNode);
+    }
+
+    @Override
+    public void returnToMainContainer(EntityPlayer player, ISubGui subGui) {
+        GuiHandler.openGUI(this.getGui(), player, this.getLocation().getPos(), this.side);
+    }
+
+    @Override
+    public ItemStack getMainContainerIcon() {
+        return this.getItemStack(thaumicenergistics.integration.appeng.compat.ThEPartItemStack.NETWORK);
     }
 
     @Override

@@ -1,8 +1,8 @@
 package thaumicenergistics.definitions;
 
-import appeng.api.definitions.IItemDefinition;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import thaumicenergistics.api.definitions.IThEItemDefinition;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
@@ -11,7 +11,7 @@ import java.util.Optional;
 /**
  * @author BrockWS
  */
-public class ThEItemDefinition implements IItemDefinition {
+public class ThEItemDefinition implements IThEItemDefinition {
 
     private Item item;
 
@@ -33,6 +33,11 @@ public class ThEItemDefinition implements IItemDefinition {
     @Override
     public Optional<ItemStack> maybeStack(int i) {
         return Optional.of(new ItemStack(this.item, i));
+    }
+
+    @Override
+    public Optional<ItemStack> maybeStack(int stackSize, int damage) {
+        return Optional.of(new ItemStack(this.item, stackSize, damage));
     }
 
     @Override

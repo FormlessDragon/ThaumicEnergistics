@@ -1,7 +1,9 @@
 package thaumicenergistics.item;
 
-import appeng.api.config.FuzzyMode;
-import appeng.api.storage.ICellWorkbenchItem;
+import ae2.api.config.FuzzyMode;
+import ae2.api.storage.cells.ICellWorkbenchItem;
+import ae2.items.contents.CellConfig;
+import ae2.util.ConfigInventory;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.ItemStack;
@@ -9,11 +11,12 @@ import net.minecraft.world.World;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.items.IItemHandler;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.api.stacks.AEEssentiaKeys;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.client.render.IThEModel;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,27 +30,26 @@ public class ItemCreativeEssentiaCell extends ItemBase implements ICellWorkbench
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
-        tooltip.add("Contains all types of essentia");
+        if (this.getConfigInventory(stack).keySet().isEmpty()) {
+            tooltip.add("Contains all types of essentia");
+        } else {
+            tooltip.add("Contains configured essentia types");
+        }
     }
 
     @Override
     public boolean isEditable(ItemStack itemStack) {
-        return false;
+        return true;
     }
 
     @Override
-    public IItemHandler getUpgradesInventory(ItemStack itemStack) {
-        return null;
-    }
-
-    @Override
-    public IItemHandler getConfigInventory(ItemStack itemStack) {
-        return null;
+    public ConfigInventory getConfigInventory(ItemStack itemStack) {
+        return CellConfig.create(Collections.singleton(AEEssentiaKeys.INSTANCE), itemStack);
     }
 
     @Override
     public FuzzyMode getFuzzyMode(ItemStack itemStack) {
-        return null;
+        return FuzzyMode.IGNORE_ALL;
     }
 
     @Override

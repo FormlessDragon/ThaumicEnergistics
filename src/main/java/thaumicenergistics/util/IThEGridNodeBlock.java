@@ -1,6 +1,6 @@
 package thaumicenergistics.util;
 
-import appeng.api.networking.IGridNode;
+import ae2.api.networking.IGridNode;
 import thaumicenergistics.integration.appeng.grid.ThEGridBlock;
 
 /**

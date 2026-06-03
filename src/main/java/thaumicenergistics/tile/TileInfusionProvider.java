@@ -1,18 +1,18 @@
 package thaumicenergistics.tile;
 
-import appeng.api.config.Actionable;
-import appeng.api.networking.storage.IStorageGrid;
-import appeng.api.storage.IMEMonitor;
-import appeng.api.storage.data.IItemList;
-import appeng.me.GridAccessException;
+import ae2.api.config.Actionable;
+import ae2.api.stacks.AEKey;
+import ae2.api.stacks.KeyCounter;
+import ae2.api.storage.MEStorage;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.nbt.NBTTagCompound;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectSource;
-import thaumicenergistics.api.storage.IAEEssentiaStack;
-import thaumicenergistics.api.storage.IEssentiaStorageChannel;
+import thaumicenergistics.api.stacks.AEEssentiaKey;
+import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
+import thaumicenergistics.integration.appeng.compat.GridAccessException;
 import thaumicenergistics.integration.appeng.grid.GridUtil;
-import thaumicenergistics.util.AEUtil;
 import thaumicenergistics.util.ForgeUtil;
 
 /**
@@ -27,17 +27,14 @@ public class TileInfusionProvider extends TileNetwork implements IAspectSource {
         super();
     }
 
-    public IItemList<IAEEssentiaStack> getStoredAspects() {
-        IEssentiaStorageChannel channel = this.getChannel();
-        IItemList<IAEEssentiaStack> list;
+    public KeyCounter getStoredAspects() {
         try {
-            IStorageGrid storage = GridUtil.getStorageGrid(this);
-            list = storage.getInventory(channel).getStorageList();
+            MEStorage storage = GridUtil.getStorageGrid(this).getInventory();
+            return SupergiantEssentiaUtil.getAvailableEssentia(storage);
         } catch (GridAccessException e) {
-            // ignore, create an empty list
-            list = channel.createList();
+            // Ignore, return an empty list.
+            return new KeyCounter();
         }
-        return list;
     }
 
     @Override
@@ -45,24 +42,29 @@ public class TileInfusionProvider extends TileNetwork implements IAspectSource {
         if (ForgeUtil.isClient())
             return this.clientAspects;
         AspectList list = new AspectList();
-        IItemList<IAEEssentiaStack> stored = this.getStoredAspects();
-        for (IAEEssentiaStack stack : stored)
-            list.add(stack.getAspect(), stack.getStackSize() >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) stack.getStackSize());
+        KeyCounter stored = this.getStoredAspects();
+        for (Object2LongMap.Entry<AEKey> entry : stored) {
+            if (entry.getKey() instanceof AEEssentiaKey) {
+                AEEssentiaKey key = (AEEssentiaKey) entry.getKey();
+                long amount = entry.getLongValue();
+                list.add(key.getAspect(), amount >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) amount);
+            }
+        }
         return list;
     }
 
     @Override
     public boolean takeFromContainer(Aspect aspect, int i) {
         try {
-            IStorageGrid storage = GridUtil.getStorageGrid(this);
-            IMEMonitor<IAEEssentiaStack> monitor = storage.getInventory(this.getChannel());
-            IAEEssentiaStack canExtract = monitor.extractItems(AEUtil.getAEStackFromAspect(aspect, i), Actionable.SIMULATE, this.src);
-            if (canExtract == null || canExtract.getStackSize() != i)
+            MEStorage storage = GridUtil.getStorageGrid(this).getInventory();
+            long canExtract = SupergiantEssentiaUtil.extract(storage, aspect, i, Actionable.SIMULATE, this.src);
+            if (canExtract != i)
                 return false;
-            monitor.extractItems(canExtract, Actionable.MODULATE, this.src);
+            SupergiantEssentiaUtil.extract(storage, aspect, i, Actionable.MODULATE, this.src);
             this.markDirty();
         } catch (GridAccessException e) {
             e.printStackTrace();
+            return false;
         }
         return true;
     }

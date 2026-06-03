@@ -1,11 +1,12 @@
 package thaumicenergistics.part;
 
-import appeng.api.parts.IPartModel;
+import ae2.api.parts.IPartModel;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.config.AESettings;
 import thaumicenergistics.init.ModGUIs;
@@ -49,7 +50,7 @@ public class PartEssentiaTerminal extends PartSharedTerminal {
     }
 
     @Override
-    public boolean onActivate(EntityPlayer player, EnumHand hand, Vec3d pos) {
+    public boolean onUseItemOn(ItemStack itemStack, EntityPlayer player, EnumHand hand, Vec3d pos) {
         if ((player.isSneaking() && AEUtil.isWrench(player.getHeldItem(hand), player, this.getTile().getPos())))
             return false;
 

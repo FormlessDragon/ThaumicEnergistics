@@ -1,14 +1,12 @@
 package thaumicenergistics.integration.appeng.grid;
 
-import appeng.api.networking.IGrid;
-import appeng.api.networking.IGridCache;
-import appeng.api.networking.IGridHost;
-import appeng.api.networking.IGridNode;
-import appeng.api.networking.crafting.ICraftingGrid;
-import appeng.api.networking.energy.IEnergyGrid;
-import appeng.api.networking.storage.IStorageGrid;
-import appeng.api.util.AEPartLocation;
-import appeng.me.GridAccessException;
+import ae2.api.networking.IGrid;
+import ae2.api.networking.IGridNode;
+import ae2.api.networking.IGridService;
+import ae2.api.networking.crafting.ICraftingService;
+import ae2.api.networking.energy.IEnergyService;
+import ae2.api.networking.storage.IStorageService;
+import thaumicenergistics.integration.appeng.compat.GridAccessException;
 
 import javax.annotation.Nonnull;
 
@@ -20,62 +18,58 @@ import javax.annotation.Nonnull;
 @SuppressWarnings("ConstantConditions")
 public class GridUtil {
 
-    public static ICraftingGrid getCraftingGrid(@Nonnull IGridHost host) throws GridAccessException {
-        return (ICraftingGrid) GridUtil.getCache(host, ICraftingGrid.class);
+    public static ICraftingService getCraftingGrid(@Nonnull IThEGridHost host) throws GridAccessException {
+        return GridUtil.getCraftingGrid(GridUtil.getGrid(host));
     }
 
-    public static ICraftingGrid getCraftingGrid(@Nonnull IGridNode node) throws GridAccessException {
-        return (ICraftingGrid) GridUtil.getCache(node, ICraftingGrid.class);
+    public static ICraftingService getCraftingGrid(@Nonnull IGridNode node) throws GridAccessException {
+        return GridUtil.getCraftingGrid(GridUtil.getGrid(node));
     }
 
-    public static ICraftingGrid getCraftingGrid(@Nonnull IGrid grid) throws GridAccessException {
-        return (ICraftingGrid) GridUtil.getCache(grid, ICraftingGrid.class);
+    public static ICraftingService getCraftingGrid(@Nonnull IGrid grid) throws GridAccessException {
+        return GridUtil.getService(grid, ICraftingService.class);
     }
 
-    public static IEnergyGrid getEnergyGrid(@Nonnull IGridHost host) throws GridAccessException {
-        return (IEnergyGrid) GridUtil.getCache(host, IEnergyGrid.class);
+    public static IEnergyService getEnergyGrid(@Nonnull IThEGridHost host) throws GridAccessException {
+        return GridUtil.getEnergyGrid(GridUtil.getGrid(host));
     }
 
-    public static IEnergyGrid getEnergyGrid(@Nonnull IGridNode node) throws GridAccessException {
-        return (IEnergyGrid) GridUtil.getCache(node, IEnergyGrid.class);
+    public static IEnergyService getEnergyGrid(@Nonnull IGridNode node) throws GridAccessException {
+        return GridUtil.getEnergyGrid(GridUtil.getGrid(node));
     }
 
-    public static IEnergyGrid getEnergyGrid(@Nonnull IGrid grid) throws GridAccessException {
-        return (IEnergyGrid) GridUtil.getCache(grid, IEnergyGrid.class);
+    public static IEnergyService getEnergyGrid(@Nonnull IGrid grid) throws GridAccessException {
+        return GridUtil.getService(grid, IEnergyService.class);
     }
 
-    public static IStorageGrid getStorageGrid(@Nonnull IGridHost host) throws GridAccessException {
-        return (IStorageGrid) GridUtil.getCache(host, IStorageGrid.class);
+    public static IStorageService getStorageGrid(@Nonnull IThEGridHost host) throws GridAccessException {
+        return GridUtil.getStorageGrid(GridUtil.getGrid(host));
     }
 
-    public static IStorageGrid getStorageGrid(@Nonnull IGridNode node) throws GridAccessException {
-        return (IStorageGrid) GridUtil.getCache(node, IStorageGrid.class);
+    public static IStorageService getStorageGrid(@Nonnull IGridNode node) throws GridAccessException {
+        return GridUtil.getStorageGrid(GridUtil.getGrid(node));
     }
 
-    public static IGridCache getCache(@Nonnull IGridHost host, @Nonnull Class<? extends IGridCache> clazz) throws GridAccessException {
-        return GridUtil.getCache(GridUtil.getGrid(host), clazz);
+    public static IStorageService getStorageGrid(@Nonnull IGrid grid) throws GridAccessException {
+        return GridUtil.getService(grid, IStorageService.class);
     }
 
-    public static IGridCache getCache(@Nonnull IGridNode node, @Nonnull Class<? extends IGridCache> clazz) throws GridAccessException {
-        return GridUtil.getCache(GridUtil.getGrid(node), clazz);
-    }
-
-    public static IGridCache getCache(@Nonnull IGrid grid, @Nonnull Class<? extends IGridCache> clazz) throws GridAccessException {
-        IGridCache cache = grid.getCache(clazz);
-        if (cache == null)
+    public static <T extends IGridService> T getService(@Nonnull IGrid grid, @Nonnull Class<T> clazz) throws GridAccessException {
+        T service = grid.getService(clazz);
+        if (service == null)
             throw new GridAccessException();
-        return cache;
+        return service;
     }
 
-    public static IGrid getGrid(@Nonnull IGridHost host) throws GridAccessException {
-        IGridNode node = host.getGridNode(AEPartLocation.UP);
+    public static IGrid getGrid(@Nonnull IThEGridHost host) throws GridAccessException {
+        IGridNode node = host.getGridNode();
         if (node == null)
             throw new GridAccessException();
         return GridUtil.getGrid(node);
     }
 
     public static IGrid getGrid(@Nonnull IGridNode node) throws GridAccessException {
-        IGrid grid = node.getGrid();
+        IGrid grid = node.grid();
         if (grid == null)
             throw new GridAccessException();
         return grid;

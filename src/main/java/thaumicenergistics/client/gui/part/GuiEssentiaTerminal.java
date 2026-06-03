@@ -1,28 +1,31 @@
 package thaumicenergistics.client.gui.part;
 
-import appeng.api.config.Settings;
-import appeng.api.config.SortDir;
-import appeng.api.config.SortOrder;
-import appeng.api.config.TerminalStyle;
-import appeng.api.storage.data.IItemList;
-import appeng.api.util.IConfigManager;
-import appeng.api.util.IConfigurableObject;
-import appeng.client.gui.widgets.GuiImgButton;
+import ae2.api.config.TerminalStyle;
+import ae2.api.config.Setting;
+import ae2.api.config.SortDir;
+import ae2.api.config.SortOrder;
+import ae2.api.config.Settings;
+import ae2.api.util.IConfigManager;
+import ae2.api.util.IConfigurableObject;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Mouse;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.api.storage.IAEEssentiaStack;
-import thaumicenergistics.api.storage.IEssentiaStorageChannel;
+import thaumicenergistics.api.stacks.AEEssentiaKey;
+import thaumicenergistics.client.gui.component.GuiImgButton;
+import thaumicenergistics.client.gui.GuiConfigurable;
+import thaumicenergistics.client.gui.helpers.EssentiaRepo;
 import thaumicenergistics.client.gui.helpers.GuiScrollBar;
-import thaumicenergistics.client.gui.helpers.MERepo;
+import thaumicenergistics.client.gui.helpers.TerminalDisplayStack;
 import thaumicenergistics.config.ThEConfig;
 import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.part.ContainerEssentiaTerminal;
-import thaumicenergistics.container.slot.SlotME;
+import thaumicenergistics.container.slot.SlotEssentiaME;
 import thaumicenergistics.container.slot.ThESlot;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.network.PacketHandler;
@@ -35,8 +38,10 @@ import java.io.IOException;
 /**
  * @author BrockWS
  */
-public class GuiEssentiaTerminal extends GuiAbstractTerminal<IAEEssentiaStack, IEssentiaStorageChannel> {
+public class GuiEssentiaTerminal extends GuiConfigurable {
 
+    private final ContainerEssentiaTerminal container;
+    private final EssentiaRepo repo;
     private GuiScrollBar scrollBar;
     private GuiImgButton sortByButton;
     private GuiImgButton sortDirButton;
@@ -45,7 +50,8 @@ public class GuiEssentiaTerminal extends GuiAbstractTerminal<IAEEssentiaStack, I
 
     public GuiEssentiaTerminal(ContainerEssentiaTerminal container) {
         super(container);
-        this.repo = new MERepo<>(IEssentiaStorageChannel.class);
+        this.container = container;
+        this.repo = new EssentiaRepo();
     }
 
     @Override
@@ -66,7 +72,7 @@ public class GuiEssentiaTerminal extends GuiAbstractTerminal<IAEEssentiaStack, I
         this.repo.setScrollBar(this.scrollBar);
         this.updateScroll();
 
-        this.inventorySlots.inventorySlots.removeIf(slot -> slot instanceof SlotME);
+        this.inventorySlots.inventorySlots.removeIf(slot -> slot instanceof SlotEssentiaME);
         this.addTerminalSlots(9, 18);
 
         this.buttonList.clear();
@@ -96,9 +102,15 @@ public class GuiEssentiaTerminal extends GuiAbstractTerminal<IAEEssentiaStack, I
     private void addTerminalSlots(int offsetX, int offsetY) {
         for (int r = 0; r < this.rows; r++) {
             for (int c = 0; c < 9; c++) {
-                this.addMESlot(new SlotME<>(this.repo, c + r * 9, offsetX + c * 18, offsetY + r * 18));
+                this.addEssentiaSlot(new SlotEssentiaME(this.repo, c + r * 9, offsetX + c * 18, offsetY + r * 18));
             }
         }
+    }
+
+    private void addEssentiaSlot(SlotEssentiaME slot) {
+        slot.slotNumber = this.inventorySlots.inventorySlots.size();
+        this.inventorySlots.inventorySlots.add(slot);
+        this.inventorySlots.inventoryItemStacks.add(ItemStack.EMPTY);
     }
 
     @Override
@@ -126,7 +138,7 @@ public class GuiEssentiaTerminal extends GuiAbstractTerminal<IAEEssentiaStack, I
     }
 
     @Override
-    public void updateSetting(Settings setting, Enum value) {
+    public void updateSetting(Setting<?> setting, Enum<?> value) {
         super.updateSetting(setting, value);
         this.repo.setSortOrder((SortOrder) ((IConfigurableObject) this.inventorySlots).getConfigManager().getSetting(Settings.SORT_BY));
         this.repo.setSortDir((SortDir) ((IConfigurableObject) this.inventorySlots).getConfigManager().getSetting(Settings.SORT_DIRECTION));
@@ -160,10 +172,10 @@ public class GuiEssentiaTerminal extends GuiAbstractTerminal<IAEEssentiaStack, I
 
     @Override
     protected void handleMouseClick(Slot slot, int slotId, int mouseButton, ClickType type) {
-        if (slot instanceof SlotME) {
+        if (slot instanceof SlotEssentiaME) {
             // Send to server for processing
             if (slot.getHasStack())
-                PacketHandler.sendToServer(new PacketUIAction(ActionType.FILL_ESSENTIA_ITEM, ((SlotME) slot).getAEStack()));
+                PacketHandler.sendToServer(new PacketUIAction(ActionType.FILL_ESSENTIA_ITEM, ((SlotEssentiaME) slot).getAEStack()));
             else
                 PacketHandler.sendToServer(new PacketUIAction(ActionType.EMPTY_ESSENTIA_ITEM));
             return;
@@ -187,10 +199,9 @@ public class GuiEssentiaTerminal extends GuiAbstractTerminal<IAEEssentiaStack, I
     protected void actionPerformed(GuiButton button) {
         if (button instanceof GuiImgButton) {
             GuiImgButton btn = (GuiImgButton) button;
-            Enum currentValue = btn.getCurrentValue();
-            Enum next = ThEUtil.rotateEnum(currentValue, btn.getSetting().getPossibleValues(), Mouse.isButtonDown(1));
+            Enum<?> next = btn.getNextValue(Mouse.isButtonDown(1));
             if (next.equals(SortOrder.MOD)) // Can't sort aspects by mod id
-                next = ThEUtil.rotateEnum(next, btn.getSetting().getPossibleValues(), Mouse.isButtonDown(1));
+                next = ThEUtil.rotateEnum(next, btn.getSetting().getValues(), Mouse.isButtonDown(1));
             btn.set(next);
             if (btn.getSetting() == Settings.TERMINAL_STYLE) {
                 ThEConfig.client.terminalStyle = (TerminalStyle) next;
@@ -202,17 +213,83 @@ public class GuiEssentiaTerminal extends GuiAbstractTerminal<IAEEssentiaStack, I
         }
     }
 
-    public void onMEStorageUpdate(IItemList<IAEEssentiaStack> list) {
+    public void onMEStorageUpdate(Iterable<TerminalDisplayStack> list) {
         this.repo.clear();
-        for (IAEEssentiaStack stack : list)
+        for (TerminalDisplayStack stack : list)
             this.repo.postUpdate(stack);
         this.repo.updateView();
         this.updateScroll();
     }
 
     public void updateScroll() {
+        if (this.scrollBar == null) {
+            return;
+        }
         this.scrollBar.setRows(this.rows);
         this.scrollBar.setRange(0, (this.repo.size() + 8) / 9 - this.rows, Math.max(1, this.rows / 6));
+    }
+
+    @Override
+    protected void drawSlotOverlay(Slot slot) {
+        super.drawSlotOverlay(slot);
+        if (slot instanceof SlotEssentiaME) {
+            SlotEssentiaME slotME = (SlotEssentiaME) slot;
+            this.renderStackSize(slotME.getDisplayStack(), slot.xPos, slot.yPos);
+            if (!this.isActive())
+                drawRect(slot.xPos, slot.yPos, slot.xPos + 16, slot.yPos + 16, 0x66111111);
+        }
+    }
+
+    @Override
+    protected void renderHoveredToolTip(int mouseX, int mouseY) {
+        Slot hovered = this.findSlotAtMouse(mouseX, mouseY);
+        if (hovered instanceof SlotEssentiaME && hovered.getHasStack()) {
+            TerminalDisplayStack stack = ((SlotEssentiaME) hovered).getDisplayStack();
+            if (stack != null && stack.key() instanceof AEEssentiaKey) {
+                this.drawHoveringText(((AEEssentiaKey) stack.key()).getAspect().getName(), mouseX, mouseY);
+                return;
+            }
+        }
+        super.renderHoveredToolTip(mouseX, mouseY);
+    }
+
+    private boolean isActive() {
+        return this.container.getPart().isActive();
+    }
+
+    private void renderStackSize(TerminalDisplayStack stack, int xPos, int yPos) {
+        if (stack == null) {
+            return;
+        }
+
+        String text = null;
+        if (stack.stackSize() == 0 && stack.craftable()) {
+            text = "+";
+        } else if (stack.stackSize() > 0) {
+            text = this.formatStackSize(stack.stackSize());
+        }
+
+        if (text == null) {
+            return;
+        }
+
+        GlStateManager.disableLighting();
+        GlStateManager.disableDepth();
+        GlStateManager.disableBlend();
+        this.fontRenderer.drawStringWithShadow(text, xPos + 17 - this.fontRenderer.getStringWidth(text), yPos + 9, 16777215);
+        GlStateManager.enableLighting();
+        GlStateManager.enableDepth();
+        GlStateManager.enableBlend();
+    }
+
+    private String formatStackSize(long amount) {
+        if (amount >= 1000000) {
+            return amount / 1000000 + "M";
+        }
+        if (amount >= 1000) {
+            return amount / 1000 + "K";
+        }
+        return Long.toString(amount);
     }
 
     @Override

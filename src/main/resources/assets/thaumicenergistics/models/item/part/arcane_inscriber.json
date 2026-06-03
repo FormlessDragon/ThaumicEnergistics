@@ -1,7 +1,7 @@
 {
-  "parent": "appliedenergistics2:item/part/display",
+  "parent": "ae2:item/display_base",
   "textures": {
-    "front": "appliedenergistics2:items/part/crafting_terminal",
+    "front": "ae2:items/part/crafting_terminal",
     "front_bright": "thaumicenergistics:part/arcane_inscriber/overlay1",
     "front_medium": "thaumicenergistics:part/arcane_inscriber/overlay4",
     "front_dark": "thaumicenergistics:part/arcane_inscriber/overlay3"

@@ -1,9 +1,6 @@
 package thaumicenergistics.client.gui.part;
 
-import appeng.api.implementations.IPowerChannelState;
-import appeng.api.storage.IStorageChannel;
-import appeng.api.storage.data.IAEStack;
-import net.minecraft.inventory.Slot;
+import ae2.api.implementations.IPowerChannelState;
 import thaumicenergistics.client.gui.GuiConfigurable;
 import thaumicenergistics.client.gui.helpers.MERepo;
 import thaumicenergistics.container.ContainerBaseTerminal;
@@ -13,17 +10,17 @@ import thaumicenergistics.container.slot.SlotME;
  * @author BrockWS
  * @author Alex811
  */
-public abstract class GuiAbstractTerminal<T extends IAEStack<T>, C extends IStorageChannel<T>> extends GuiConfigurable implements IPowerChannelState {
+public abstract class GuiAbstractTerminal extends GuiConfigurable implements IPowerChannelState {
 
     protected ContainerBaseTerminal container;
-    protected MERepo<T> repo;
+    protected MERepo repo;
 
     public GuiAbstractTerminal(ContainerBaseTerminal container) {
         super(container);
         this.container = container;
     }
 
-    public MERepo<T> getRepo() {
+    public MERepo getRepo() {
         return this.repo;
     }
 
@@ -38,8 +35,8 @@ public abstract class GuiAbstractTerminal<T extends IAEStack<T>, C extends IStor
     }
 
     @Override
-    public void drawSlot(Slot slot) {
-        super.drawSlot(slot);
+    protected void drawSlotOverlay(net.minecraft.inventory.Slot slot) {
+        super.drawSlotOverlay(slot);
         if (slot instanceof SlotME && !this.isActive())
             drawRect(slot.xPos, slot.yPos, slot.xPos + 16, slot.yPos + 16, 0x66111111);
     }

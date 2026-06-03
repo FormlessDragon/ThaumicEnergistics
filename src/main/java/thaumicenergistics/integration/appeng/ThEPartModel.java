@@ -1,6 +1,6 @@
 package thaumicenergistics.integration.appeng;
 
-import appeng.api.parts.IPartModel;
+import ae2.api.parts.IPartModel;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nonnull;

@@ -1,6 +1,5 @@
 package thaumicenergistics.block;
 
-import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -98,7 +97,6 @@ public class BlockArcaneAssembler extends BlockNetwork implements IThEModel {
 
     @Override
     @ParametersAreNonnullByDefault
-    @MethodsReturnNonnullByDefault
     @SuppressWarnings("deprecation")
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
         AxisAlignedBB boundingBox = super.getBoundingBox(state, source, pos);

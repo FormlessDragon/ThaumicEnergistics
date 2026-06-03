@@ -1,10 +1,10 @@
 package thaumicenergistics.network.packets;
 
-import appeng.api.parts.IPart;
-import appeng.api.parts.IPartHost;
-import appeng.api.util.AEPartLocation;
+import ae2.api.parts.IPart;
+import ae2.api.parts.IPartHost;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
@@ -55,7 +55,7 @@ public class PacketEssentiaFilterAction implements IMessage {
         World world = DimensionManager.getWorld(buf.readInt());
         TileEntity tile = world.getTileEntity(pos);
         if (tile instanceof IPartHost) {
-            IPart part = ((IPartHost) tile).getPart(AEPartLocation.values()[buf.readInt()]);
+            IPart part = ((IPartHost) tile).getPart(EnumFacing.values()[buf.readInt()]);
             if (part instanceof PartBase)
                 this.part = (PartBase) part;
         }

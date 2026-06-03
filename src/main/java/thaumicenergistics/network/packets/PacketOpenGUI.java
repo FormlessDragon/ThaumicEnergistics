@@ -1,9 +1,9 @@
 package thaumicenergistics.network.packets;
 
-import appeng.api.util.AEPartLocation;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.IThreadListener;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -19,12 +19,12 @@ public class PacketOpenGUI implements IMessage {
 
     public int gui;
     public BlockPos pos;
-    public AEPartLocation side;
+    public EnumFacing side;
 
     public PacketOpenGUI() {
     }
 
-    public PacketOpenGUI(ModGUIs gui, BlockPos pos, AEPartLocation side) {
+    public PacketOpenGUI(ModGUIs gui, BlockPos pos, EnumFacing side) {
         this.gui = gui.ordinal();
         this.pos = pos;
         this.side = side;
@@ -34,7 +34,7 @@ public class PacketOpenGUI implements IMessage {
     public void fromBytes(ByteBuf buf) {
         this.gui = buf.readByte();
         this.pos = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
-        this.side = AEPartLocation.fromOrdinal(buf.readByte());
+        this.side = EnumFacing.values()[buf.readByte()];
     }
 
     @Override

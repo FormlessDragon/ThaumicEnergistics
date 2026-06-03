@@ -1,8 +1,9 @@
 package thaumicenergistics.network.packets;
 
-import appeng.api.config.Settings;
-import appeng.api.util.IConfigManager;
-import appeng.api.util.IConfigurableObject;
+import ae2.api.config.Setting;
+import ae2.api.config.Settings;
+import ae2.api.util.IConfigManager;
+import ae2.api.util.IConfigurableObject;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -14,6 +15,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import thaumicenergistics.client.gui.GuiBase;
+import thaumicenergistics.config.ThESettings;
 import thaumicenergistics.container.IPartContainer;
 
 /**
@@ -28,8 +30,8 @@ public class PacketSettingChange implements IMessage {
     public PacketSettingChange() {
     }
 
-    public PacketSettingChange(Settings setting, Enum value) {
-        this(setting.name(), value.name());
+    public PacketSettingChange(Setting<?> setting, Enum<?> value) {
+        this(setting.getName(), value.name());
     }
 
     public PacketSettingChange(String s, String v) {
@@ -49,12 +51,32 @@ public class PacketSettingChange implements IMessage {
         ByteBufUtils.writeUTF8String(buf, this.value);
     }
 
-    public Settings getSetting() {
-        return Settings.valueOf(this.setting);
+    public Setting<?> getSetting() {
+        return this.resolveSetting();
     }
 
-    public Enum getValue() {
-        for (Enum e : this.getSetting().getPossibleValues())
+    private Setting<?> resolveSetting() {
+        Setting<?> teSetting = ThESettings.get(this.setting);
+        if (teSetting != null) {
+            return teSetting;
+        }
+        try {
+            return Settings.getOrThrow(this.setting);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    public Enum<?> getValue() {
+        Setting<?> resolvedSetting = this.resolveSetting();
+        if (resolvedSetting == null) {
+            return null;
+        }
+        return this.resolveValue(resolvedSetting);
+    }
+
+    private Enum<?> resolveValue(Setting<?> resolvedSetting) {
+        for (Enum<?> e : resolvedSetting.getValues())
             if (e.name().equalsIgnoreCase(this.value))
                 return e;
         return null;
@@ -64,6 +86,12 @@ public class PacketSettingChange implements IMessage {
 
         @Override
         public IMessage onMessage(PacketSettingChange message, MessageContext ctx) {
+            Setting<?> resolvedSetting = message.resolveSetting();
+            Enum<?> resolvedValue = resolvedSetting == null ? null : message.resolveValue(resolvedSetting);
+            if (resolvedSetting == null || resolvedValue == null) {
+                return null;
+            }
+
             NetHandlerPlayServer handler = ctx.getServerHandler();
             EntityPlayerMP player = handler.player;
             IThreadListener thread = (IThreadListener) player.world;
@@ -71,9 +99,12 @@ public class PacketSettingChange implements IMessage {
                 if (player.openContainer instanceof IConfigurableObject) {
                     IConfigManager cm = ((IConfigurableObject) player.openContainer).getConfigManager();
                     if (cm != null) {
-                        cm.putSetting(message.getSetting(), message.getValue());
+                        if (!cm.getSettings().contains(resolvedSetting)) {
+                            return;
+                        }
+                        putSetting(cm, resolvedSetting, resolvedValue);
                         if (player.openContainer instanceof IPartContainer)
-                            ((IPartContainer) player.openContainer).getPart().settingChanged(message.getSetting());
+                            ((IPartContainer) player.openContainer).getPart().settingChanged(resolvedSetting);
                     }
                 }
             });
@@ -85,12 +116,32 @@ public class PacketSettingChange implements IMessage {
 
         @Override
         public IMessage onMessage(PacketSettingChange message, MessageContext ctx) {
+            Setting<?> resolvedSetting = message.resolveSetting();
+            Enum<?> resolvedValue = resolvedSetting == null ? null : message.resolveValue(resolvedSetting);
+            if (resolvedSetting == null || resolvedValue == null) {
+                return null;
+            }
+
             Minecraft.getMinecraft().addScheduledTask(() -> {
                 GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-                if (gui instanceof GuiBase)
-                    ((GuiBase) gui).updateSetting(message.getSetting(), message.getValue());
+                if (gui instanceof GuiBase) {
+                    GuiBase guiBase = (GuiBase) gui;
+                    if (!guiBase.hasConfigSetting(resolvedSetting)) {
+                        return;
+                    }
+                    guiBase.updateSetting(resolvedSetting, resolvedValue);
+                }
             });
             return null;
         }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void putSetting(IConfigManager configManager, Setting<?> setting, Enum<?> value) {
+        putSettingUnchecked(configManager, (Setting) setting, value);
+    }
+
+    private static <T extends Enum<T>> void putSettingUnchecked(IConfigManager configManager, Setting<T> setting, Enum<?> value) {
+        configManager.putSetting(setting, setting.getEnumClass().cast(value));
     }
 }

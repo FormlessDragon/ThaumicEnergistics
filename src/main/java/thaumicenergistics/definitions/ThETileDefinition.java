@@ -1,16 +1,16 @@
 package thaumicenergistics.definitions;
 
-import appeng.api.definitions.ITileDefinition;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.tileentity.TileEntity;
+import thaumicenergistics.api.definitions.IThETileDefinition;
 
 import java.util.Optional;
 
 /**
  * @author BrockWS
  */
-public class ThETileDefinition extends ThEBlockDefinition implements ITileDefinition {
+public class ThETileDefinition extends ThEBlockDefinition implements IThETileDefinition {
 
     private Class<? extends TileEntity> tile;
 

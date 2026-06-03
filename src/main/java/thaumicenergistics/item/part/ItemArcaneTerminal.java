@@ -1,11 +1,11 @@
 package thaumicenergistics.item.part;
 
-import appeng.api.AEApi;
-import appeng.api.parts.IPart;
+import ae2.api.parts.IPart;
+import ae2.api.parts.PartModels;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.model.ModelLoader;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.item.ItemPartBase;
 import thaumicenergistics.part.PartArcaneTerminal;
 
@@ -28,7 +28,7 @@ public class ItemArcaneTerminal extends ItemPartBase {
 
     @Override
     public void initModel() {
-        AEApi.instance().registries().partModels().registerModels(PartArcaneTerminal.MODELS);
+        PartModels.registerModels(PartArcaneTerminal.MODELS);
         ModelLoader.setCustomModelResourceLocation(this, 0, new ModelResourceLocation(Reference.MOD_ID + ":part/arcane_terminal"));
     }
 }

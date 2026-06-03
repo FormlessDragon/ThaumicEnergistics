@@ -1,17 +1,15 @@
 package thaumicenergistics.container.part;
 
-import appeng.api.AEApi;
-import appeng.api.config.Actionable;
-import appeng.api.networking.security.IActionSource;
-import appeng.api.networking.storage.IBaseMonitor;
-import appeng.api.storage.IMEMonitor;
-import appeng.api.storage.IMEMonitorHandlerReceiver;
-import appeng.api.storage.channels.IItemStorageChannel;
-import appeng.api.storage.data.IAEItemStack;
-import appeng.api.storage.data.IItemList;
-import appeng.api.util.AEPartLocation;
-import appeng.core.AELog;
+import ae2.api.config.Actionable;
+import ae2.api.networking.crafting.ICraftingService;
+import ae2.api.stacks.AEItemKey;
+import ae2.api.stacks.AEKey;
+import ae2.api.stacks.KeyCounter;
+import ae2.api.storage.MEStorage;
+import ae2.container.implementations.ContainerCraftAmount;
+import ae2.core.gui.locator.PartLocator;
 import com.google.common.collect.Lists;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IContainerListener;
@@ -39,17 +37,14 @@ import thaumcraft.api.aspects.IEssentiaContainerItem;
 import thaumcraft.api.aura.AuraHelper;
 import thaumcraft.api.crafting.IArcaneRecipe;
 import thaumcraft.api.items.ItemsTC;
-import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.config.AESettings;
 import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.ContainerBaseTerminal;
 import thaumicenergistics.container.DummyContainer;
 import thaumicenergistics.container.ICraftingContainer;
-import thaumicenergistics.container.crafting.ContainerCraftAmountBridge;
 import thaumicenergistics.container.slot.SlotArcaneMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.container.slot.SlotUpgrade;
-import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketInvHeldUpdate;
@@ -63,20 +58,18 @@ import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import java.io.IOException;
 import java.nio.BufferOverflowException;
-import java.util.Objects;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author BrockWS
  * @author Alex811
  */
-public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IMEMonitorHandlerReceiver<IAEItemStack>, ICraftingContainer {
+public class ContainerArcaneTerminal extends ContainerBaseTerminal implements ICraftingContainer {
 
     public IRecipe recipe;
 
     protected PartSharedTerminal part;
-    protected IItemStorageChannel channel;
-    protected IMEMonitor<IAEItemStack> monitor;
-    private final IItemList<IAEItemStack> items = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class).createList();
     protected IInventory craftingResult;
     protected SlotArcaneResult resultSlot;
     private boolean isValidContainer = true;
@@ -84,14 +77,6 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
     public ContainerArcaneTerminal(EntityPlayer player, PartSharedTerminal part) {
         super(player, part);
         this.part = part;
-
-        if (ForgeUtil.isServer()) {
-            this.channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
-            this.monitor = this.part.getInventory(this.channel);
-            if (this.monitor != null) {
-                this.monitor.addListener(this, null);
-            }
-        }
 
         this.addMatrixSlots(32, 36);
         this.addUpgradeSlots(177, 54);
@@ -113,50 +98,36 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
     @Override
     public void onAction(EntityPlayerMP player, PacketUIAction packet) {
         // TODO: Give inventoryInsert/inventoryExtract IEnergyGrid to extract power
-        if (this.monitor == null)
+        MEStorage storage = this.getNetworkStorage();
+        if (storage == null)
             return;
         if (packet.action == ActionType.PICKUP_OR_SETDOWN) { // Normal lmb
-            if (player.inventory.getItemStack().isEmpty() && packet.requestedStack != null) { // PICKUP
-                IAEItemStack stack = (IAEItemStack) packet.requestedStack.copy();
-                stack.setStackSize(stack.getDefinition().getMaxStackSize());
-                stack = AEUtil.inventoryExtract(stack, this.monitor, this.part.source);
+            if (player.inventory.getItemStack().isEmpty() && packet.requestedKey instanceof AEItemKey) { // PICKUP
+                AEItemKey key = (AEItemKey) packet.requestedKey;
+                ItemStack request = key.toStack((int) Math.min(key.getMaxStackSize(), Integer.MAX_VALUE));
+                ItemStack extracted = this.extractItem(storage, request, request.getCount(), Actionable.MODULATE);
 
-                if (stack != null)
-                    player.inventory.setItemStack(stack.createItemStack());
-                else
-                    player.inventory.setItemStack(ItemStack.EMPTY);
+                player.inventory.setItemStack(extracted);
                 PacketHandler.sendToPlayer(player, new PacketInvHeldUpdate(player.inventory.getItemStack()));
             } else if (!player.inventory.getItemStack().isEmpty()) { // Set down
-                IAEItemStack stack = this.channel.createStack(player.inventory.getItemStack());
-                stack = AEUtil.inventoryInsert(stack, this.monitor, this.part.source);
+                ItemStack remainder = this.insertItem(storage, player.inventory.getItemStack(), player.inventory.getItemStack().getCount(), Actionable.MODULATE);
 
-                if (stack != null)
-                    player.inventory.setItemStack(stack.createItemStack());
-                else
-                    player.inventory.setItemStack(ItemStack.EMPTY);
+                player.inventory.setItemStack(remainder);
                 PacketHandler.sendToPlayer(player, new PacketInvHeldUpdate(player.inventory.getItemStack()));
             }
         } else if (packet.action == ActionType.SPLIT_OR_PLACE_SINGLE) { // Normal rmb
-            if (player.inventory.getItemStack().isEmpty() && packet.requestedStack != null) { // Grab half
-                IAEItemStack stack = (IAEItemStack) packet.requestedStack.copy();
-                stack.setStackSize(stack.getDefinition().getMaxStackSize()); // Cap it to max stack size
-                stack = AEUtil.inventoryExtract(stack, this.monitor, this.part.source, Actionable.SIMULATE); // Double check how much we have available
+            if (player.inventory.getItemStack().isEmpty() && packet.requestedKey instanceof AEItemKey) { // Grab half
+                AEItemKey key = (AEItemKey) packet.requestedKey;
+                long available = storage.extract(key, key.getMaxStackSize(), Actionable.SIMULATE, this.part.source);
 
-                if (stack != null) {
-                    long toPull = (long) Math.ceil((double) stack.getStackSize() / 2);
-                    stack = AEUtil.inventoryExtract(stack.setStackSize(toPull), this.monitor, this.part.source);
-                }
+                int toPull = (int) Math.ceil((double) available / 2);
+                ItemStack extracted = toPull > 0 ? key.toStack((int) storage.extract(key, toPull, Actionable.MODULATE, this.part.source)) : ItemStack.EMPTY;
 
-                if (stack != null)
-                    player.inventory.setItemStack(stack.createItemStack());
-                else
-                    player.inventory.setItemStack(ItemStack.EMPTY);
+                player.inventory.setItemStack(extracted);
                 PacketHandler.sendToPlayer(player, new PacketInvHeldUpdate(player.inventory.getItemStack()));
             } else if (!player.inventory.getItemStack().isEmpty()) { // Drop single
-                IAEItemStack stack = this.channel.createStack(player.inventory.getItemStack());
-                Objects.requireNonNull(stack).setStackSize(1);
-                stack = AEUtil.inventoryInsert(stack, this.monitor, this.part.source);
-                if (stack == null) {
+                ItemStack remainder = this.insertItem(storage, player.inventory.getItemStack(), 1, Actionable.MODULATE);
+                if (remainder.isEmpty()) {
                     ItemStack stack2 = player.inventory.getItemStack();
                     stack2.setCount(stack2.getCount() - 1);
                     if (stack2.isEmpty())
@@ -164,28 +135,24 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
                     PacketHandler.sendToPlayer(player, new PacketInvHeldUpdate(player.inventory.getItemStack()));
                 }
             }
-        } else if ((packet.action == ActionType.SCROLL_UP || packet.action == ActionType.PICKUP_SINGLE) && packet.requestedStack instanceof IAEItemStack) { // Shift rmb
+        } else if ((packet.action == ActionType.SCROLL_UP || packet.action == ActionType.PICKUP_SINGLE) && packet.requestedKey instanceof AEItemKey) { // Shift rmb
             ItemStack held = player.inventory.getItemStack();
-            if (!held.isEmpty() && (held.getCount() >= held.getMaxStackSize() || !ForgeUtil.areItemStacksEqual(((IAEItemStack) packet.requestedStack).getDefinition(), held)))
+            AEItemKey key = (AEItemKey) packet.requestedKey;
+            if (!held.isEmpty() && (held.getCount() >= held.getMaxStackSize() || !key.matches(held)))
                 return;
-            IAEItemStack stack = (IAEItemStack) packet.requestedStack.copy();
-            stack.setStackSize(1);
-            stack = AEUtil.inventoryExtract(stack, this.monitor, this.part.source);
-            if (stack != null) {
+            ItemStack stack = this.extractItem(storage, key.toStack(), 1, Actionable.MODULATE);
+            if (!stack.isEmpty()) {
                 if (!held.isEmpty())
                     held.grow(1);
                 else
-                    held = stack.createItemStack();
+                    held = stack;
             }
             player.inventory.setItemStack(held);
             PacketHandler.sendToPlayer(player, new PacketInvHeldUpdate(player.inventory.getItemStack()));
         } else if (packet.action == ActionType.SCROLL_DOWN && !player.inventory.getItemStack().isEmpty()) {
             ItemStack held = player.inventory.getItemStack();
-            IAEItemStack is = this.channel.createStack(held);
-            Objects.requireNonNull(is);
-            is.setStackSize(1);
-            is = AEUtil.inventoryInsert(is, this.monitor, this.part.source, Actionable.MODULATE);
-            if (is != null) // Failed to insert one item
+            ItemStack remainder = this.insertItem(storage, held, 1, Actionable.MODULATE);
+            if (!remainder.isEmpty()) // Failed to insert one item
                 return;
             if (held.getCount() > 1) {
                 held.shrink(1);
@@ -194,29 +161,18 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
             }
             player.inventory.setItemStack(held);
             PacketHandler.sendToPlayer(player, new PacketInvHeldUpdate(player.inventory.getItemStack()));
-        } else if (packet.action == ActionType.SHIFT_MOVE && packet.requestedStack instanceof IAEItemStack) {
-            IAEItemStack stack = ((IAEItemStack) packet.requestedStack).copy();
-            ItemStack is = stack.createItemStack();
-
-            // Cap to max stack size
-            stack.setStackSize(is.getMaxStackSize());
-            is.setCount((int) stack.getStackSize());
-
-            is = ForgeUtil.addStackToPlayerInventory(player, is, true);
-            if (!is.isEmpty())
-                stack.setStackSize(stack.getStackSize() - is.getCount());
-            stack = AEUtil.inventoryExtract(stack, this.monitor, this.part.source);
-            if (stack != null)
-                ForgeUtil.addStackToPlayerInventory(player, stack.createItemStack(), false);
+        } else if (packet.action == ActionType.SHIFT_MOVE && packet.requestedKey instanceof AEItemKey) {
+            AEItemKey key = (AEItemKey) packet.requestedKey;
+            ItemStack toMove = key.toStack(key.getMaxStackSize());
+            ItemStack remainder = ForgeUtil.addStackToPlayerInventory(player, toMove, true);
+            int extractAmount = toMove.getCount() - remainder.getCount();
+            ItemStack extracted = this.extractItem(storage, toMove, extractAmount, Actionable.MODULATE);
+            if (!extracted.isEmpty())
+                ForgeUtil.addStackToPlayerInventory(player, extracted, false);
         } else if (packet.action == ActionType.AUTO_CRAFT) {
-            if (!packet.requestedStack.isCraftable())
+            if (!packet.requestedCraftable || !(packet.requestedKey instanceof AEItemKey))
                 return;
-            GuiHandler.openGUI(ModGUIs.AE2_CRAFT_AMOUNT, player, this.part.getLocation().getPos(), this.part.side);
-            if (player.openContainer instanceof ContainerCraftAmountBridge) {
-                ContainerCraftAmountBridge cca = (ContainerCraftAmountBridge) player.openContainer;
-                cca.getCraftingItem().putStack(packet.requestedStack.asItemStackRepresentation());
-                cca.setItemToCraft((IAEItemStack) packet.requestedStack);
-            }
+            ContainerCraftAmount.open(player, new PartLocator(this.part.getLocation().getPos(), this.part.side), packet.requestedKey, 1, this);
         } else if (packet.action == ActionType.CLEAR_GRID) {
             clearCrafting();
         }
@@ -224,7 +180,21 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
     }
 
     protected void clearCrafting() {
-        AEUtil.clearIntoMEInventory(this.getInventory("crafting"), this.monitor, this.part.source);
+        MEStorage storage = this.getNetworkStorage();
+        if (storage == null)
+            return;
+        IItemHandler crafting = this.getInventory("crafting");
+        for (int slot = 0; slot < crafting.getSlots(); slot++) {
+            ItemStack stack = crafting.extractItem(slot, Integer.MAX_VALUE, true);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            ItemStack remainder = this.insertItem(storage, stack, stack.getCount(), Actionable.MODULATE);
+            int inserted = stack.getCount() - remainder.getCount();
+            if (inserted > 0) {
+                crafting.extractItem(slot, inserted, false);
+            }
+        }
     }
 
     @Override
@@ -233,8 +203,11 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
             return super.transferStackInSlot(playerIn, index);
         Slot slot = this.inventorySlots.get(index);
         if (slot.getHasStack() && !slot.getStack().isEmpty()) {
-            IAEItemStack remaining = AEUtil.inventoryInsert(this.channel.createStack(slot.getStack()), this.monitor, this.part.source, Actionable.MODULATE);
-            slot.putStack(remaining == null ? ItemStack.EMPTY : remaining.createItemStack());
+            MEStorage storage = this.getNetworkStorage();
+            if (storage != null) {
+                ItemStack remaining = this.insertItem(storage, slot.getStack(), slot.getStack().getCount(), Actionable.MODULATE);
+                slot.putStack(remaining);
+            }
             this.detectAndSendChanges();
         }
 
@@ -253,33 +226,9 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
             if (this.player instanceof IContainerListener)
                 this.sendVisInfo((IContainerListener) this.player);
 
-            if (!this.items.isEmpty()) {
-                try {
-                    final IItemList<IAEItemStack> monitorCache = this.monitor.getStorageList();
-
-                    final PacketMEItemUpdate packet = new PacketMEItemUpdate();
-
-                    for (final IAEItemStack is : this.items) {
-                        final IAEItemStack send = monitorCache.findPrecise(is);
-                        if (send == null) {
-                            is.setStackSize(0);
-                            packet.appendStack(is);
-                        } else {
-                            packet.appendStack(send);
-                        }
-                    }
-
-                    if (!packet.isEmpty()) {
-                        this.items.resetStatus();
-
-                        for (final Object c : this.listeners) {
-                            if (c instanceof EntityPlayer) {
-                                PacketHandler.sendToPlayer((EntityPlayerMP) c, packet);
-                            }
-                        }
-                    }
-                } catch (final IOException e) {
-                    AELog.debug(e);
+            for (final Object c : this.listeners) {
+                if (c instanceof EntityPlayer) {
+                    this.sendInventory((IContainerListener) c);
                 }
             }
 
@@ -292,10 +241,8 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
         NBTBase normal = tag.getTag("normal");
         NBTBase crystals = tag.getTag("crystal");
 
-        boolean clearSuccess = AEUtil.clearIntoMEInventory(this.getInventory("crafting"), this.monitor, this.part.source);
+        this.clearCrafting();
         this.onMatrixChanged();
-        if (!clearSuccess)
-            return;
 
         handleJEITag(0, normal);
         handleJEITag(9, crystals);
@@ -319,14 +266,10 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
             if (stack.isEmpty()) continue;
 
             ThELog.debug("Adding {} for {}", stack.getDisplayName(), slot);
-            IAEItemStack aeStack = this.channel.createStack(stack);
-            if (aeStack == null) {
-                ThELog.warn("Failed to create IAEItemStack for {}, report to developer!", stack.toString());
-                continue;
-            }
-            IAEItemStack aeExtract = AEUtil.inventoryExtract(aeStack, this.monitor, this.part.source);
-            if (aeExtract != null && aeExtract.getStackSize() > 0)
-                crafting.insertItem(slot, aeExtract.createItemStack(), false);
+            MEStorage storage = this.getNetworkStorage();
+            ItemStack aeExtract = storage == null ? ItemStack.EMPTY : this.extractItem(storage, stack, stack.getCount(), Actionable.MODULATE);
+            if (!aeExtract.isEmpty())
+                crafting.insertItem(slot, aeExtract, false);
 
             if (crafting.getStackInSlot(slot).getCount() >= stack.getCount()) // We managed to pull everything from the system
                 continue;
@@ -342,23 +285,8 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
         ThELog.debug("Failed to find valid item");
     }
 
-    @Override
     public boolean isValid(Object verificationToken) {
         return true;
-    }
-
-    @Override
-    public void postChange(IBaseMonitor<IAEItemStack> monitor, Iterable<IAEItemStack> change, IActionSource actionSource) {
-        for (IAEItemStack itemStack : change) {
-            items.add(itemStack);
-        }
-    }
-
-    @Override
-    public void onListUpdate() {
-        for (IContainerListener c : this.listeners) {
-            this.sendInventory(c);
-        }
     }
 
     @Override
@@ -367,14 +295,6 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
         this.sendVisInfo(listener);
         this.sendInventory(listener);
         this.onMatrixChanged();
-    }
-
-    @Override
-    public void onContainerClosed(EntityPlayer playerIn) {
-        super.onContainerClosed(playerIn);
-        if (this.monitor != null) {
-            this.monitor.removeListener(this);
-        }
     }
 
     @Override
@@ -492,7 +412,7 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
         return this.part.getLocation().getPos();
     }
 
-    public AEPartLocation getPartSide() {
+    public net.minecraft.util.EnumFacing getPartSide() {
         return this.part.side;
     }
 
@@ -592,40 +512,99 @@ public class ContainerArcaneTerminal extends ContainerBaseTerminal implements IM
 
     private ItemStack getRefill(ItemStack stack) {
         // TODO: Fuzzy selection
-        IAEItemStack aeStack = this.monitor.extractItems(this.channel.createStack(stack), Actionable.SIMULATE, this.part.source);
-        if (aeStack != null && aeStack.getStackSize() == stack.getCount()) {// Make sure we actually have enough to pull
+        MEStorage storage = this.getNetworkStorage();
+        if (storage != null && this.extractItem(storage, stack, stack.getCount(), Actionable.SIMULATE).getCount() == stack.getCount()) {// Make sure we actually have enough to pull
            /* try {
                 GridUtil.getEnergyGrid(this.part.getGridNode()).extractAEPower(1, Actionable.MODULATE, PowerMultiplier.CONFIG);
             } catch (GridAccessException ignored) {
 
             }*/
-            return this.monitor.extractItems(aeStack, Actionable.MODULATE, this.part.source).createItemStack();
+            return this.extractItem(storage, stack, stack.getCount(), Actionable.MODULATE);
         }
         return ItemStack.EMPTY;
     }
 
     protected void sendInventory(IContainerListener listener) {
-        if (ForgeUtil.isClient() || !(listener instanceof EntityPlayerMP) || this.monitor == null)
+        if (ForgeUtil.isClient() || !(listener instanceof EntityPlayerMP))
             return;
 
         try {
+            MEStorage storage = this.getNetworkStorage();
+            if (storage == null)
+                return;
             PacketMEItemUpdate packet = new PacketMEItemUpdate();
-            IItemList<IAEItemStack> storage = monitor.getStorageList();
+            boolean firstPacket = true;
+            KeyCounter stacks = storage.getAvailableStacks();
+            Map<AEKey, Long> storedItems = new LinkedHashMap<>();
 
-            for (IAEItemStack stack : storage) {
+            for (Object2LongMap.Entry<AEKey> stack : stacks) {
+                if (!(stack.getKey() instanceof AEItemKey)) {
+                    continue;
+                }
+                storedItems.put(stack.getKey(), stack.getLongValue());
+            }
+
+            ICraftingService craftingService = this.part.getGridNode() == null || this.part.getGridNode().grid() == null
+                    ? null
+                    : this.part.getGridNode().grid().getCraftingService();
+            Iterable<AEKey> craftables = craftingService == null
+                    ? java.util.Collections.emptySet()
+                    : craftingService.getCraftables(key -> key instanceof AEItemKey);
+
+            for (AEKey key : craftables) {
+                storedItems.putIfAbsent(key, 0L);
+            }
+
+            for (Map.Entry<AEKey, Long> stack : storedItems.entrySet()) {
+                boolean craftable = craftingService != null && craftingService.isCraftable(stack.getKey());
                 try {
-                    packet.appendStack(stack);
+                    packet.appendStack(stack.getKey(), stack.getValue(), craftable);
                 } catch (BufferOverflowException e) {
+                    packet.setClearExisting(firstPacket);
                     PacketHandler.sendToPlayer((EntityPlayerMP) listener, packet);
+                    firstPacket = false;
 
                     packet = new PacketMEItemUpdate();
-                    packet.appendStack(stack);
+                    packet.setClearExisting(false);
+                    packet.appendStack(stack.getKey(), stack.getValue(), craftable);
                 }
             }
+            packet.setClearExisting(firstPacket);
             PacketHandler.sendToPlayer((EntityPlayerMP) listener, packet);
         } catch (IOException e) {
             ThELog.error("sendInventory", e);
         }
+    }
+
+    protected MEStorage getNetworkStorage() {
+        return this.part.getInventory();
+    }
+
+    protected ItemStack extractItem(MEStorage storage, ItemStack stack, int amount, Actionable mode) {
+        if (storage == null || stack.isEmpty() || amount <= 0) {
+            return ItemStack.EMPTY;
+        }
+        AEItemKey key = AEItemKey.of(stack);
+        long extracted = storage.extract(key, amount, mode, this.part.source);
+        if (extracted <= 0) {
+            return ItemStack.EMPTY;
+        }
+        return key.toStack((int) Math.min(extracted, Integer.MAX_VALUE));
+    }
+
+    protected ItemStack insertItem(MEStorage storage, ItemStack stack, int amount, Actionable mode) {
+        if (storage == null || stack.isEmpty() || amount <= 0) {
+            return stack;
+        }
+        AEItemKey key = AEItemKey.of(stack);
+        long inserted = storage.insert(key, amount, mode, this.part.source);
+        int remaining = amount - (int) Math.min(inserted, Integer.MAX_VALUE);
+        if (remaining <= 0) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack remainder = stack.copy();
+        remainder.setCount(remaining);
+        return remainder;
     }
 
     private InventoryCrafting getInvCrafting(IItemHandler handler, IRecipe recipe) {

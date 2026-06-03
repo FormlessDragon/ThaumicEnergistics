@@ -1,12 +1,13 @@
 package thaumicenergistics.integration.appeng.util;
 
-import appeng.api.config.Settings;
-import appeng.api.util.IConfigManager;
+import ae2.api.config.Setting;
+import ae2.api.config.Settings;
+import ae2.api.util.IConfigManager;
 import net.minecraft.nbt.NBTTagCompound;
 import thaumicenergistics.config.AESettings;
 
 import javax.annotation.Nullable;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,13 +16,22 @@ import java.util.Set;
  */
 public class ThEConfigManager implements IConfigManager {
 
-    private Map<Settings, Enum> settings = new EnumMap<>(Settings.class);
+    private final Map<Setting<?>, Enum<?>> settings = new HashMap<>();
+    private static final Map<Setting<?>, String> LEGACY_NAMES = new HashMap<>();
+
+    static {
+        LEGACY_NAMES.put(Settings.SORT_BY, "SORT_BY");
+        LEGACY_NAMES.put(Settings.SORT_DIRECTION, "SORT_DIRECTION");
+        LEGACY_NAMES.put(Settings.VIEW_MODE, "VIEW_MODE");
+        LEGACY_NAMES.put(Settings.REDSTONE_CONTROLLED, "REDSTONE_CONTROLLED");
+        LEGACY_NAMES.put(Settings.ACCESS, "ACCESS");
+        LEGACY_NAMES.put(Settings.STORAGE_FILTER, "STORAGE_FILTER");
+    }
 
     public ThEConfigManager() {
     }
 
-    @Override
-    public void registerSetting(Settings setting, Enum<?> defaultValue) {
+    public <T extends Enum<T>> void registerSetting(Setting<T> setting, T defaultValue) {
         this.settings.put(setting, defaultValue);
     }
 
@@ -30,45 +40,77 @@ public class ThEConfigManager implements IConfigManager {
     }
 
     @Override
-    public Enum<?> putSetting(Settings setting, Enum<?> value) {
-        Enum old = this.getSetting(setting);
+    public <T extends Enum<T>> void putSetting(Setting<T> setting, T value) {
+        if (!this.settings.containsKey(setting)) {
+            throw new IllegalStateException("Setting '" + setting + "' has not been registered!");
+        }
+        if (value == null) {
+            throw new IllegalArgumentException("Setting '" + setting + "' cannot be set to null!");
+        }
         this.settings.put(setting, value);
-        return old;
     }
 
     @Override
-    public Enum<?> getSetting(Settings setting) {
-        Enum v = this.settings.get(setting);
+    public <T extends Enum<T>> T getSetting(Setting<T> setting) {
+        Enum<?> v = this.settings.get(setting);
         if (v == null)
             throw new IllegalStateException("Setting '" + setting + "' has not been registered!");
-        return v;
+        return setting.getEnumClass().cast(v);
     }
 
     @Override
     public void writeToNBT(NBTTagCompound tag) {
-        this.settings.forEach((key, value) -> tag.setString(key.name(), value.name()));
+        this.settings.forEach((key, value) -> tag.setString(key.getName(), value.name()));
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void readFromNBT(NBTTagCompound tag) {
         this.settings.forEach((key, old) -> {
-            if (!tag.hasKey(key.name()))
-                return;
-            String value = tag.getString(key.name());
-            Enum newValue;
-            try {
-                newValue = Enum.valueOf(old.getDeclaringClass(), value);
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
+            String keyName = key.getName();
+            if (tag.hasKey(keyName)) {
+                this.setFromString(key, tag.getString(keyName));
                 return;
             }
-            this.putSetting(key, newValue);
+
+            String legacyName = LEGACY_NAMES.get(key);
+            if (legacyName != null && tag.hasKey(legacyName)) {
+                this.setFromString(key, tag.getString(legacyName));
+            }
         });
     }
 
     @Override
-    public Set<Settings> getSettings() {
+    public Set<Setting<?>> getSettings() {
         return this.settings.keySet();
+    }
+
+    @Override
+    public boolean importSettings(Map<String, String> settings) {
+        boolean changed = false;
+        for (Map.Entry<Setting<?>, Enum<?>> entry : this.settings.entrySet()) {
+            String value = settings.get(entry.getKey().getName());
+            if (value != null) {
+                changed |= this.setFromString(entry.getKey(), value);
+            }
+        }
+        return changed;
+    }
+
+    @Override
+    public Map<String, String> exportSettings() {
+        Map<String, String> exported = new HashMap<>();
+        this.settings.forEach((key, value) -> exported.put(key.getName(), value.name()));
+        return exported;
+    }
+
+    private <T extends Enum<T>> boolean setFromString(Setting<T> setting, String value) {
+        T oldValue = this.getSetting(setting);
+        try {
+            setting.setFromString(this, value);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return oldValue != this.getSetting(setting);
     }
 }

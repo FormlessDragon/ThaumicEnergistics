@@ -1,8 +1,8 @@
 package thaumicenergistics.client.gui.part;
 
-import appeng.api.config.Settings;
-import appeng.client.gui.widgets.GuiImgButton;
+import ae2.api.config.Settings;
 import thaumicenergistics.api.ThEApi;
+import thaumicenergistics.client.gui.component.GuiImgButton;
 import thaumicenergistics.container.part.ContainerEssentiaImportBus;
 
 /**

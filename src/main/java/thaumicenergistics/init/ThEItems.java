@@ -1,6 +1,5 @@
 package thaumicenergistics.init;
 
-import appeng.api.definitions.IItemDefinition;
 import net.minecraft.item.Item;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.event.RegistryEvent;
@@ -9,6 +8,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thaumicenergistics.api.IThEItems;
+import thaumicenergistics.api.definitions.IThEItemDefinition;
 import thaumicenergistics.client.render.IThEModel;
 import thaumicenergistics.definitions.ThEItemDefinition;
 import thaumicenergistics.item.*;
@@ -42,32 +42,32 @@ public class ThEItems implements IThEItems {
         });
     }
 
-    private static IItemDefinition createItem(ItemBase item) {
+    private static IThEItemDefinition createItem(ItemBase item) {
         ThEItems.ITEMS.add(item);
         return new ThEItemDefinition(item);
     }
 
-    private final IItemDefinition itemEssentiaCell1k;
-    private final IItemDefinition itemEssentiaCell4k;
-    private final IItemDefinition itemEssentiaCell16k;
-    private final IItemDefinition itemEssentiaCell64k;
-    private final IItemDefinition itemEssentiaCellCreative;
-    private final IItemDefinition itemEssentiaImportBus;
-    private final IItemDefinition itemEssentiaExportBus;
-    private final IItemDefinition itemEssentiaStorageBus;
-    private final IItemDefinition itemEssentiaTerminal;
-    private final IItemDefinition itemArcaneTerminal;
-    private final IItemDefinition itemArcaneInscriber;
-    private final IItemDefinition itemDiffusionCore;
-    private final IItemDefinition itemCoalescenceCore;
-    private final IItemDefinition itemEssentiaComponent1k;
-    private final IItemDefinition itemEssentiaComponent4k;
-    private final IItemDefinition itemEssentiaComponent16k;
-    private final IItemDefinition itemEssentiaComponent64k;
-    private final IItemDefinition itemUpgradeArcane;
-    private final IItemDefinition itemKnowledgeCore;
-    private final IItemDefinition itemBlankKnowledgeCore;
-    private final IItemDefinition itemDummyAspect;
+    private final IThEItemDefinition itemEssentiaCell1k;
+    private final IThEItemDefinition itemEssentiaCell4k;
+    private final IThEItemDefinition itemEssentiaCell16k;
+    private final IThEItemDefinition itemEssentiaCell64k;
+    private final IThEItemDefinition itemEssentiaCellCreative;
+    private final IThEItemDefinition itemEssentiaImportBus;
+    private final IThEItemDefinition itemEssentiaExportBus;
+    private final IThEItemDefinition itemEssentiaStorageBus;
+    private final IThEItemDefinition itemEssentiaTerminal;
+    private final IThEItemDefinition itemArcaneTerminal;
+    private final IThEItemDefinition itemArcaneInscriber;
+    private final IThEItemDefinition itemDiffusionCore;
+    private final IThEItemDefinition itemCoalescenceCore;
+    private final IThEItemDefinition itemEssentiaComponent1k;
+    private final IThEItemDefinition itemEssentiaComponent4k;
+    private final IThEItemDefinition itemEssentiaComponent16k;
+    private final IThEItemDefinition itemEssentiaComponent64k;
+    private final IThEItemDefinition itemUpgradeArcane;
+    private final IThEItemDefinition itemKnowledgeCore;
+    private final IThEItemDefinition itemBlankKnowledgeCore;
+    private final IThEItemDefinition itemDummyAspect;
 
     public ThEItems() {
         this.itemEssentiaCell1k = ThEItems.createItem(new ItemEssentiaCell("1k", 1024, 12));
@@ -94,107 +94,107 @@ public class ThEItems implements IThEItems {
     }
 
     @Override
-    public IItemDefinition essentiaCell1k() {
+    public IThEItemDefinition essentiaCell1k() {
         return this.itemEssentiaCell1k;
     }
 
     @Override
-    public IItemDefinition essentiaCell4k() {
+    public IThEItemDefinition essentiaCell4k() {
         return this.itemEssentiaCell4k;
     }
 
     @Override
-    public IItemDefinition essentiaCell16k() {
+    public IThEItemDefinition essentiaCell16k() {
         return this.itemEssentiaCell16k;
     }
 
     @Override
-    public IItemDefinition essentiaCell64k() {
+    public IThEItemDefinition essentiaCell64k() {
         return this.itemEssentiaCell64k;
     }
 
     @Override
-    public IItemDefinition essentiaCellCreative() {
+    public IThEItemDefinition essentiaCellCreative() {
         return this.itemEssentiaCellCreative;
     }
 
     @Override
-    public IItemDefinition essentiaImportBus() {
+    public IThEItemDefinition essentiaImportBus() {
         return this.itemEssentiaImportBus;
     }
 
     @Override
-    public IItemDefinition essentiaExportBus() {
+    public IThEItemDefinition essentiaExportBus() {
         return this.itemEssentiaExportBus;
     }
 
     @Override
-    public IItemDefinition essentiaStorageBus() {
+    public IThEItemDefinition essentiaStorageBus() {
         return this.itemEssentiaStorageBus;
     }
 
     @Override
-    public IItemDefinition essentiaTerminal() {
+    public IThEItemDefinition essentiaTerminal() {
         return this.itemEssentiaTerminal;
     }
 
     @Override
-    public IItemDefinition arcaneTerminal() {
+    public IThEItemDefinition arcaneTerminal() {
         return this.itemArcaneTerminal;
     }
 
     @Override
-    public IItemDefinition arcaneInscriber() {
+    public IThEItemDefinition arcaneInscriber() {
         return this.itemArcaneInscriber;
     }
 
     @Override
-    public IItemDefinition diffusionCore() {
+    public IThEItemDefinition diffusionCore() {
         return this.itemDiffusionCore;
     }
 
     @Override
-    public IItemDefinition coalescenceCore() {
+    public IThEItemDefinition coalescenceCore() {
         return this.itemCoalescenceCore;
     }
 
     @Override
-    public IItemDefinition essentiaComponent1k() {
+    public IThEItemDefinition essentiaComponent1k() {
         return this.itemEssentiaComponent1k;
     }
 
     @Override
-    public IItemDefinition essentiaComponent4k() {
+    public IThEItemDefinition essentiaComponent4k() {
         return this.itemEssentiaComponent4k;
     }
 
     @Override
-    public IItemDefinition essentiaComponent16k() {
+    public IThEItemDefinition essentiaComponent16k() {
         return this.itemEssentiaComponent16k;
     }
 
     @Override
-    public IItemDefinition essentiaComponent64k() {
+    public IThEItemDefinition essentiaComponent64k() {
         return this.itemEssentiaComponent64k;
     }
 
     @Override
-    public IItemDefinition upgradeArcane() {
+    public IThEItemDefinition upgradeArcane() {
         return this.itemUpgradeArcane;
     }
 
     @Override
-    public IItemDefinition knowledgeCore() {
+    public IThEItemDefinition knowledgeCore() {
         return this.itemKnowledgeCore;
     }
 
     @Override
-    public IItemDefinition blankKnowledgeCore() {
+    public IThEItemDefinition blankKnowledgeCore() {
         return this.itemBlankKnowledgeCore;
     }
 
     @Override
-    public IItemDefinition dummyAspect() {
+    public IThEItemDefinition dummyAspect() {
         return this.itemDummyAspect;
     }
 }

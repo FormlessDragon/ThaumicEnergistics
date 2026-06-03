@@ -1,7 +1,7 @@
 {
-  "parent": "appliedenergistics2:item/part/display",
+  "parent": "ae2:item/display_base",
   "textures": {
-    "front": "appliedenergistics2:items/part/crafting_terminal",
+    "front": "ae2:items/part/crafting_terminal",
     "front_bright": "thaumicenergistics:part/essentia_terminal/bright",
     "front_medium": "thaumicenergistics:part/essentia_terminal/medium",
     "front_dark": "thaumicenergistics:part/essentia_terminal/dark"

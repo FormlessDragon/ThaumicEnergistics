@@ -1,107 +1,99 @@
 package thaumicenergistics.integration.appeng.cell;
 
-import appeng.api.config.AccessRestriction;
-import appeng.api.config.Actionable;
-import appeng.api.config.IncludeExclude;
-import appeng.api.networking.security.IActionSource;
-import appeng.api.storage.ICellInventory;
-import appeng.api.storage.ICellInventoryHandler;
-import appeng.api.storage.ISaveProvider;
-import appeng.api.storage.IStorageChannel;
-import appeng.api.storage.data.IItemList;
+import ae2.api.config.Actionable;
+import ae2.api.networking.security.IActionSource;
+import ae2.api.stacks.AEKey;
+import ae2.api.stacks.KeyCounter;
+import ae2.api.storage.cells.CellState;
+import ae2.api.storage.cells.StorageCell;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
+import thaumicenergistics.api.stacks.AEEssentiaKey;
+import thaumicenergistics.item.ItemCreativeEssentiaCell;
 import thaumcraft.api.aspects.Aspect;
-import thaumicenergistics.api.storage.IAEEssentiaStack;
-import thaumicenergistics.api.storage.IEssentiaStorageChannel;
-import thaumicenergistics.integration.appeng.EssentiaList;
-import thaumicenergistics.util.AEUtil;
 
-import javax.annotation.Nullable;
+import java.util.Set;
 
 /**
  * @author BrockWS
  */
-public class CreativeEssentiaCellInventory implements ICellInventoryHandler<IAEEssentiaStack> {
+public class CreativeEssentiaCellInventory implements StorageCell {
 
-    private IItemList<IAEEssentiaStack> storedAspects = new EssentiaList();
+    private final ItemStack stack;
 
-    private CreativeEssentiaCellInventory() {
-        Aspect.aspects.forEach((s, aspect) -> storedAspects.add(AEUtil.getAEStackFromAspect(aspect, Integer.MAX_VALUE)));
-    }
-
-    public static ICellInventoryHandler getCell(ItemStack s, ISaveProvider c) {
-        return new CreativeEssentiaCellInventory();
-    }
-
-    @Nullable
-    @Override
-    public ICellInventory<IAEEssentiaStack> getCellInv() {
-        return null;
+    public CreativeEssentiaCellInventory(ItemStack stack) {
+        this.stack = stack;
     }
 
     @Override
-    public boolean isPreformatted() {
-        return false;
+    public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
+        return amount > 0 && this.isConfiguredEssentiaKey(what) ? amount : 0;
     }
 
     @Override
-    public boolean isFuzzy() {
-        return false;
+    public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
+        return amount > 0 && this.isConfiguredEssentiaKey(what) ? amount : 0;
     }
 
     @Override
-    public IncludeExclude getIncludeExcludeMode() {
-        return IncludeExclude.WHITELIST;
+    public void getAvailableStacks(KeyCounter out) {
+        Set<AEKey> configuredKeys = this.getConfiguredKeys();
+        if (configuredKeys.isEmpty()) {
+            for (Aspect aspect : Aspect.aspects.values()) {
+                AEEssentiaKey key = AEEssentiaKey.of(aspect);
+                if (key != null) {
+                    out.add(key, Long.MAX_VALUE);
+                }
+            }
+        } else {
+            for (AEKey key : configuredKeys) {
+                if (key instanceof AEEssentiaKey) {
+                    out.add(key, Long.MAX_VALUE);
+                }
+            }
+        }
     }
 
     @Override
-    public AccessRestriction getAccess() {
-        return AccessRestriction.READ_WRITE;
+    public boolean isPreferredStorageFor(AEKey what, IActionSource source) {
+        return this.isConfiguredEssentiaKey(what);
     }
 
     @Override
-    public boolean isPrioritized(IAEEssentiaStack iaeEssentiaStack) {
-        return false;
+    public CellState getStatus() {
+        return CellState.TYPES_FULL;
     }
 
     @Override
-    public boolean canAccept(IAEEssentiaStack iaeEssentiaStack) {
-        return true;
-    }
-
-    @Override
-    public int getPriority() {
+    public double getIdleDrain() {
         return 0;
     }
 
     @Override
-    public int getSlot() {
-        return 0;
+    public boolean canFitInsideCell() {
+        return false;
     }
 
     @Override
-    public boolean validForPass(int i) {
-        return true;
+    public ITextComponent getDescription() {
+        return new TextComponentString(this.stack.getDisplayName());
     }
 
     @Override
-    public IAEEssentiaStack injectItems(IAEEssentiaStack stack, Actionable actionable, IActionSource src) {
-        return null;
+    public void persist() {
     }
 
-    @Override
-    public IAEEssentiaStack extractItems(IAEEssentiaStack stack, Actionable actionable, IActionSource src) {
-        return stack.copy();
+    private boolean isConfiguredEssentiaKey(AEKey key) {
+        if (!(key instanceof AEEssentiaKey)) {
+            return false;
+        }
+
+        Set<AEKey> configuredKeys = this.getConfiguredKeys();
+        return configuredKeys.isEmpty() || configuredKeys.contains(key);
     }
 
-    @Override
-    public IItemList<IAEEssentiaStack> getAvailableItems(IItemList<IAEEssentiaStack> list) {
-        this.storedAspects.forEach(list::add);
-        return list;
-    }
-
-    @Override
-    public IStorageChannel<IAEEssentiaStack> getChannel() {
-        return AEUtil.getStorageChannel(IEssentiaStorageChannel.class);
+    private Set<AEKey> getConfiguredKeys() {
+        return ((ItemCreativeEssentiaCell) this.stack.getItem()).getConfigInventory(this.stack).keySet();
     }
 }

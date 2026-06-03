@@ -1,10 +1,10 @@
 package thaumicenergistics.client.gui;
 
-import appeng.api.config.Settings;
-import appeng.api.util.IConfigManager;
-import appeng.api.util.IConfigurableObject;
-import appeng.client.gui.widgets.GuiImgButton;
-import appeng.client.gui.widgets.ITooltip;
+import ae2.api.config.Setting;
+import ae2.api.config.Settings;
+import ae2.api.util.IConfigManager;
+import ae2.api.util.IConfigurableObject;
+import ae2.client.gui.widgets.ITooltip;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiTextField;
@@ -18,9 +18,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.opengl.GL11;
-import thaumicenergistics.api.storage.IAEEssentiaStack;
+import thaumicenergistics.api.stacks.AEEssentiaKey;
+import thaumicenergistics.client.gui.component.GuiImgButton;
 import thaumicenergistics.client.gui.helpers.GenericStackSizeRenderer;
 import thaumicenergistics.client.gui.helpers.GuiScrollBar;
+import thaumicenergistics.client.gui.helpers.TerminalDisplayStack;
 import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.slot.ISlotOptional;
 import thaumicenergistics.container.slot.SlotGhostEssentia;
@@ -28,9 +30,11 @@ import thaumicenergistics.container.slot.SlotME;
 import thaumicenergistics.container.slot.ThESlot;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
+
+import static thaumicenergistics.config.ThESettings.actions;
+import static thaumicenergistics.config.ThESettings.searchMode;
 
 /**
  * @author BrockWS
@@ -53,22 +57,24 @@ public abstract class GuiBase extends GuiContainer {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.drawDefaultBackground();
         GlStateManager.color(1.0F, 1.0F, 1.0f, 1.0F);
+        this.drawSlotBackgrounds();
         super.drawScreen(mouseX, mouseY, partialTicks);
+        this.drawSlotOverlays();
         this.renderHoveredToolTip(mouseX, mouseY);
     }
 
-    @Override
-    public void drawSlot(Slot slot) {
+    protected void drawSlotBackgrounds() {
         mc.getTextureManager().bindTexture(this.getGuiBackground());
+        for (Slot slot : this.inventorySlots.inventorySlots) {
+            this.drawSlotBackground(slot);
+        }
+    }
+
+    protected void drawSlotBackground(Slot slot) {
         if (slot instanceof ISlotOptional) {
             if (slot.isEnabled()) {
                 // TODO: Draw slot background on enabled slots
             }
-        } else if (slot instanceof SlotME) {
-            SlotME slotME = (SlotME) slot;
-            super.drawSlot(slot);
-            stackSizeRenderer.renderStackSize(this.fontRenderer, slotME.getAEStack(), slot.xPos, slot.yPos);
-            return;
         } else if (slot instanceof ThESlot) {
             if (((ThESlot) slot).hasBackgroundIcon()) {
                 int index = ((ThESlot) slot).getBackgroundIconIndex();
@@ -86,38 +92,57 @@ public abstract class GuiBase extends GuiContainer {
                 this.drawTexturedModelRectColor(slot.xPos, slot.yPos, uv_x * 16, uv_y * 16, 16, 16, new Color(1f, 1f, 1f, 0.4f));
             }
         }
-        super.drawSlot(slot);
+    }
+
+    protected void drawSlotOverlays() {
+        for (Slot slot : this.inventorySlots.inventorySlots) {
+            this.drawSlotOverlay(slot);
+        }
+    }
+
+    protected void drawSlotOverlay(Slot slot) {
+        if (slot instanceof SlotME) {
+            TerminalDisplayStack stack = ((SlotME) slot).getDisplayStack();
+            if (stack != null) {
+                stackSizeRenderer.renderStackSize(this.fontRenderer, stack.stackSize(), stack.craftable(), slot.xPos, slot.yPos);
+            }
+        }
     }
 
     @Override
     protected void renderHoveredToolTip(int mouseX, int mouseY) {
-        if (this.hoveredSlot != null) {
-            if (this.hoveredSlot instanceof SlotGhostEssentia && ((SlotGhostEssentia) this.hoveredSlot).getAspect() != null) {
-                this.drawHoveringText(((SlotGhostEssentia) this.hoveredSlot).getAspect().getName(), mouseX, mouseY);
+        Slot hovered = this.findSlotAtMouse(mouseX, mouseY);
+        if (hovered != null) {
+            if (hovered instanceof SlotGhostEssentia && ((SlotGhostEssentia) hovered).getAspect() != null) {
+                this.drawHoveringText(((SlotGhostEssentia) hovered).getAspect().getName(), mouseX, mouseY);
                 return;
             }
-            if (this.hoveredSlot instanceof SlotME && this.hoveredSlot.getHasStack() && ((SlotME) this.hoveredSlot).getAEStack() instanceof IAEEssentiaStack) {
-                IAEEssentiaStack stack = (IAEEssentiaStack) ((SlotME) this.hoveredSlot).getAEStack();
-                this.drawHoveringText(stack.getAspect().getName(), mouseX, mouseY);
-                return;
+            if (hovered instanceof SlotME && hovered.getHasStack()) {
+                TerminalDisplayStack stack = ((SlotME) hovered).getDisplayStack();
+                if (stack != null && stack.key() instanceof AEEssentiaKey) {
+                    AEEssentiaKey key = (AEEssentiaKey) stack.key();
+                    this.drawHoveringText(key.getAspect().getName(), mouseX, mouseY);
+                    return;
+                }
             }
         }
 
         // TODO: Don't use AE2 Core classes
         for (GuiButton c : this.buttonList) {
-            if (!(c instanceof ITooltip) || !((ITooltip) c).isVisible())
+            if (!(c instanceof ITooltip) || !((ITooltip) c).isTooltipAreaVisible())
                 continue;
             ITooltip t = (ITooltip) c;
-            int x = t.xPos();
-            int y = t.yPos();
-            if (mouseX >= x && mouseX <= x + t.getWidth() && mouseY >= y && mouseY <= y + t.getHeight()) {
-                if (t.getMessage() == null || t.getMessage().isEmpty())
+            Rectangle area = t.getTooltipArea();
+            int x = area.x;
+            int y = area.y;
+            if (area.contains(mouseX, mouseY)) {
+                List<String> lines = t.getTooltipMessage().stream().map(component -> component.getFormattedText()).collect(Collectors.toList());
+                if (lines.isEmpty())
                     continue;
 
                 if (y < 15)
                     y = 15;
 
-                List<String> lines = Arrays.asList(t.getMessage().split("\n"));
                 // AE2 Has the first line as WHITE and the rest as GRAY
                 lines.set(0, TextFormatting.WHITE + lines.get(0));
                 for (int i = 1; i < lines.size(); i++)
@@ -129,25 +154,59 @@ public abstract class GuiBase extends GuiContainer {
         super.renderHoveredToolTip(mouseX, mouseY);
     }
 
+    protected Slot findSlotAtMouse(int mouseX, int mouseY) {
+        for (Slot slot : this.inventorySlots.inventorySlots) {
+            if (this.isPointOverSlot(slot, mouseX, mouseY)) {
+                return slot;
+            }
+        }
+        return null;
+    }
+
+    private boolean isPointOverSlot(Slot slot, int mouseX, int mouseY) {
+        int x = this.guiLeft + slot.xPos;
+        int y = this.guiTop + slot.yPos;
+        return mouseX >= x && mouseX < x + 16 && mouseY >= y && mouseY < y + 16;
+    }
+
     /**
      * Called when a PacketSettingChange is received (Client and Server)
      *
      * @param setting Setting changed
      * @param value   New Value
      */
-    public void updateSetting(Settings setting, Enum value) {
+    public void updateSetting(Setting<?> setting, Enum<?> value) {
         if (this.inventorySlots instanceof IConfigurableObject) {
             IConfigManager configManager = ((IConfigurableObject) this.inventorySlots).getConfigManager();
-            configManager.putSetting(setting, value);
+            putSetting(configManager, setting, value);
             this.buttonList.forEach(btn -> {
                 if (!(btn instanceof GuiImgButton))
                     return;
                 GuiImgButton b = (GuiImgButton) btn;
-                if (Stream.of(Settings.ACTIONS, Settings.TERMINAL_STYLE, Settings.SEARCH_MODE).anyMatch(s -> s == b.getSetting()))
+                if (actions() == b.getSetting() || Settings.TERMINAL_STYLE == b.getSetting() || searchMode() == b.getSetting())
                     return;
-                b.set(configManager.getSetting(b.getSetting()));
+                b.set(getSetting(configManager, b.getSetting()));
             });
         }
+    }
+
+    public boolean hasConfigSetting(Setting<?> setting) {
+        return !(this.inventorySlots instanceof IConfigurableObject)
+                || ((IConfigurableObject) this.inventorySlots).getConfigManager().getSettings().contains(setting);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void putSetting(IConfigManager configManager, Setting<?> setting, Enum<?> value) {
+        putSettingUnchecked(configManager, (Setting) setting, value);
+    }
+
+    private static <T extends Enum<T>> void putSettingUnchecked(IConfigManager configManager, Setting<T> setting, Enum<?> value) {
+        configManager.putSetting(setting, setting.getEnumClass().cast(value));
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Enum<?> getSetting(IConfigManager configManager, Setting<?> setting) {
+        return configManager.getSetting((Setting) setting);
     }
 
     protected void addMESlot(SlotME slot) {

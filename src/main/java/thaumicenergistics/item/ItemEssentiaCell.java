@@ -1,39 +1,40 @@
 package thaumicenergistics.item;
 
-import appeng.api.AEApi;
-import appeng.api.config.FuzzyMode;
-import appeng.api.implementations.items.IStorageCell;
-import appeng.api.storage.ICellInventoryHandler;
-import appeng.items.contents.CellUpgrades;
-import appeng.util.InventoryAdaptor;
+import ae2.api.config.FuzzyMode;
+import ae2.api.stacks.AEKey;
+import ae2.api.stacks.AEKeyType;
+import ae2.api.storage.StorageCells;
+import ae2.api.storage.cells.IBasicCellItem;
+import ae2.api.storage.cells.StorageCell;
+import ae2.items.contents.CellConfig;
+import ae2.util.ConfigInventory;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import net.minecraftforge.client.model.ModelLoader;
-import net.minecraftforge.items.IItemHandler;
-import org.dv.minecraft.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.api.storage.IAEEssentiaStack;
-import thaumicenergistics.api.storage.IEssentiaStorageChannel;
+import thaumicenergistics.api.stacks.AEEssentiaKey;
+import thaumicenergistics.api.stacks.AEEssentiaKeys;
 import thaumicenergistics.client.render.IThEModel;
 import thaumicenergistics.init.ModGlobals;
-import thaumicenergistics.util.inventory.EssentiaCellConfig;
+import thaumicenergistics.util.ForgeUtil;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * @author BrockWS
  */
-public class ItemEssentiaCell extends ItemBase implements IStorageCell<IAEEssentiaStack>, IThEModel {
+public class ItemEssentiaCell extends ItemBase implements IBasicCellItem, IThEModel {
 
     private final String size;
     private final int bytes;
@@ -59,37 +60,32 @@ public class ItemEssentiaCell extends ItemBase implements IStorageCell<IAEEssent
         ItemStack held = player.getHeldItem(hand);
         if (held.isEmpty())
             return super.onItemRightClick(world, player, hand);
-        ICellInventoryHandler<IAEEssentiaStack> handler = AEApi.instance().registries().cell().getCellInventory(held, null, this.getChannel());
-        if (handler == null)
-            throw new NullPointerException("Couldn't get ICellInventoryHandler for Essentia Cell");
-        if (!handler.getAvailableItems(this.getChannel().createList()).isEmpty()) // Only try to separate cell if empty
+        StorageCell cell = StorageCells.getCellInventory(held, null);
+        if (cell == null || !cell.getAvailableStacks().isEmpty()) // Only try to separate cell if empty
             return super.onItemRightClick(world, player, hand);
 
         Optional<ItemStack> cellComponentOptional = this.getComponentOfCell(held);
-        Optional<ItemStack> emptyCasingOptional = AEApi.instance().definitions().materials().emptyStorageCell().maybeStack(1);
-        if (!cellComponentOptional.isPresent() || !emptyCasingOptional.isPresent())
+        if (!cellComponentOptional.isPresent())
             return super.onItemRightClick(world, player, hand);
 
-        ItemStack emptyCasing = emptyCasingOptional.get();
+        ItemStack emptyCasing = ae2.core.definitions.AEItems.ITEM_CELL_HOUSING.stack();
         ItemStack cellComponent = cellComponentOptional.get();
-        InventoryPlayer inv = player.inventory;
-        InventoryAdaptor invAdaptor = InventoryAdaptor.getAdaptor(player);
+        player.setHeldItem(hand, ItemStack.EMPTY);
 
-        if (hand == EnumHand.MAIN_HAND) // Prevent accidental deletion when in off hand
-            inv.setInventorySlotContents(inv.currentItem, ItemStack.EMPTY);
-
-        ItemStack cellRemainder = invAdaptor.addItems(cellComponent);
-        if (!cellRemainder.isEmpty())
-            player.dropItem(cellRemainder, false);
-
-        ItemStack casingRemainder = invAdaptor.addItems(emptyCasing);
-        if (!casingRemainder.isEmpty())
-            player.dropItem(emptyCasing, false);
+        this.addOrDrop(player, cellComponent);
+        this.addOrDrop(player, emptyCasing);
 
         if (player.inventoryContainer != null)
             player.inventoryContainer.detectAndSendChanges();
 
         return ActionResult.newResult(EnumActionResult.SUCCESS, player.getHeldItem(hand));
+    }
+
+    private void addOrDrop(EntityPlayer player, ItemStack stack) {
+        ItemStack remainder = ForgeUtil.addStackToPlayerInventory(player, stack, false);
+        if (!remainder.isEmpty()) {
+            player.dropItem(remainder, false);
+        }
     }
 
     private Optional<ItemStack> getComponentOfCell(ItemStack stack) {
@@ -113,8 +109,12 @@ public class ItemEssentiaCell extends ItemBase implements IStorageCell<IAEEssent
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
-        ICellInventoryHandler<IAEEssentiaStack> cellInventory = AEApi.instance().registries().cell().getCellInventory(stack, null, this.getChannel());
-        AEApi.instance().client().addCellInformation(cellInventory, tooltip);
+        this.addCellInformationToTooltip(stack, tooltip);
+    }
+
+    @Override
+    public AEKeyType getKeyType() {
+        return AEEssentiaKeys.INSTANCE;
     }
 
     @Override
@@ -133,8 +133,8 @@ public class ItemEssentiaCell extends ItemBase implements IStorageCell<IAEEssent
     }
 
     @Override
-    public boolean isBlackListed(ItemStack itemStack, IAEEssentiaStack iaeEssentiaStack) {
-        return false;
+    public boolean isBlackListed(ItemStack itemStack, AEKey key) {
+        return !(key instanceof AEEssentiaKey);
     }
 
     @Override
@@ -153,23 +153,13 @@ public class ItemEssentiaCell extends ItemBase implements IStorageCell<IAEEssent
     }
 
     @Override
-    public IEssentiaStorageChannel getChannel() {
-        return AEApi.instance().storage().getStorageChannel(IEssentiaStorageChannel.class);
-    }
-
-    @Override
     public boolean isEditable(ItemStack itemStack) {
         return true;
     }
 
     @Override
-    public IItemHandler getUpgradesInventory(ItemStack itemStack) {
-        return new CellUpgrades(itemStack, 0);
-    }
-
-    @Override
-    public IItemHandler getConfigInventory(ItemStack itemStack) {
-        return new EssentiaCellConfig(itemStack);
+    public ConfigInventory getConfigInventory(ItemStack itemStack) {
+        return CellConfig.create(Collections.singleton(AEEssentiaKeys.INSTANCE), itemStack);
     }
 
     @Override

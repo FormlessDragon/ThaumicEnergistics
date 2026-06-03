@@ -1,6 +1,6 @@
 package thaumicenergistics.client;
 
-import appeng.api.util.AEColor;
+import ae2.api.util.AEColor;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.color.IBlockColor;

@@ -1,8 +1,8 @@
 package thaumicenergistics.upgrade;
 
-import appeng.api.definitions.IItemDefinition;
 import net.minecraft.item.ItemStack;
 import thaumicenergistics.api.IThEUpgrade;
+import thaumicenergistics.api.definitions.IThEItemDefinition;
 import thaumicenergistics.util.ForgeUtil;
 
 import java.util.HashMap;
@@ -14,17 +14,17 @@ import java.util.stream.Stream;
  */
 public class ThEUpgrade implements IThEUpgrade {
 
-    private final IItemDefinition definition;
+    private final IThEItemDefinition definition;
     private final Map<ItemStack, Integer> supported;
 
-    public ThEUpgrade(IItemDefinition definition) {
+    public ThEUpgrade(IThEItemDefinition definition) {
         this.definition = definition;
 
         this.supported = new HashMap<>();
     }
 
     @Override
-    public void registerItem(IItemDefinition item, int max) {
+    public void registerItem(IThEItemDefinition item, int max) {
         item.maybeStack(1).ifPresent(stack -> this.registerItem(stack, max));
     }
 
@@ -36,7 +36,7 @@ public class ThEUpgrade implements IThEUpgrade {
     }
 
     @Override
-    public IItemDefinition getDefinition() {
+    public IThEItemDefinition getDefinition() {
         return this.definition;
     }
 
