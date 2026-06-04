@@ -16,7 +16,7 @@ import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.integration.appeng.ThEPartModel;
 import thaumicenergistics.integration.appeng.compat.ThEPartItemStack;
-import thaumicenergistics.item.part.ItemArcaneTerminal;
+import thaumicenergistics.items.part.ItemArcaneTerminal;
 import thaumicenergistics.util.AEUtil;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.ItemHandlerUtil;

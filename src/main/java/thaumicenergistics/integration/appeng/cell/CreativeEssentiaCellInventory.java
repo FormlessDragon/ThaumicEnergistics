@@ -9,8 +9,8 @@ import ae2.api.storage.cells.StorageCell;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
-import thaumicenergistics.api.stacks.AEEssentiaKey;
-import thaumicenergistics.item.ItemCreativeEssentiaCell;
+import thaumicenergistics.me.key.AEEssentiaKey;
+import thaumicenergistics.items.ItemCreativeEssentiaCell;
 import thaumcraft.api.aspects.Aspect;
 
 import java.util.Set;

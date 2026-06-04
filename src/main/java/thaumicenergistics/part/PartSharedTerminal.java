@@ -11,7 +11,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.integration.appeng.grid.GridUtil;
-import thaumicenergistics.item.ItemPartBase;
+import thaumicenergistics.items.ItemPartBase;
 
 /**
  * @author BrockWS

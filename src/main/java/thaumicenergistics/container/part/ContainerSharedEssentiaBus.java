@@ -15,7 +15,7 @@ import thaumicenergistics.container.slot.SlotGhost;
 import thaumicenergistics.container.slot.SlotGhostEssentia;
 import thaumicenergistics.container.slot.SlotUpgrade;
 import thaumicenergistics.integration.appeng.compat.Upgrades;
-import thaumicenergistics.item.ItemMaterial;
+import thaumicenergistics.items.ItemMaterial;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketEssentiaFilter;
 import thaumicenergistics.part.PartSharedEssentiaBus;

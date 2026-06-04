@@ -71,7 +71,6 @@ unimined.minecraft {
         }
         loader "0.5.12-alpha"
         runs.all {
-            systemProperty("crl.dev.mixin", "mixins.${mod_id}.json,mixins.${mod_id}.late.json")
             args += ['--username', minecraft_username]
             def extraArgs = propertyString('extra_jvm_args')
             if (extraArgs != null && !extraArgs.trim().isEmpty()) {
@@ -122,7 +121,18 @@ processResources {
 }
 
 sourceSets {
+    stubApi {
+        java {
+            srcDir 'src/api/java'
+        }
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+
     main {
+        compileClasspath += sourceSets.stubApi.output
+        runtimeClasspath += sourceSets.stubApi.output
+
         blossom {
             javaSources {
                 property('mod_id', propertyString('mod_id'))
@@ -144,6 +154,24 @@ sourceSets {
             }
         }
     }
+
+    test {
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+
+configurations.named('stubApiImplementation').configure {
+    extendsFrom(configurations.implementation)
+}
+configurations.named('stubApiCompileOnly').configure {
+    extendsFrom(configurations.compileOnly)
+}
+configurations.named('stubApiAnnotationProcessor').configure {
+    extendsFrom(configurations.annotationProcessor)
+}
+configurations.named('stubApiRuntimeOnly').configure {
+    extendsFrom(configurations.runtimeOnly)
 }
 
 idea {
@@ -180,7 +208,8 @@ if (!propertyBool('enable_shadow')) {
 }
 
 compileJava {
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_21
+    dependsOn(tasks.named('compileStubApiJava'))
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
@@ -195,7 +224,6 @@ jar {
         manifest {
             def attribute_map = [:]
             attribute_map['ModType'] = "CRL"
-            attribute_map['MixinConfigs'] = "mixins.${mod_id}.json,mixins.${mod_id}.late.json"
             if (configurations.contain.size() > 0) {
                 attribute_map['ContainedDeps'] = configurations.contain.collect { it.name }.join(' ')
                 attribute_map['NonModDeps'] = true

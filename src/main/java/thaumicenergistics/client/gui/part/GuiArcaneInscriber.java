@@ -11,7 +11,7 @@ import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.slot.ThEGhostSlot;
 import thaumicenergistics.init.ModGlobals;
-import thaumicenergistics.item.ItemKnowledgeCore;
+import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketUIAction;
 import thaumicenergistics.util.KnowledgeCoreUtil;

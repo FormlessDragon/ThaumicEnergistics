@@ -22,7 +22,7 @@ import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
-import thaumicenergistics.item.ItemKnowledgeCore;
+import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketIsArcaneUpdate;
 import thaumicenergistics.network.packets.PacketUIAction;

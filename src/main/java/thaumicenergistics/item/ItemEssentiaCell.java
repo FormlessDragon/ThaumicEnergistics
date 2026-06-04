@@ -18,10 +18,11 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import net.minecraftforge.client.model.ModelLoader;
+import thaumicenergistics.items.ItemBase;
+import thaumicenergistics.me.key.AEEssentiaKey;
+import thaumicenergistics.me.key.AEEssentiaKeys;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.api.stacks.AEEssentiaKey;
-import thaumicenergistics.api.stacks.AEEssentiaKeys;
 import thaumicenergistics.client.render.IThEModel;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.util.ForgeUtil;
@@ -94,8 +95,8 @@ public class ItemEssentiaCell extends ItemBase implements IBasicCellItem, IThEMo
         Preconditions.checkNotNull(stack.getItem().getRegistryName());
         Preconditions.checkNotNull(stack.getItem().getRegistryName().getPath());
         switch (stack.getItem().getRegistryName().getPath().split("_")[2]) {
-            case "1k":
-                return ThEApi.instance().items().essentiaComponent1k().maybeStack(1);
+/*            case "1k":
+                return ThEApi.instance().items().essentiaComponent1k().maybeStack(1);*/
             case "4k":
                 return ThEApi.instance().items().essentiaComponent4k().maybeStack(1);
             case "16k":

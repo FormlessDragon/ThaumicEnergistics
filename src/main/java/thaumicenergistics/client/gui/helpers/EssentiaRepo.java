@@ -6,7 +6,7 @@ import ae2.api.config.ViewItems;
 import ae2.api.stacks.AEKey;
 import ae2.api.stacks.KeyCounter;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import thaumicenergistics.api.stacks.AEEssentiaKey;
+import thaumicenergistics.me.key.AEEssentiaKey;
 
 import java.util.ArrayList;
 import java.util.Comparator;

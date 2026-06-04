@@ -9,7 +9,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectSource;
-import thaumicenergistics.api.stacks.AEEssentiaKey;
+import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
 import thaumicenergistics.integration.appeng.compat.GridAccessException;
 import thaumicenergistics.integration.appeng.grid.GridUtil;

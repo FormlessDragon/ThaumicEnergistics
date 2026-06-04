@@ -87,14 +87,6 @@ public class GuiHandler implements IGuiHandler {
         switch (guiID) {
             case ARCANE_ASSEMBLER:
                 return new ContainerArcaneAssembler(player, (TileArcaneAssembler) te);
-            case ESSENTIA_IMPORT_BUS:
-                return new ContainerEssentiaImportBus(player, (PartEssentiaImportBus) part);
-            case ESSENTIA_EXPORT_BUS:
-                return new ContainerEssentiaExportBus(player, (PartEssentiaExportBus) part);
-            case ESSENTIA_STORAGE_BUS:
-                return new ContainerEssentiaStorageBus(player, (PartEssentiaStorageBus) part);
-            case ESSENTIA_TERMINAL:
-                return new ContainerEssentiaTerminal(player, (PartEssentiaTerminal) part);
             case ARCANE_TERMINAL:
                 return new ContainerArcaneTerminal(player, (PartArcaneTerminal) part);
             case ARCANE_INSCRIBER:
@@ -105,8 +97,6 @@ public class GuiHandler implements IGuiHandler {
                 return new ContainerCraftConfirmBridge(player.inventory, (PartSharedTerminal) part);
             case AE2_CRAFT_STATUS:
                 return new ContainerCraftingStatusBridge(player.inventory, (PartSharedTerminal) part);
-            case AE2_PRIORITY:
-                return new ContainerPriorityBridge(player.inventory, (PartEssentiaStorageBus) part);
             case KNOWLEDGE_CORE_ADD:
             case KNOWLEDGE_CORE_DEL:
             case KNOWLEDGE_CORE_VIEW:
@@ -129,14 +119,6 @@ public class GuiHandler implements IGuiHandler {
         switch (guiID) {
             case ARCANE_ASSEMBLER:
                 return new GuiArcaneAssembler(new ContainerArcaneAssembler(player, (TileArcaneAssembler) te));
-            case ESSENTIA_IMPORT_BUS:
-                return new GuiEssentiaImportBus(new ContainerEssentiaImportBus(player, (PartEssentiaImportBus) part));
-            case ESSENTIA_EXPORT_BUS:
-                return new GuiEssentiaExportBus(new ContainerEssentiaExportBus(player, (PartEssentiaExportBus) part));
-            case ESSENTIA_STORAGE_BUS:
-                return new GuiEssentiaStorageBus(new ContainerEssentiaStorageBus(player, (PartEssentiaStorageBus) part));
-            case ESSENTIA_TERMINAL:
-                return new GuiEssentiaTerminal(new ContainerEssentiaTerminal(player, (PartEssentiaTerminal) part));
             case ARCANE_TERMINAL:
                 return new GuiArcaneTerminal(new ContainerArcaneTerminal(player, (PartArcaneTerminal) part));
             case ARCANE_INSCRIBER:
@@ -147,8 +129,6 @@ public class GuiHandler implements IGuiHandler {
                 return new GuiCraftConfirmBridge(new ContainerCraftConfirmBridge(player.inventory, (PartSharedTerminal) part), player.inventory, (PartSharedTerminal) part);
             case AE2_CRAFT_STATUS:
                 return new GuiCraftingStatusBridge(new ContainerCraftingStatusBridge(player.inventory, (PartSharedTerminal) part), player.inventory, (PartSharedTerminal) part);
-            case AE2_PRIORITY:
-                return new GuiPriorityBridge(player, (PartEssentiaStorageBus) part);
             case KNOWLEDGE_CORE_ADD:
             case KNOWLEDGE_CORE_DEL:
             case KNOWLEDGE_CORE_VIEW:

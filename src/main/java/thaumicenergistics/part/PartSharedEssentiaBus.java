@@ -19,7 +19,7 @@ import thaumcraft.api.aspects.IAspectContainer;
 import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
 import thaumicenergistics.integration.appeng.compat.ThEPartItemStack;
 import thaumicenergistics.integration.appeng.compat.Upgrades;
-import thaumicenergistics.item.ItemPartBase;
+import thaumicenergistics.items.ItemPartBase;
 import thaumicenergistics.util.EssentiaFilter;
 import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 

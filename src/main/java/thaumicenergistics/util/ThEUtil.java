@@ -5,9 +5,10 @@ import net.minecraft.item.ItemStack;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.item.ItemDummyAspect;
+import thaumicenergistics.items.ItemDummyAspect;
 
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -58,11 +59,14 @@ public class ThEUtil {
         return e == TerminalStyle.FULL;
     }
 
-    @Deprecated
     public static int getEssentiaCapacity(ItemStack stack) {
         if (stack == null || !(stack.getItem() instanceof IEssentiaContainerItem) || stack.getItem().getRegistryName() == null)
             return 0;
-        return ThEApi.instance().config().essentiaContainerCapacity().getOrDefault(stack.getItem().getRegistryName().toString() + ":" + stack.getMetadata(), 0);
+
+        Map<String, Integer> capacities = ThEApi.instance().config().essentiaContainerCapacity();
+        String registryName = stack.getItem().getRegistryName().toString();
+        Integer capacity = capacities.get(registryName + ":" + stack.getMetadata());
+        return capacity != null ? capacity : capacities.getOrDefault(registryName, 0);
     }
 
     /**

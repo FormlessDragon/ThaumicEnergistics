@@ -4,7 +4,7 @@ import ae2.api.storage.cells.ICellHandler;
 import ae2.api.storage.cells.ISaveProvider;
 import ae2.api.storage.cells.StorageCell;
 import net.minecraft.item.ItemStack;
-import thaumicenergistics.item.ItemCreativeEssentiaCell;
+import thaumicenergistics.items.ItemCreativeEssentiaCell;
 
 /**
  * @author BrockWS

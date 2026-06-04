@@ -12,7 +12,7 @@ import net.minecraft.util.text.ITextComponent;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
-import thaumicenergistics.api.stacks.AEEssentiaKey;
+import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
 import thaumicenergistics.util.EssentiaFilter;
 

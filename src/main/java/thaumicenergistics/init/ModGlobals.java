@@ -27,7 +27,7 @@ public class ModGlobals {
 
         @Override
         public ItemStack createIcon() {
-            ItemStack icon = ThEApi.instance().items().essentiaCell1k().maybeStack(1).orElse(ItemStack.EMPTY);
+            ItemStack icon = ThEApi.instance().items().essentiaCell4k().maybeStack(1).orElse(ItemStack.EMPTY);
             if (icon.isEmpty())
                 throw new NullPointerException("Unable to use essentiaCell1k for creative tab!");
             return icon;

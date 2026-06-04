@@ -4,7 +4,7 @@ import net.minecraft.item.ItemStack;
 import thaumicenergistics.api.IThEUpgrade;
 import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.integration.appeng.compat.Upgrades;
-import thaumicenergistics.item.ItemKnowledgeCore;
+import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.util.ForgeUtil;
 
 import java.util.HashMap;

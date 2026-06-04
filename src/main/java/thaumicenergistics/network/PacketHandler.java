@@ -29,7 +29,6 @@ public class PacketHandler {
         PacketHandler.INSTANCE = NetworkRegistry.INSTANCE.newSimpleChannel(Reference.MOD_ID);
 
         PacketHandler.INSTANCE.registerMessage(PacketEssentiaFilter.Handler.class, PacketEssentiaFilter.class, PacketHandler.nextID(), Side.CLIENT);
-        PacketHandler.INSTANCE.registerMessage(PacketMEEssentiaUpdate.Handler.class, PacketMEEssentiaUpdate.class, PacketHandler.nextID(), Side.CLIENT);
         PacketHandler.INSTANCE.registerMessage(PacketMEItemUpdate.Handler.class, PacketMEItemUpdate.class, PacketHandler.nextID(), Side.CLIENT);
         PacketHandler.INSTANCE.registerMessage(PacketInvHeldUpdate.Handler.class, PacketInvHeldUpdate.class, PacketHandler.nextID(), Side.CLIENT);
         PacketHandler.INSTANCE.registerMessage(PacketVisUpdate.Handler.class, PacketVisUpdate.class, PacketHandler.nextID(), Side.CLIENT);

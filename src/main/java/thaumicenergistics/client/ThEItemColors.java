@@ -11,7 +11,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.item.ItemDummyAspect;
+import thaumicenergistics.items.ItemDummyAspect;
 
 import javax.annotation.Nullable;
 
@@ -34,8 +34,6 @@ public class ThEItemColors {
             Minecraft.getMinecraft().getItemColors().registerItemColorHandler(terminalItemColor, item);
             // Minecraft.getMinecraft().getBlockColors().registerBlockColorHandler(terminalBlockColor, item);
         });
-        ThEApi.instance().items().essentiaTerminal().maybeItem()
-                .ifPresent(item -> Minecraft.getMinecraft().getItemColors().registerItemColorHandler(terminalItemColor, item));
     }
 
     @SideOnly(Side.CLIENT)

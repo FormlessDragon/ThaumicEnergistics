@@ -1,6 +1,7 @@
 package thaumicenergistics;
 
 import ae2.api.stacks.AEKeyTypes;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -22,7 +23,7 @@ import thaumicenergistics.api.IThEBlocks;
 import thaumicenergistics.api.IThEItems;
 import thaumicenergistics.api.IThEUpgrades;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.api.stacks.AEEssentiaKeys;
+import thaumicenergistics.me.key.AEEssentiaKeys;
 import thaumicenergistics.client.ThEItemColors;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.command.CommandAddVis;
@@ -72,21 +73,13 @@ public class ThaumicEnergistics {
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER.info("{} preInit", Reference.MOD_NAME);
         ThEApi.instance(); // Make sure to init the api
-        registerEssentiaKeyType();
+        AEKeyTypes.register(AEEssentiaKeys.INSTANCE);
         MinecraftForge.EVENT_BUS.register(this);
         PacketHandler.register();
 
         proxy.preInit(event);
 
         ThEIntegrationLoader.preInit();
-    }
-
-    private static void registerEssentiaKeyType() {
-        boolean registered = AEKeyTypes.getAll().stream()
-                .anyMatch(type -> AEEssentiaKeys.ID.equals(type.getId()));
-        if (!registered) {
-            AEKeyTypes.register(AEEssentiaKeys.INSTANCE);
-        }
     }
 
     /**
@@ -154,4 +147,7 @@ public class ThaumicEnergistics {
             ConfigManager.sync(Reference.MOD_ID, Config.Type.INSTANCE);
     }
 
+    public static ResourceLocation id(String id) {
+        return new ResourceLocation(Reference.MOD_ID, id);
+    }
 }

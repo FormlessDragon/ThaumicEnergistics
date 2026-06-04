@@ -38,7 +38,7 @@ import thaumicenergistics.integration.appeng.grid.IThEGridHost;
 import thaumicenergistics.integration.appeng.grid.ThEGridBlock;
 import thaumicenergistics.integration.appeng.util.ThEActionSource;
 import thaumicenergistics.integration.appeng.util.ThEConfigManager;
-import thaumicenergistics.item.ItemPartBase;
+import thaumicenergistics.items.ItemPartBase;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.IThEGridNodeBlock;
 import thaumicenergistics.util.IThEOwnable;

@@ -6,7 +6,7 @@ import thaumicenergistics.api.IThEItems;
 import thaumicenergistics.api.IThEUpgrade;
 import thaumicenergistics.api.IThEUpgrades;
 import thaumicenergistics.api.definitions.IThEItemDefinition;
-import thaumicenergistics.definitions.ThEItemDefinition;
+import thaumicenergistics.core.definitions.ThEItemDefinition;
 
 import java.util.ArrayList;
 import java.util.List;

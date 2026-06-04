@@ -12,7 +12,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import org.jetbrains.annotations.Nullable;
 import thaumcraft.api.aspects.Aspect;
-import thaumicenergistics.api.stacks.AEEssentiaKey;
+import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.api.stacks.EssentiaStack;
 
 public final class SupergiantEssentiaUtil {

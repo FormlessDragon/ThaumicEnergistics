@@ -15,8 +15,8 @@ import thaumicenergistics.block.BlockArcaneAssembler;
 import thaumicenergistics.block.BlockBase;
 import thaumicenergistics.block.BlockInfusionProvider;
 import thaumicenergistics.client.render.IThEModel;
-import thaumicenergistics.definitions.ThEBlockDefinition;
-import thaumicenergistics.definitions.ThETileDefinition;
+import thaumicenergistics.core.definitions.ThEBlockDefinition;
+import thaumicenergistics.core.definitions.ThETileDefinition;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.tile.TileInfusionProvider;
 

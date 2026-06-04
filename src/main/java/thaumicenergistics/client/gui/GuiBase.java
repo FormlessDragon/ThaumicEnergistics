@@ -18,7 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.opengl.GL11;
-import thaumicenergistics.api.stacks.AEEssentiaKey;
+import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.client.gui.component.GuiImgButton;
 import thaumicenergistics.client.gui.helpers.GenericStackSizeRenderer;
 import thaumicenergistics.client.gui.helpers.GuiScrollBar;

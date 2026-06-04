@@ -13,7 +13,7 @@ public interface IThEItems {
 
     // Cells
 
-    IThEItemDefinition essentiaCell1k();
+//    IThEItemDefinition essentiaCell1k();
 
     IThEItemDefinition essentiaCell4k();
 
@@ -25,14 +25,6 @@ public interface IThEItems {
 
     // Parts
 
-    IThEItemDefinition essentiaImportBus();
-
-    IThEItemDefinition essentiaExportBus();
-
-    IThEItemDefinition essentiaStorageBus();
-
-    IThEItemDefinition essentiaTerminal();
-
     IThEItemDefinition arcaneTerminal();
 
     IThEItemDefinition arcaneInscriber();
@@ -43,7 +35,7 @@ public interface IThEItems {
 
     IThEItemDefinition coalescenceCore();
 
-    IThEItemDefinition essentiaComponent1k();
+//    IThEItemDefinition essentiaComponent1k();
 
     IThEItemDefinition essentiaComponent4k();
 

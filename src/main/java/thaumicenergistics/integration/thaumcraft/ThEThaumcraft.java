@@ -126,7 +126,7 @@ public class ThEThaumcraft implements IThEIntegration {
                         AEItems.LOGIC_PROCESSOR.stack()
                 )));
 
-        ThEApi.instance().items().essentiaComponent1k().maybeStack(1).ifPresent(stack -> {
+       /*ThEApi.instance().items().essentiaComponent1k().maybeStack(1).ifPresent(stack -> {
             ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_1k"), new ShapedArcaneRecipe(
                     recipeGroup,
                     "ESSENTIASTORAGE1k@2",
@@ -206,73 +206,7 @@ public class ThEThaumcraft implements IThEIntegration {
                     AEBlocks.QUARTZ_GLASS.block()
             ));
             this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_64k"));
-        });
-
-        ThEApi.instance().items().essentiaExportBus().maybeStack(1).ifPresent(stack ->
-                ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_export_bus"), new ShapedArcaneRecipe(
-                        recipeGroup,
-                        "ESSENTIABUSES@2",
-                        20,
-                        new AspectList(),
-                        stack,
-                        "ICI",
-                        "STS",
-                        'S',
-                        ItemsTC.salisMundus,
-                        'C',
-                        ThEApi.instance().items().coalescenceCore().maybeStack(1).orElse(ItemStack.EMPTY),
-                        'I',
-                        "ingotIron",
-                        'T',
-                        BlocksTC.tube
-                )));
-        ThEApi.instance().items().essentiaImportBus().maybeStack(1).ifPresent(stack ->
-                ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_import_bus"), new ShapedArcaneRecipe(
-                        recipeGroup,
-                        "ESSENTIABUSES@2",
-                        20,
-                        new AspectList(),
-                        stack,
-                        "SCS",
-                        "ITI",
-                        'S',
-                        ItemsTC.salisMundus,
-                        'C',
-                        ThEApi.instance().items().diffusionCore().maybeStack(1).orElse(ItemStack.EMPTY),
-                        'I',
-                        "ingotIron",
-                        'T',
-                        BlocksTC.tube
-                )));
-        ThEApi.instance().items().essentiaStorageBus().maybeItem().ifPresent(item ->
-                ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_storage_bus"), new ShapelessArcaneRecipe(
-                        recipeGroup,
-                        "ESSENTIABUSES@2",
-                        20,
-                        new AspectList(),
-                        item,
-                        Ingredient.fromStacks(
-                                AEBlocks.INTERFACE.stack(),
-                                AEParts.INTERFACE.stack()
-                        ),
-                        Blocks.PISTON,
-                        Blocks.STICKY_PISTON,
-                        ItemsTC.salisMundus
-                )));
-        ThEApi.instance().items().essentiaTerminal().maybeItem().ifPresent(essentia -> {
-            ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_terminal"), new ShapelessArcaneRecipe(
-                    recipeGroup,
-                    "ESSENTIATERMINAL@2",
-                    25,
-                    new AspectList(),
-                    essentia,
-                    ItemsTC.salisMundus,
-                    ThEApi.instance().items().diffusionCore().maybeStack(1).orElse(ItemStack.EMPTY),
-                    ThEApi.instance().items().coalescenceCore().maybeStack(1).orElse(ItemStack.EMPTY),
-                    AEItems.LOGIC_PROCESSOR.stack(),
-                    "itemIlluminatedPanel"
-            ));
-        });
+        });*/
         ThEApi.instance().items().arcaneTerminal().maybeItem().ifPresent(arcane ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "arcane_terminal"), new ShapelessArcaneRecipe(
                         recipeGroup,

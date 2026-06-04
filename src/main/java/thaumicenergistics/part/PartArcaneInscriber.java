@@ -8,7 +8,7 @@ import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.integration.appeng.ThEPartModel;
 import thaumicenergistics.integration.appeng.compat.ThEPartItemStack;
-import thaumicenergistics.item.part.ItemArcaneInscriber;
+import thaumicenergistics.items.part.ItemArcaneInscriber;
 import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
 

@@ -11,7 +11,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 import thaumcraft.api.aspects.Aspect;
-import thaumicenergistics.item.ItemDummyAspect;
+import thaumicenergistics.items.ItemDummyAspect;
 
 import java.awt.*;
 

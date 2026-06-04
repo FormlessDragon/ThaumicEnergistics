@@ -3,7 +3,7 @@ package thaumicenergistics.client.gui.helpers;
 import ae2.api.stacks.AEItemKey;
 import ae2.api.stacks.AEKey;
 import net.minecraft.item.ItemStack;
-import thaumicenergistics.api.stacks.AEEssentiaKey;
+import thaumicenergistics.me.key.AEEssentiaKey;
 
 public final class TerminalDisplayStacks {
     private TerminalDisplayStacks() {

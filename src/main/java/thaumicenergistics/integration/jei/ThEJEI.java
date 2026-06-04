@@ -50,10 +50,6 @@ public class ThEJEI implements IModPlugin {
         items.arcaneTerminal().maybeStack(1).ifPresent(stack -> registerWorkbenchCatalyst(registry, new ACTRecipeTransferHandler<>(rthh), stack));
         items.arcaneInscriber().maybeStack(1).ifPresent(stack -> registerWorkbenchCatalyst(registry, new ACIRecipeTransferHandler<>(rthh), stack));
 
-        items.essentiaExportBus().maybeStack(1)
-                .ifPresent(stack -> registry.addGhostIngredientHandler(
-                        GuiSharedEssentiaBus.class,
-                        new GhostEssentiaHandler()));
         items.arcaneInscriber().maybeStack(1)
                 .ifPresent(stack -> registry.addGhostIngredientHandler(
                         GuiArcaneInscriber.class,

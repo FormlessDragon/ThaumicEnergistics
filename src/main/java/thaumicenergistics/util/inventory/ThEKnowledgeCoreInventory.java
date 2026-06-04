@@ -1,7 +1,7 @@
 package thaumicenergistics.util.inventory;
 
 import net.minecraft.item.ItemStack;
-import thaumicenergistics.item.ItemKnowledgeCore;
+import thaumicenergistics.items.ItemKnowledgeCore;
 
 /**
  * @author Alex811
