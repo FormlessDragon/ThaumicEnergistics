@@ -1,6 +1,6 @@
 package thaumicenergistics.integration.theoneprobe;
 
-import api.java.mcjty.theoneprobe.api.ITheOneProbe;
+import mcjty.theoneprobe.api.ITheOneProbe;
 import net.minecraftforge.fml.common.event.FMLInterModComms;
 import thaumicenergistics.integration.IThEIntegration;
 

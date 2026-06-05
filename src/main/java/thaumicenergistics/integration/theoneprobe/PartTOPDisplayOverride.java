@@ -1,6 +1,6 @@
 package thaumicenergistics.integration.theoneprobe;
 
-import api.java.mcjty.theoneprobe.api.*;
+import mcjty.theoneprobe.api.*;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;

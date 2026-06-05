@@ -3,6 +3,7 @@ package thaumicenergistics.client.render;
 import ae2.api.client.AEKeyRenderHandler;
 import ae2.api.client.AEKeyRendering;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -25,30 +26,17 @@ public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKe
     public void drawInGui(Minecraft mc, int x, int y, AEEssentiaKey what) {
         Aspect aspect = what.getAspect();
         GlStateManager.pushMatrix();
-
         try {
-            mc.getTextureManager().bindTexture(aspect.getImage());
-            GL11.glBlendFunc(770, 771);
-            GlStateManager.disableLighting();
-            // GlStateManager.scale(0.063f, 0.063f, 0);
-            GlStateManager.rotate(180f, 1, 1, 0);
-            GlStateManager.rotate(90f, 0, 0, 1);
-            GlStateManager.translate(0f, -1f, 0);
-
-            Color c = new Color(aspect.getColor());
-            GlStateManager.color((float) c.getRed() / 255.0F, (float) c.getGreen() / 255.0F, (float) c.getBlue() / 255.0F, 1.0f);
-
-            Tessellator tess = Tessellator.getInstance();
-            tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-            tess.getBuffer().pos(0.0D, 1.0D, 0).tex(0.0D, 1.0D).color((float) c.getRed() / 255.0F, (float) c.getGreen() / 255.0F, (float) c.getBlue() / 255.0F, 1.0f).endVertex();
-            tess.getBuffer().pos(1.0D, 1.0D, 0).tex(1.0D, 1.0D).color((float) c.getRed() / 255.0F, (float) c.getGreen() / 255.0F, (float) c.getBlue() / 255.0F, 1.0f).endVertex();
-            tess.getBuffer().pos(1.0D, 0.0D, 0).tex(1.0D, 0.0D).color((float) c.getRed() / 255.0F, (float) c.getGreen() / 255.0F, (float) c.getBlue() / 255.0F, 1.0f).endVertex();
-            tess.getBuffer().pos(0.0D, 0.0D, 0).tex(0.0D, 0.0D).color((float) c.getRed() / 255.0F, (float) c.getGreen() / 255.0F, (float) c.getBlue() / 255.0F, 1.0f).endVertex();
-            tess.draw();
-        } finally {
             GlStateManager.enableBlend();
-            GlStateManager.enableDepth();
+            GlStateManager.disableLighting();
+            GlStateManager.enableTexture2D();
+            GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            mc.getTextureManager().bindTexture(aspect.getImage());
+
+            drawAspectQuad(x, y, x + 16.0D, y + 16.0D, new Color(aspect.getColor()));
+        } finally {
             GlStateManager.enableLighting();
+            GlStateManager.disableBlend();
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
         }
@@ -67,19 +55,12 @@ public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKe
             GlStateManager.enableBlend();
             GlStateManager.disableLighting();
             GlStateManager.disableCull();
+            GlStateManager.enableTexture2D();
+            GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
             Minecraft minecraft = Minecraft.getMinecraft();
             minecraft.getTextureManager().bindTexture(aspect.getImage());
 
-            Color c = new Color(aspect.getColor());
-            GlStateManager.color((float) c.getRed() / 255.0F, (float) c.getGreen() / 255.0F, (float) c.getBlue() / 255.0F, 1.0f);
-
-            Tessellator tess= Tessellator.getInstance();
-            tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-            tess.getBuffer().pos(x0, y1, 0).tex(0.0D, 1.0D).color((float) c.getRed() / 255.0F, (float) c.getGreen() / 255.0F, (float) c.getBlue() / 255.0F, 1.0f).endVertex();
-            tess.getBuffer().pos(x1, y1, 0).tex(1.0D, 1.0D).color((float) c.getRed() / 255.0F, (float) c.getGreen() / 255.0F, (float) c.getBlue() / 255.0F, 1.0f).endVertex();
-            tess.getBuffer().pos(x1, y0, 0).tex(1.0D, 0.0D).color((float) c.getRed() / 255.0F, (float) c.getGreen() / 255.0F, (float) c.getBlue() / 255.0F, 1.0f).endVertex();
-            tess.getBuffer().pos(x0, y1, 0).tex(0.0D, 0.0D).color((float) c.getRed() / 255.0F, (float) c.getGreen() / 255.0F, (float) c.getBlue() / 255.0F, 1.0f).endVertex();
-            tess.draw();
+            drawAspectQuad(x0, y0, x1, y1, new Color(aspect.getColor()));
         } finally {
             GlStateManager.enableCull();
             GlStateManager.enableLighting();
@@ -92,5 +73,16 @@ public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKe
     @Override
     public ITextComponent getDisplayName(AEEssentiaKey what) {
         return what.getDisplayName();
+    }
+
+    private static void drawAspectQuad(double x0, double y0, double x1, double y1, Color color) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+        buffer.pos(x0, y1, 0.0D).tex(0.0D, 1.0D).color(color.getRed(), color.getGreen(), color.getBlue(), 255).endVertex();
+        buffer.pos(x1, y1, 0.0D).tex(1.0D, 1.0D).color(color.getRed(), color.getGreen(), color.getBlue(), 255).endVertex();
+        buffer.pos(x1, y0, 0.0D).tex(1.0D, 0.0D).color(color.getRed(), color.getGreen(), color.getBlue(), 255).endVertex();
+        buffer.pos(x0, y0, 0.0D).tex(0.0D, 0.0D).color(color.getRed(), color.getGreen(), color.getBlue(), 255).endVertex();
+        tessellator.draw();
     }
 }

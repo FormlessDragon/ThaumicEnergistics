@@ -1,8 +1,8 @@
 package thaumicenergistics.integration.theoneprobe;
 
-import api.java.mcjty.theoneprobe.api.IProbeHitData;
-import api.java.mcjty.theoneprobe.api.IProbeInfo;
-import api.java.mcjty.theoneprobe.api.ProbeMode;
+import mcjty.theoneprobe.api.IProbeHitData;
+import mcjty.theoneprobe.api.IProbeInfo;
+import mcjty.theoneprobe.api.ProbeMode;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;

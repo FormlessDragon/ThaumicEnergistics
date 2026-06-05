@@ -10,9 +10,11 @@ import org.jetbrains.annotations.Nullable;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
+import thaumcraft.common.items.consumables.ItemPhial;
 import thaumicenergistics.api.stacks.EssentiaStack;
 import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.me.key.AEEssentiaKeys;
+import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.ThEUtil;
 
 public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEssentiaKey, EssentiaContainerItemStrategy.Context> {
@@ -64,68 +66,94 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
     }
 
     @Override
-    public long extract(Context context, AEEssentiaKey aeEssentiaKey, long l, Actionable actionable) {
+    public long extract(Context context, AEEssentiaKey what, long amount, Actionable mode) {
+        if (amount <= 0) {
+            return 0;
+        }
+
         ItemStack stack = context.getStack();
         IEssentiaContainerItem container = getContainer(stack);
         if (container == null) {
             return 0;
         }
 
-        AspectList list = container.getAspects(stack);
+        ItemStack single = stack.copy();
+        single.setCount(1);
+
+        AspectList list = container.getAspects(single);
         if (list == null || list.size() == 0) {
             return 0;
         }
 
-        Aspect aspect = aeEssentiaKey.getAspect();
+        Aspect aspect = what.getAspect();
         int available = list.getAmount(aspect);
         if (available <= 0) {
             return 0;
         }
 
-        int toExtract = (int) Math.min(Integer.MAX_VALUE, l);
-        int extracted = Math.min(toExtract, available);
-        if (extracted > 0 && actionable == Actionable.MODULATE) {
-            int remaining = available - extracted;
-            AspectList updated = remaining > 0 ? new AspectList().add(aspect, remaining) : new AspectList();
-            container.setAspects(stack, updated);
-            context.setStack(stack);
+        clearAspects(single);
+        if (!context.canAddOverflow(single)) {
+            return 0;
         }
-        return extracted;
+
+        if (mode == Actionable.SIMULATE) {
+            return available;
+        }
+
+        if (amount < available) {
+            return 0;
+        }
+
+        stack.shrink(1);
+        context.addOverflow(single);
+        return available;
     }
 
     @Override
-    public long insert(Context context, AEEssentiaKey aeEssentiaKey, long l, Actionable actionable) {
+    public long insert(Context context, AEEssentiaKey what, long amount, Actionable mode) {
+        if (amount <= 0) {
+            return 0;
+        }
+
         ItemStack stack = context.getStack();
         IEssentiaContainerItem container = getContainer(stack);
         if (container == null) {
             return 0;
         }
 
-        int capacity = ThEUtil.getEssentiaCapacity(stack);
+        ItemStack copy = stack.copy();
+        copy.setCount(1);
+
+        int capacity = ThEUtil.getEssentiaCapacity(copy);
         if (capacity <= 0) {
             return 0;
         }
 
-        Aspect aspect = aeEssentiaKey.getAspect();
-        AspectList list = container.getAspects(stack);
-        int current = 0;
+        AspectList list = container.getAspects(copy);
         if (list != null && list.size() > 0) {
-            Aspect existing = list.getAspects()[0];
-            if (existing == null || !existing.equals(aspect)) {
-                return 0;
-            }
-            current = list.getAmount(existing);
+            return 0;
         }
 
-        int toInsert = (int) Math.min(Integer.MAX_VALUE, l);
-        int room = Math.max(0, capacity - current);
-        int inserted = Math.min(toInsert, room);
-        if (inserted > 0 && actionable == Actionable.MODULATE) {
-            AspectList updated = new AspectList().add(aspect, current + inserted);
-            container.setAspects(stack, updated);
-            context.setStack(stack);
+        if (copy.getItem() instanceof ItemPhial) {
+            copy.setItemDamage(1);
         }
-        return inserted;
+
+        container.setAspects(copy, new AspectList().add(what.getAspect(), capacity));
+        if (!context.canAddOverflow(copy)) {
+            return 0;
+        }
+
+        if (mode == Actionable.SIMULATE) {
+            return capacity;
+        }
+
+        if (amount < capacity) {
+            return 0;
+        }
+
+        stack.shrink(1);
+        context.addOverflow(copy);
+        return capacity;
     }
 
     @Override
@@ -147,15 +175,19 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
         return getContainer(stack) != null && ThEUtil.getEssentiaCapacity(stack) > 0;
     }
 
+    private static void clearAspects(ItemStack stack) {
+        stack.setTagCompound(null);
+        stack.setItemDamage(0);
+    }
+
     private static @Nullable IEssentiaContainerItem getContainer(ItemStack stack) {
         if (stack.isEmpty()) {
             return null;
         }
-        if (!(stack.getItem() instanceof IEssentiaContainerItem)) {
+        if (!(stack.getItem() instanceof IEssentiaContainerItem container)) {
             return null;
         }
 
-        IEssentiaContainerItem container = (IEssentiaContainerItem) stack.getItem();
         return container.ignoreContainedAspects() ? null : container;
     }
 
@@ -164,6 +196,8 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
         ItemStack getStack();
 
         void setStack(ItemStack stack);
+
+        boolean canAddOverflow(ItemStack stack);
 
         void addOverflow(ItemStack stack);
 
@@ -182,8 +216,18 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
         }
 
         @Override
+        public boolean canAddOverflow(ItemStack stack) {
+            ItemStack carried = player.inventory.getItemStack();
+            return carried.isEmpty() || carried.getCount() <= 1 || ForgeUtil.addStackToPlayerInventory(player, stack, true).isEmpty();
+        }
+
+        @Override
         public void addOverflow(ItemStack stack) {
-            // No overflow handling needed for carried stacks.
+            if (player.inventory.getItemStack().isEmpty()) {
+                player.inventory.setItemStack(stack);
+            } else {
+                player.inventory.addItemStackToInventory(stack);
+            }
         }
 
     }
@@ -201,8 +245,14 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
         }
 
         @Override
+        public boolean canAddOverflow(ItemStack stack) {
+            ItemStack current = player.inventory.getStackInSlot(slot);
+            return current.isEmpty() || current.getCount() <= 1 || ForgeUtil.addStackToPlayerInventory(player, stack, true).isEmpty();
+        }
+
+        @Override
         public void addOverflow(ItemStack stack) {
-            // No overflow handling needed for player inventory slots.
+            player.inventory.addItemStackToInventory(stack);
         }
 
     }

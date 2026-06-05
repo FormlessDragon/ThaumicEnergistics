@@ -2,7 +2,7 @@ package thaumicenergistics.integration.theoneprobe;
 
 import ae2.api.parts.IPart;
 import ae2.api.parts.IPartHost;
-import api.java.mcjty.theoneprobe.api.IProbeHitData;
+import mcjty.theoneprobe.api.IProbeHitData;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
