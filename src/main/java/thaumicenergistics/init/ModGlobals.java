@@ -2,6 +2,7 @@ package thaumicenergistics.init;
 
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
+import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.api.ThEApi;
 
@@ -27,7 +28,7 @@ public class ModGlobals {
 
         @Override
         public ItemStack createIcon() {
-            ItemStack icon = ThEApi.instance().items().essentiaCell4k().maybeStack(1).orElse(ItemStack.EMPTY);
+            ItemStack icon = ThEItems.ESSENTIA_CELL_1K.stack(1);
             if (icon.isEmpty())
                 throw new NullPointerException("Unable to use essentiaCell1k for creative tab!");
             return icon;

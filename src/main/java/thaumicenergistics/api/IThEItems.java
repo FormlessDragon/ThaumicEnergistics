@@ -13,14 +13,6 @@ public interface IThEItems {
 
     // Cells
 
-//    IThEItemDefinition essentiaCell1k();
-
-    IThEItemDefinition essentiaCell4k();
-
-    IThEItemDefinition essentiaCell16k();
-
-    IThEItemDefinition essentiaCell64k();
-
     IThEItemDefinition essentiaCellCreative();
 
     // Parts
@@ -34,14 +26,6 @@ public interface IThEItems {
     IThEItemDefinition diffusionCore();
 
     IThEItemDefinition coalescenceCore();
-
-//    IThEItemDefinition essentiaComponent1k();
-
-    IThEItemDefinition essentiaComponent4k();
-
-    IThEItemDefinition essentiaComponent16k();
-
-    IThEItemDefinition essentiaComponent64k();
 
     IThEItemDefinition upgradeArcane();
 

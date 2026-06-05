@@ -14,9 +14,9 @@ item.thaumicenergistics.essentia_component_16k.name=МЭ 16k компонент 
 item.thaumicenergistics.essentia_component_64k.name=МЭ 64k компонент хранения эссенции
 
 item.thaumicenergistics.essentia_storage_cell_1k.name=МЭ 1k Ячейка хранения эссенции
-item.thaumicenergistics.essentia_cell_4k.name=МЭ 4k Ячейка хранения эссенции
-item.thaumicenergistics.essentia_cell_16k.name=МЭ 16k Ячейка хранения эссенции
-item.thaumicenergistics.essentia_cell_64k.name=МЭ 64k Ячейка хранения эссенции
+item.thaumicenergistics.essentia_storage_cell_4k.name=МЭ 4k Ячейка хранения эссенции
+item.thaumicenergistics.essentia_storage_cell_16k.name=МЭ 16k Ячейка хранения эссенции
+item.thaumicenergistics.essentia_storage_cell_64k.name=МЭ 64k Ячейка хранения эссенции
 item.thaumicenergistics.essentia_cell_creative.name=Для творческаого режима МЭ Ячейка хранения эссенции
 
 item.thaumicenergistics.essentia_import.name=МЭ Шина импорта эссенции

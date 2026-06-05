@@ -15,9 +15,9 @@ item.thaumicenergistics.essentia_component_16k.name=16k-ME源质储存组件
 item.thaumicenergistics.essentia_component_64k.name=64k-ME源质储存组件
 
 item.thaumicenergistics.essentia_storage_cell_1k.name=1k-ME源质储存元件
-item.thaumicenergistics.essentia_cell_4k.name=4k-ME源质储存元件
-item.thaumicenergistics.essentia_cell_16k.name=16k-ME源质储存元件
-item.thaumicenergistics.essentia_cell_64k.name=64k-ME源质储存元件
+item.thaumicenergistics.essentia_storage_cell_4k.name=4k-ME源质储存元件
+item.thaumicenergistics.essentia_storage_cell_16k.name=16k-ME源质储存元件
+item.thaumicenergistics.essentia_storage_cell_64k.name=64k-ME源质储存元件
 item.thaumicenergistics.essentia_cell_creative.name=创造ME源质储存元件
 
 item.thaumicenergistics.essentia_import.name=ME源质输入总线

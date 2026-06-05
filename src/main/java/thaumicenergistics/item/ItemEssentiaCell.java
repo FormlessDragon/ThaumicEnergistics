@@ -18,11 +18,11 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import net.minecraftforge.client.model.ModelLoader;
+import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.items.ItemBase;
 import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.me.key.AEEssentiaKeys;
 import thaumicenergistics.thaumicenergistics.Reference;
-import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.render.IThEModel;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.util.ForgeUtil;
@@ -66,7 +66,7 @@ public class ItemEssentiaCell extends ItemBase implements IBasicCellItem, IThEMo
             return super.onItemRightClick(world, player, hand);
 
         Optional<ItemStack> cellComponentOptional = this.getComponentOfCell(held);
-        if (!cellComponentOptional.isPresent())
+        if (cellComponentOptional.isEmpty())
             return super.onItemRightClick(world, player, hand);
 
         ItemStack emptyCasing = ae2.core.definitions.AEItems.ITEM_CELL_HOUSING.stack();
@@ -94,18 +94,24 @@ public class ItemEssentiaCell extends ItemBase implements IBasicCellItem, IThEMo
         Preconditions.checkNotNull(stack.getItem());
         Preconditions.checkNotNull(stack.getItem().getRegistryName());
         Preconditions.checkNotNull(stack.getItem().getRegistryName().getPath());
+        ItemStack optional;
         switch (stack.getItem().getRegistryName().getPath().split("_")[2]) {
-/*            case "1k":
-                return ThEApi.instance().items().essentiaComponent1k().maybeStack(1);*/
+            case "1k":
+                optional = ThEItems.ESSENTIA_COMPONENT_1K.stack(1);
+                break;
             case "4k":
-                return ThEApi.instance().items().essentiaComponent4k().maybeStack(1);
+                optional = ThEItems.ESSENTIA_COMPONENT_4K.stack(1);
+                break;
             case "16k":
-                return ThEApi.instance().items().essentiaComponent16k().maybeStack(1);
+                optional = ThEItems.ESSENTIA_COMPONENT_16K.stack(1);
+                break;
             case "64k":
-                return ThEApi.instance().items().essentiaComponent64k().maybeStack(1);
+                optional = ThEItems.ESSENTIA_COMPONENT_64K.stack(1);
+                break;
             default:
                 return Optional.empty();
         }
+        return Optional.of(optional);
     }
 
     @Override
