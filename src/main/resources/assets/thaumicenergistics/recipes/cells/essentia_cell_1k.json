@@ -1,6 +1,6 @@
 {
   "result": {
-    "item": "thaumicenergistics:essentia_cell_1k"
+    "item": "thaumicenergistics:essentia_storage_cell_1k"
   },
   "type": "forge:ore_shaped",
   "pattern": [
@@ -10,7 +10,7 @@
   ],
   "key": {
     "a": {
-      "item": "appliedenergistics2:quartz_glass"
+      "item": "ae2:quartz_glass"
     },
     "d": {
       "type": "forge:ore_dict",

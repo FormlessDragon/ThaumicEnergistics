@@ -1,6 +1,5 @@
 package thaumicenergistics;
 
-import ae2.api.stacks.AEKeyTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config;
@@ -23,7 +22,6 @@ import thaumicenergistics.api.IThEBlocks;
 import thaumicenergistics.api.IThEItems;
 import thaumicenergistics.api.IThEUpgrades;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.me.key.AEEssentiaKeys;
 import thaumicenergistics.client.ThEItemColors;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.command.CommandAddVis;
@@ -73,7 +71,6 @@ public class ThaumicEnergistics {
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER.info("{} preInit", Reference.MOD_NAME);
         ThEApi.instance(); // Make sure to init the api
-        AEKeyTypes.register(AEEssentiaKeys.INSTANCE);
         MinecraftForge.EVENT_BUS.register(this);
         PacketHandler.register();
 

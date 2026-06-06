@@ -5,7 +5,6 @@ import ae2.core.definitions.AEBlocks;
 import ae2.core.definitions.AEItems;
 import ae2.core.definitions.AEParts;
 import com.google.common.base.Preconditions;
-import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
@@ -126,87 +125,83 @@ public class ThEThaumcraft implements IThEIntegration {
                         AEItems.LOGIC_PROCESSOR.stack()
                 )));
 
-       /*ThEApi.instance().items().essentiaComponent1k().maybeStack(1).ifPresent(stack -> {
-            ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_1k"), new ShapedArcaneRecipe(
-                    recipeGroup,
-                    "ESSENTIASTORAGE1k@2",
-                    10,
-                    new AspectList(),
-                    stack,
-                    "SQS",
-                    "QPQ",
-                    "SQS",
-                    'S',
-                    ItemsTC.salisMundus,
-                    'Q',
-                    Ingredient.fromStacks(certusQuartz.toArray(new ItemStack[0])),
-                    'P',
-                    AEItems.LOGIC_PROCESSOR.stack()
-            ));
-            this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_1k"));
-        });
-        ThEApi.instance().items().essentiaComponent4k().maybeStack(1).ifPresent(stack -> {
-            ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_4k"), new ShapedArcaneRecipe(
-                    recipeGroup,
-                    "ESSENTIASTORAGE4k@2",
-                    10,
-                    new AspectList(),
-                    stack,
-                    "SPS",
-                    "CGC",
-                    "SCS",
-                    'S',
-                    ItemsTC.salisMundus,
-                    'C',
-                    ThEApi.instance().items().essentiaComponent1k().maybeStack(1).orElse(ItemStack.EMPTY),
-                    'P',
-                    AEItems.CALCULATION_PROCESSOR.stack(),
-                    'G',
-                    AEBlocks.QUARTZ_GLASS.block()
-            ));
-            this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_4k"));
-        });
-        ThEApi.instance().items().essentiaComponent16k().maybeStack(1).ifPresent(stack -> {
-            ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_16k"), new ShapedArcaneRecipe(
-                    recipeGroup,
-                    "ESSENTIASTORAGE16k@2",
-                    10,
-                    new AspectList(),
-                    stack,
-                    "SPS",
-                    "CGC",
-                    "SCS",
-                    'S',
-                    ItemsTC.salisMundus,
-                    'C',
-                    ThEApi.instance().items().essentiaComponent4k().maybeStack(1).orElse(ItemStack.EMPTY),
-                    'P',
-                    AEItems.ENGINEERING_PROCESSOR.stack(),
-                    'G',
-                    AEBlocks.QUARTZ_GLASS.block()
-            ));
-        });
-        ThEApi.instance().items().essentiaComponent64k().maybeStack(1).ifPresent(stack -> {
-            ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_64k"), new ShapedArcaneRecipe(
-                    recipeGroup,
-                    "ESSENTIASTORAGE64k@2",
-                    10,
-                    new AspectList(),
-                    stack,
-                    "SPS",
-                    "CGC",
-                    "SCS",
-                    'S',
-                    ItemsTC.salisMundus,
-                    'C',
-                    ThEApi.instance().items().essentiaComponent16k().maybeStack(1).orElse(ItemStack.EMPTY),
-                    'P',
-                    AEItems.ENGINEERING_PROCESSOR.stack(),
-                    'G',
-                    AEBlocks.QUARTZ_GLASS.block()
-            ));
-            this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_64k"));
-        });*/
+        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_1k"), new ShapedArcaneRecipe(
+                recipeGroup,
+                "ESSENTIASTORAGE1k@2",
+                10,
+                new AspectList(),
+                thaumicenergistics.core.definitions.ThEItems.ESSENTIA_COMPONENT_1K.stack(),
+                "SQS",
+                "QPQ",
+                "SQS",
+                'S',
+                ItemsTC.salisMundus,
+                'Q',
+                Ingredient.fromStacks(certusQuartz.toArray(new ItemStack[0])),
+                'P',
+                AEItems.LOGIC_PROCESSOR.stack()
+        ));
+        this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_1k"));
+
+        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_4k"), new ShapedArcaneRecipe(
+                recipeGroup,
+                "ESSENTIASTORAGE4k@2",
+                10,
+                new AspectList(),
+                thaumicenergistics.core.definitions.ThEItems.ESSENTIA_COMPONENT_4K.stack(),
+                "SPS",
+                "CGC",
+                "SCS",
+                'S',
+                ItemsTC.salisMundus,
+                'C',
+                thaumicenergistics.core.definitions.ThEItems.ESSENTIA_COMPONENT_1K.stack(),
+                'P',
+                AEItems.CALCULATION_PROCESSOR.stack(),
+                'G',
+                AEBlocks.QUARTZ_GLASS.block()
+        ));
+        this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_4k"));
+
+        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_16k"), new ShapedArcaneRecipe(
+                recipeGroup,
+                "ESSENTIASTORAGE16k@2",
+                10,
+                new AspectList(),
+                thaumicenergistics.core.definitions.ThEItems.ESSENTIA_COMPONENT_16K.stack(),
+                "SPS",
+                "CGC",
+                "SCS",
+                'S',
+                ItemsTC.salisMundus,
+                'C',
+                thaumicenergistics.core.definitions.ThEItems.ESSENTIA_COMPONENT_4K.stack(),
+                'P',
+                AEItems.ENGINEERING_PROCESSOR.stack(),
+                'G',
+                AEBlocks.QUARTZ_GLASS.block()
+        ));
+        this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_16k"));
+
+        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_64k"), new ShapedArcaneRecipe(
+                recipeGroup,
+                "ESSENTIASTORAGE64k@2",
+                10,
+                new AspectList(),
+                thaumicenergistics.core.definitions.ThEItems.ESSENTIA_COMPONENT_64K.stack(),
+                "SPS",
+                "CGC",
+                "SCS",
+                'S',
+                ItemsTC.salisMundus,
+                'C',
+                thaumicenergistics.core.definitions.ThEItems.ESSENTIA_COMPONENT_16K.stack(),
+                'P',
+                AEItems.ENGINEERING_PROCESSOR.stack(),
+                'G',
+                AEBlocks.QUARTZ_GLASS.block()
+        ));
+        this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_64k"));
         ThEApi.instance().items().arcaneTerminal().maybeItem().ifPresent(arcane ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "arcane_terminal"), new ShapelessArcaneRecipe(
                         recipeGroup,
@@ -295,9 +290,9 @@ public class ThEThaumcraft implements IThEIntegration {
     }
 
     private void addFakeCrafting(ResourceLocation resourceLocation) {
-        /*IForgeRegistryEntry entry = ForgeUtil.getRegistryEntry(IRecipe.class, resourceLocation);
+        IForgeRegistryEntry entry = ForgeUtil.getRegistryEntry(IRecipe.class, resourceLocation);
         Preconditions.checkNotNull(entry);
-        ThaumcraftApi.addFakeCraftingRecipe(entry.getRegistryName(), entry);*/
+        ThaumcraftApi.addFakeCraftingRecipe(entry.getRegistryName(), entry);
     }
 
     private ItemStack aeItemStack(ResourceLocation id) {

@@ -1,12 +1,11 @@
 {
   "result": {
-    "item": "thaumicenergistics:essentia_cell_64k"
+    "item": "thaumicenergistics:essentia_storage_cell_64k"
   },
   "type": "forge:ore_shapeless",
   "ingredients": [
     {
-      "type": "appliedenergistics2:part",
-      "part": "material.empty_storage_cell"
+      "item": "ae2:item_cell_housing"
     },
     {
       "item": "thaumicenergistics:essentia_component_64k"

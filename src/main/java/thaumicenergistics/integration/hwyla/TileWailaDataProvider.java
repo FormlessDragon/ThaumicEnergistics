@@ -1,8 +1,8 @@
 package thaumicenergistics.integration.hwyla;
 
-import mcp.mobius.waila.api.IWailaConfigHandler;
-import mcp.mobius.waila.api.IWailaDataAccessor;
-import mcp.mobius.waila.api.IWailaDataProvider;
+import mobius.waila.api.IWailaConfigHandler;
+import mobius.waila.api.IWailaDataAccessor;
+import mobius.waila.api.IWailaDataProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import thaumicenergistics.api.IThELangKey;

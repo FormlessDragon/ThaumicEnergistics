@@ -3,6 +3,7 @@ package thaumicenergistics.util;
 import ae2.api.config.Actionable;
 import ae2.api.networking.security.IActionSource;
 import ae2.api.storage.MEStorage;
+import ae2.util.InteractionUtil;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
@@ -83,6 +84,6 @@ public class AEUtil {
     public static boolean isWrench(ItemStack stack, EntityPlayer player, BlockPos pos) {
         if (stack.isEmpty())
             return false;
-        return false;
+        return InteractionUtil.canWrenchRotate(stack);
     }
 }

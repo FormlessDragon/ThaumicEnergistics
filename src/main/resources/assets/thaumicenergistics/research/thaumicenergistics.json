@@ -49,9 +49,9 @@
             "THEORY;THAUMICENERGISTICS;1"
           ],
           "required_item": [
-            "appliedenergistics2:material;2;22",
-            "appliedenergistics2:material;2;8",
-            "appliedenergistics2:material;1;0",
+            "ae2:logic_processor;2",
+            "ae2:fluix_dust;2",
+            "ae2:certus_quartz_crystal",
             "minecraft:quartz",
             "thaumcraft:quicksilver;2"
           ]
@@ -73,7 +73,7 @@
       "name": "research.essentiastorage1k.title",
       "icons": [
         "thaumicenergistics:essentia_component_1k",
-        "thaumicenergistics:essentia_cell_1k"
+        "thaumicenergistics:essentia_storage_cell_1k"
       ],
       "category": "THAUMICENERGISTICS",
       "location": [
@@ -94,8 +94,8 @@
           ],
           "required_item": [
             "thaumcraft:salis_mundus;4",
-            "appliedenergistics2:material;4;0",
-            "appliedenergistics2:material;1;22"
+            "ae2:certus_quartz_crystal;4",
+            "ae2:logic_processor"
           ]
         },
         {
@@ -115,7 +115,7 @@
       "name": "research.essentiastorage4k.title",
       "icons": [
         "thaumicenergistics:essentia_component_4k",
-        "thaumicenergistics:essentia_cell_4k"
+        "thaumicenergistics:essentia_storage_cell_4k"
       ],
       "category": "THAUMICENERGISTICS",
       "location": [
@@ -137,8 +137,8 @@
           "required_item": [
             "thaumcraft:salis_mundus;4",
             "thaumicenergistics:essentia_component_1k;3",
-            "appliedenergistics2:quartz_glass",
-            "appliedenergistics2:material;1;23"
+            "ae2:quartz_glass",
+            "ae2:calculation_processor"
           ]
         },
         {
@@ -158,7 +158,7 @@
       "name": "research.essentiastorage16k.title",
       "icons": [
         "thaumicenergistics:essentia_component_16k",
-        "thaumicenergistics:essentia_cell_16k"
+        "thaumicenergistics:essentia_storage_cell_16k"
       ],
       "category": "THAUMICENERGISTICS",
       "location": [
@@ -180,8 +180,8 @@
           "required_item": [
             "thaumcraft:salis_mundus;4",
             "thaumicenergistics:essentia_component_4k;3",
-            "appliedenergistics2:quartz_glass",
-            "appliedenergistics2:material;1;24"
+            "ae2:quartz_glass",
+            "ae2:engineering_processor"
           ]
         },
         {
@@ -201,7 +201,7 @@
       "name": "research.essentiastorage64k.title",
       "icons": [
         "thaumicenergistics:essentia_component_64k",
-        "thaumicenergistics:essentia_cell_64k"
+        "thaumicenergistics:essentia_storage_cell_64k"
       ],
       "category": "THAUMICENERGISTICS",
       "location": [
@@ -223,8 +223,8 @@
           "required_item": [
             "thaumcraft:salis_mundus;4",
             "thaumicenergistics:essentia_component_16k;3",
-            "appliedenergistics2:quartz_glass",
-            "appliedenergistics2:material;1;24"
+            "ae2:quartz_glass",
+            "ae2:engineering_processor"
           ]
         },
         {

@@ -30,8 +30,4 @@ public final class AEEssentiaKeys extends AEKeyType {
         return AEEssentiaKey.fromTag(tag);
     }
 
-    @Override
-    public int getAmountPerOperation() {
-        return super.getAmountPerOperation();
-    }
 }

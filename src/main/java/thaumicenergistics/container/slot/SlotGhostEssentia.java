@@ -2,11 +2,10 @@ package thaumicenergistics.container.slot;
 
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
 import thaumcraft.api.aspects.Aspect;
 import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.util.EssentiaFilter;
-
-import javax.annotation.Nonnull;
 
 /**
  * @author BrockWS
@@ -33,11 +32,12 @@ public class SlotGhostEssentia extends SlotGhost {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public ItemStack getStack() {
         AEEssentiaKey key = AEEssentiaKey.of(this.getAspect());
         if (key != null)
             return key.wrapForDisplayOrFilter();
         return ItemStack.EMPTY;
     }
+
 }

@@ -23,7 +23,7 @@ public class ThEIntegrationLoader {
         registerIntegration("thaumcraft", ThEThaumcraft.class);
         registerIntegration(ModGlobals.MOD_ID_AE2, ThEAppliedEnergistics.class);
         registerIntegration("inventorytweaks", ThEInvTweaks.class);
-        registerIntegration("waila", ThEHwyla.class);
+        registerIntegration("mobius/waila", ThEHwyla.class);
         registerIntegration("theoneprobe", ThETheOneProbe.class);
     }
 

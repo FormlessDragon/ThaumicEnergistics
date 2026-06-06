@@ -1,6 +1,6 @@
 package thaumicenergistics.integration.hwyla;
 
-import mcp.mobius.waila.api.IWailaRegistrar;
+import mobius.waila.api.IWailaRegistrar;
 import net.minecraftforge.fml.common.event.FMLInterModComms;
 import thaumicenergistics.integration.IThEIntegration;
 import thaumicenergistics.tile.TileBase;

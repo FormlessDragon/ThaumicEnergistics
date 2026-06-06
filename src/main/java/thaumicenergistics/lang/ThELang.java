@@ -72,10 +72,10 @@ public class ThELang implements IThELang {
         this.itemEssentia16kComponent = new ThELangKey("item.thaumicenergistics.essentia_component_16k.name");
         this.itemEssentia64kComponent = new ThELangKey("item.thaumicenergistics.essentia_component_64k.name");
 
-        this.itemEssentia1kCell = new ThELangKey("item.thaumicenergistics.essentia_cell_1k.name");
-        this.itemEssentia4kCell = new ThELangKey("item.thaumicenergistics.essentia_cell_4k.name");
-        this.itemEssentia16kCell = new ThELangKey("item.thaumicenergistics.essentia_cell_16k.name");
-        this.itemEssentia64kCell = new ThELangKey("item.thaumicenergistics.essentia_cell_64k.name");
+        this.itemEssentia1kCell = new ThELangKey("item.thaumicenergistics.essentia_storage_cell_1k.name");
+        this.itemEssentia4kCell = new ThELangKey("item.thaumicenergistics.essentia_storage_cell_4k.name");
+        this.itemEssentia16kCell = new ThELangKey("item.thaumicenergistics.essentia_storage_cell_16k.name");
+        this.itemEssentia64kCell = new ThELangKey("item.thaumicenergistics.essentia_storage_cell_64k.name");
 
         this.itemEssentiaImportBus = new ThELangKey("item.thaumicenergistics.essentia_import.name");
         this.itemEssentiaExportBus = new ThELangKey("item.thaumicenergistics.essentia_export.name");
