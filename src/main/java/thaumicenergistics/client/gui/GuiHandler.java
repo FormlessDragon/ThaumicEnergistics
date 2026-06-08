@@ -88,9 +88,9 @@ public class GuiHandler implements IGuiHandler {
             case ARCANE_ASSEMBLER:
                 return new ContainerArcaneAssembler(player, (TileArcaneAssembler) te);
             case ARCANE_TERMINAL:
-                return new ContainerArcaneTerminal(player, (PartArcaneTerminal) part);
+                return new ContainerArcaneTerm(player.inventory, (PartArcaneTerminal) part);
             case ARCANE_INSCRIBER:
-                return new ContainerArcaneInscriber(player, (PartArcaneInscriber) part);
+                return new ContainerArcaneInscriber(player.inventory, (PartArcaneInscriber) part);
             case AE2_CRAFT_AMOUNT:
                 return new ContainerCraftAmountBridge(player.inventory, (PartSharedTerminal) part);
             case AE2_CRAFT_CONFIRM:
@@ -120,9 +120,9 @@ public class GuiHandler implements IGuiHandler {
             case ARCANE_ASSEMBLER:
                 return new GuiArcaneAssembler(new ContainerArcaneAssembler(player, (TileArcaneAssembler) te));
             case ARCANE_TERMINAL:
-                return new GuiArcaneTerminal(new ContainerArcaneTerminal(player, (PartArcaneTerminal) part));
+                return new GuiArcaneTerm(new ContainerArcaneTerm(player.inventory, (PartArcaneTerminal) part), player.inventory);
             case ARCANE_INSCRIBER:
-                return new GuiArcaneInscriber(new ContainerArcaneInscriber(player, (PartArcaneInscriber) part));
+                return new GuiArcaneInscriber(new ContainerArcaneInscriber(player.inventory, (PartArcaneInscriber) part), player.inventory);
             case AE2_CRAFT_AMOUNT:
                 return new GuiCraftAmountBridge(new ContainerCraftAmountBridge(player.inventory, (PartSharedTerminal) part), player.inventory, (PartSharedTerminal) part);
             case AE2_CRAFT_CONFIRM:

@@ -2,9 +2,12 @@ package thaumicenergistics.container.part;
 
 import ae2.api.config.Actionable;
 import ae2.api.util.IConfigurableObject;
-import ae2.api.storage.MEStorage;
+import ae2.container.GuiIds;
+import ae2.container.SlotSemantics;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.NBTBase;
@@ -16,7 +19,6 @@ import thaumcraft.api.crafting.IArcaneRecipe;
 import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.container.ActionType;
-import thaumicenergistics.container.ICraftingContainer;
 import thaumicenergistics.container.slot.SlotArcaneGhostMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
@@ -28,44 +30,125 @@ import thaumicenergistics.network.packets.PacketIsArcaneUpdate;
 import thaumicenergistics.network.packets.PacketUIAction;
 import thaumicenergistics.part.PartArcaneInscriber;
 import thaumicenergistics.util.*;
-import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 /**
  * @author Alex811
  */
-public class ContainerArcaneInscriber extends ContainerArcaneTerminal implements ICraftingContainer, IConfigurableObject {
+public class ContainerArcaneInscriber extends ContainerArcaneTerm implements IConfigurableObject {
+
+    private static final String ACTION_KNOWLEDGE_CORE_ADD = "knowledgeCoreAdd";
+    private static final String ACTION_KNOWLEDGE_CORE_DEL = "knowledgeCoreDel";
+    private static final String ACTION_KNOWLEDGE_CORE_VIEW = "knowledgeCoreView";
 
     public boolean recipeIsArcane = false;
 
     public ContainerArcaneInscriber(EntityPlayer player, PartArcaneInscriber part) {
-        super(player, part);
+        this(player.inventory, part);
     }
 
-    @Override
-    public void onAction(EntityPlayerMP player, PacketUIAction packet) {
-        super.onAction(player, packet);
-        if (ForgeUtil.isServer()) {
-            ItemStack knowledgeCore = this.getInventory("upgrades").getStackInSlot(0);
-            if (knowledgeCore.isEmpty()) return;
-            boolean currentIsBlank = ((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
-            ItemStack result = this.getInventory("result").getStackInSlot(0);
-            if (packet.action == ActionType.MOVE_GHOST_ITEM) {
-                if (packet.requestedKey != null) {
-                    this.getInventory("crafting")
-                            .insertItem(packet.index, packet.requestedKey.wrapForDisplayOrFilter(), false);
-                }
-            } else if (packet.action == ActionType.KNOWLEDGE_CORE_ADD && !result.isEmpty() && this.recipeIsArcane) {
-                if (currentIsBlank)
-                    ThEApi.instance().items().knowledgeCore().maybeStack(1).ifPresent(newCore -> {
-                        ((InvWrapper) this.getInventory("upgrades")).getInv().setInventorySlotContents(0, newCore);
-                    });
-                else if (KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem())) return;
-                GuiHandler.openGUI(ModGUIs.KNOWLEDGE_CORE_ADD, player, this.part.getLocation().getPos(), this.part.side);
-            } else if (packet.action == ActionType.KNOWLEDGE_CORE_DEL && !currentIsBlank)
-                GuiHandler.openGUI(ModGUIs.KNOWLEDGE_CORE_DEL, player, this.part.getLocation().getPos(), this.part.side);
-            else if (packet.action == ActionType.KNOWLEDGE_CORE_VIEW && !currentIsBlank)
-                GuiHandler.openGUI(ModGUIs.KNOWLEDGE_CORE_VIEW, player, this.part.getLocation().getPos(), this.part.side);
+    public ContainerArcaneInscriber(InventoryPlayer ip, PartArcaneInscriber part) {
+        super(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, part);
+        this.registerInscriberActions();
+    }
+
+    private void registerInscriberActions() {
+        this.registerClientAction(ACTION_KNOWLEDGE_CORE_ADD, this::requestKnowledgeCoreAdd);
+        this.registerClientAction(ACTION_KNOWLEDGE_CORE_DEL, this::requestKnowledgeCoreDel);
+        this.registerClientAction(ACTION_KNOWLEDGE_CORE_VIEW, this::requestKnowledgeCoreView);
+    }
+
+    public void requestKnowledgeCoreAdd() {
+        if (this.isClientSide()) {
+            this.sendClientAction(ACTION_KNOWLEDGE_CORE_ADD);
+            return;
         }
+
+        this.openKnowledgeCoreAdd();
+    }
+
+    public void requestKnowledgeCoreDel() {
+        if (this.isClientSide()) {
+            this.sendClientAction(ACTION_KNOWLEDGE_CORE_DEL);
+            return;
+        }
+
+        this.openKnowledgeCoreDel();
+    }
+
+    public void requestKnowledgeCoreView() {
+        if (this.isClientSide()) {
+            this.sendClientAction(ACTION_KNOWLEDGE_CORE_VIEW);
+            return;
+        }
+
+        this.openKnowledgeCoreView();
+    }
+
+    private void openKnowledgeCoreAdd() {
+        ItemStack knowledgeCore = this.getInventory("upgrades").getStackInSlot(0);
+        ItemStack result = this.getInventory("result").getStackInSlot(0);
+        if (knowledgeCore.isEmpty() || result.isEmpty() || !this.recipeIsArcane) {
+            return;
+        }
+
+        if (!(knowledgeCore.getItem() instanceof ItemKnowledgeCore)) {
+            return;
+        }
+
+        boolean currentIsBlank = ((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
+        if (currentIsBlank) {
+            ThEApi.instance().items().knowledgeCore().maybeStack(1).ifPresent(newCore ->
+                    ((InvWrapper) this.getInventory("upgrades")).getInv().setInventorySlotContents(0, newCore));
+        } else if (KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem())) {
+            return;
+        }
+
+        GuiHandler.openGUI(ModGUIs.KNOWLEDGE_CORE_ADD, this.getPlayer(), this.getPartPos(), this.getPartSide());
+    }
+
+    private void openKnowledgeCoreDel() {
+        ItemStack knowledgeCore = this.getInventory("upgrades").getStackInSlot(0);
+        if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
+            GuiHandler.openGUI(ModGUIs.KNOWLEDGE_CORE_DEL, this.getPlayer(), this.getPartPos(), this.getPartSide());
+        }
+    }
+
+    private void openKnowledgeCoreView() {
+        ItemStack knowledgeCore = this.getInventory("upgrades").getStackInSlot(0);
+        if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
+            GuiHandler.openGUI(ModGUIs.KNOWLEDGE_CORE_VIEW, this.getPlayer(), this.getPartPos(), this.getPartSide());
+        }
+    }
+
+    private boolean isNonBlankKnowledgeCore(ItemStack knowledgeCore) {
+        return !knowledgeCore.isEmpty()
+                && knowledgeCore.getItem() instanceof ItemKnowledgeCore
+                && !((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
+    }
+
+    public void onAction(EntityPlayerMP player, PacketUIAction packet) {
+        if (ForgeUtil.isClient()) {
+            return;
+        }
+
+        if (packet.action != ActionType.MOVE_GHOST_ITEM) {
+            return;
+        }
+
+        if (packet.requestedKey == null) {
+            return;
+        }
+
+        if (packet.index < 0 || packet.index >= this.inventorySlots.size()) {
+            return;
+        }
+
+        Slot slot = this.getSlot(packet.index);
+        if (!(slot instanceof SlotArcaneGhostMatrix)) {
+            return;
+        }
+
+        slot.putStack(packet.requestedKey.wrapForDisplayOrFilter());
     }
 
     public void refreshIsArcane() {
@@ -73,11 +156,11 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerminal implements
         boolean recipeIsArcane;
         InvWrapper crafting = (InvWrapper) this.getInventory("crafting");
         if (this.recipe != null && !crafting.getInv().isEmpty())
-            recipeIsArcane = (TCCraftingManager.findArcaneRecipe(crafting, this.player) != null);
+            recipeIsArcane = (TCCraftingManager.findArcaneRecipe(crafting, this.getPlayer()) != null);
         else recipeIsArcane = false;
         if (this.recipeIsArcane != recipeIsArcane) {
             this.recipeIsArcane = recipeIsArcane;
-            PacketHandler.sendToPlayer((EntityPlayerMP) this.player, new PacketIsArcaneUpdate(recipeIsArcane));
+            PacketHandler.sendToPlayer((EntityPlayerMP) this.getPlayer(), new PacketIsArcaneUpdate(recipeIsArcane));
         }
     }
 
@@ -120,19 +203,36 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerminal implements
         IItemHandler playerInv = this.getInventory("player");
 
         if (ingredientGroup == null || ingredientGroup.isEmpty()) {
-            // TODO: Probably check if its already in the slot
             return;
         }
+
+        if (!(ingredientGroup instanceof NBTTagList)) {
+            ThELog.warn("Invalid JEI ingredient group: {}", ingredientGroup);
+            return;
+        }
+
         NBTTagList subs = (NBTTagList) ingredientGroup;
         for (int i = 0; i < subs.tagCount(); i++) {
             int slot = startAtSlot + i;
-            NBTTagCompound ingredient = ((NBTTagList) subs.get(i)).getCompoundTagAt(0);
+            NBTBase sub = subs.get(i);
+            if (!(sub instanceof NBTTagList)) {
+                ThELog.warn("Invalid JEI ingredient entry: {}", sub);
+                continue;
+            }
+
+            NBTTagList alternatives = (NBTTagList) sub;
+            if (alternatives.tagCount() <= 0) {
+                continue;
+            }
+
+            NBTTagCompound ingredient = alternatives.getCompoundTagAt(0);
             ItemStack stack = new ItemStack(ingredient);
             if (stack.isEmpty()) continue;
 
             ThELog.debug("Adding {} for {}", stack.getDisplayName(), slot);
-            MEStorage storage = this.getNetworkStorage();
-            ItemStack aeExtractStack = storage == null ? ItemStack.EMPTY : this.extractItem(storage, stack, stack.getCount(), Actionable.SIMULATE);
+            ItemStack aeExtractStack = this.storage == null
+                    ? ItemStack.EMPTY
+                    : this.extractItem(this.storage, stack, stack.getCount(), Actionable.SIMULATE);
             if (!aeExtractStack.isEmpty()) {
                 if (mustBeSingle) aeExtractStack.setCount(1);
                 crafting.insertItem(slot, aeExtractStack, false);
@@ -160,29 +260,36 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerminal implements
         return ItemStack.EMPTY;
     }
 
+    @Override
+    public int tryCraft(int amount) {
+        return 0;
+    }
+
     @SuppressWarnings("SameParameterValue")
     @Override
     protected void addMatrixSlots(int offsetX, int offsetY) {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                this.addSlotToContainer(new SlotArcaneGhostMatrix(this, i * 3 + j, offsetX + (j * 18), offsetY + (i * 18)));
+                this.addSlot(new SlotArcaneGhostMatrix(this, i * 3 + j, offsetX + (j * 18), offsetY + (i * 18)),
+                        SlotSemantics.CRAFTING_GRID);
             }
         }
         offsetX += 104;
         for (int i = 0; i < 3; i++) { // Y
             for (int j = 0; j < 2; j++) { // X
-                this.addSlotToContainer(new SlotArcaneGhostMatrix(this, 9 + (i * 2 + j), offsetX + (j * 18), offsetY + (i * 18)));
+                this.addSlot(new SlotArcaneGhostMatrix(this, 9 + (i * 2 + j), offsetX + (j * 18), offsetY + (i * 18)),
+                        SlotSemantics.CRAFTING_GRID);
             }
         }
         offsetX -= 104;
-        this.craftingResult = new ThEInternalInventory("Result", 1, 64);
-        this.addSlotToContainer(this.resultSlot = new SlotArcaneResult(this, this.player, 0, offsetX + 84, offsetY + 18));
+        this.addSlot(this.resultSlot = new SlotArcaneResult(this, this.getPlayer(), 0, offsetX + 84, offsetY + 18),
+                SlotSemantics.CRAFTING_RESULT);
         this.onMatrixChanged();
     }
 
     @Override
     protected void addUpgradeSlots(int offsetX, int offsetY) {
-        this.addSlotToContainer(new SlotKnowledgeCore(this.getInventory("upgrades"), 0, offsetX, offsetY));
+        this.addSlot(new SlotKnowledgeCore(this.getInventory("upgrades"), 0, offsetX, offsetY), SlotSemantics.UPGRADE);
     }
 
     @Override

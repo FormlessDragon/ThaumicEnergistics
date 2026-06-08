@@ -5,6 +5,7 @@ import ae2.api.parts.IPartCollisionHelper;
 import ae2.api.storage.ILinkStatus;
 import ae2.api.storage.MEStorage;
 import ae2.api.storage.ITerminalHost;
+import ae2.api.storage.SupplierStorage;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -43,12 +44,13 @@ public abstract class PartSharedTerminal extends PartBase implements ITerminalHo
 
     @Override
     public MEStorage getInventory() {
-        try {
-            return GridUtil.getStorageGrid(this).getInventory();
-        } catch (thaumicenergistics.integration.appeng.compat.GridAccessException e) {
-            // Ignored
-        }
-        return null;
+        return new SupplierStorage(() -> {
+            try {
+                return GridUtil.getStorageGrid(this).getInventory();
+            } catch (thaumicenergistics.integration.appeng.compat.GridAccessException e) {
+                return null;
+            }
+        });
     }
 
     @Override

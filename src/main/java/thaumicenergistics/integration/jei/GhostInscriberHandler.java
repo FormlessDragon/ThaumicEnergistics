@@ -5,7 +5,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import thaumicenergistics.client.gui.helpers.TerminalDisplayStacks;
 import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
-import thaumicenergistics.container.slot.SlotGhost;
+import thaumicenergistics.container.slot.SlotArcaneGhostMatrix;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketUIAction;
 
@@ -27,9 +27,9 @@ public class GhostInscriberHandler implements IGhostIngredientHandler<GuiArcaneI
 
         return gui.inventorySlots.inventorySlots.stream()
                 .filter(Slot::isEnabled)
-                .filter(it -> it.slotNumber < 9) // only the matrix slots, not crystals
-                .filter(it -> it instanceof SlotGhost)
-                .map(SlotGhost.class::cast)
+                .filter(it -> it instanceof SlotArcaneGhostMatrix)
+                .map(SlotArcaneGhostMatrix.class::cast)
+                .filter(slot -> slot.getSlotIndex() < 9) // only the matrix slots, not crystals
                 .map(slot -> new Target<I>() {
 
                     @Override

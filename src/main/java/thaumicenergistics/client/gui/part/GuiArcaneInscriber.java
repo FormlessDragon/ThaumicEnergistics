@@ -1,98 +1,94 @@
 package thaumicenergistics.client.gui.part;
 
+import ae2.client.gui.style.GuiStyleManager;
 import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.inventory.Slot;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.TextComponentTranslation;
 import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.gui.component.GuiImageButton;
-import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
-import thaumicenergistics.container.slot.ThEGhostSlot;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.items.ItemKnowledgeCore;
-import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.network.packets.PacketUIAction;
 import thaumicenergistics.util.KnowledgeCoreUtil;
 
-import java.util.ArrayList;
+import java.io.IOException;
 
 /**
  * @author Alex811
  */
-public class GuiArcaneInscriber extends GuiArcaneTerminal {
+public class GuiArcaneInscriber extends GuiArcaneTerm {
 
     private GuiImageButton coreAddButton;
     private GuiImageButton coreDelButton;
     private GuiImageButton coreViewButton;
+    private final ContainerArcaneInscriber inscriberContainer;
     private final ResourceLocation images = new ResourceLocation(ModGlobals.MOD_ID_AE2, "textures/guis/states.png");
 
-    public GuiArcaneInscriber(ContainerArcaneInscriber container) {
-        super(container);
+    public GuiArcaneInscriber(ContainerArcaneInscriber container, InventoryPlayer playerInventory) {
+        super(container, playerInventory,
+                new TextComponentTranslation("gui.thaumicenergistics.arcane_inscriber"),
+                GuiStyleManager.loadStyleDoc("/screens/terminals/crafting_terminal.json"));
+        this.inscriberContainer = container;
     }
 
     @Override
     public void initGui() {
         super.initGui();
-        ArrayList<GuiImageButton> coreButtons = new ArrayList<>();
-        int coreBtnRowY = this.guiTop + 90;
+        int coreBtnRowY = this.guiTop + this.ySize - 100;
 
-        coreButtons.add(coreAddButton = new GuiImageButton(this.getGuiLeft() + 87, coreBtnRowY, 0, 12, images));
-        coreButtons.add(coreDelButton = new GuiImageButton(this.getGuiLeft() + 104, coreBtnRowY, 0, 7, images));
-        coreButtons.add(coreViewButton = new GuiImageButton(this.getGuiLeft() + 121, coreBtnRowY, 1, 12, images));
-
-        coreButtons.forEach(btn -> {
-            addButton(btn);
-            btn.recalculateY(this.rows);
-        });
+        this.coreAddButton = this.addButton(new GuiImageButton(this.getGuiLeft() + 87, coreBtnRowY, 0, 12, images));
+        this.coreDelButton = this.addButton(new GuiImageButton(this.getGuiLeft() + 104, coreBtnRowY, 0, 7, images));
+        this.coreViewButton = this.addButton(new GuiImageButton(this.getGuiLeft() + 121, coreBtnRowY, 1, 12, images));
     }
 
     @Override
-    protected void actionPerformed(GuiButton button) {
-        super.actionPerformed(button);
-        ItemStack knowledgeCore = this.container.getInventory("upgrades").getStackInSlot(0);
-        boolean currentIsBlank = knowledgeCore.getItem().getClass() != ItemKnowledgeCore.class;
-        ItemStack result = this.container.getInventory("result").getStackInSlot(0);
-        boolean hasRecipe = !result.isEmpty();
-        boolean recipeExists = KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem());
-        if (button == coreAddButton && !knowledgeCore.isEmpty() && hasRecipe && ((ContainerArcaneInscriber) this.container).recipeIsArcane && !recipeExists) {
-            PacketHandler.sendToServer(new PacketUIAction(ActionType.KNOWLEDGE_CORE_ADD));
-        } else if (button == coreDelButton && !knowledgeCore.isEmpty() && !currentIsBlank) {
-            PacketHandler.sendToServer(new PacketUIAction(ActionType.KNOWLEDGE_CORE_DEL));
-        } else if (button == coreViewButton && !knowledgeCore.isEmpty() && !currentIsBlank) {
-            PacketHandler.sendToServer(new PacketUIAction(ActionType.KNOWLEDGE_CORE_VIEW));
+    protected void actionPerformed(GuiButton button) throws IOException {
+        if (button == this.coreAddButton && this.canAddKnowledgeCoreRecipe()) {
+            this.inscriberContainer.requestKnowledgeCoreAdd();
+            return;
         }
+
+        if (button == this.coreDelButton && this.canOpenStoredKnowledgeCore()) {
+            this.inscriberContainer.requestKnowledgeCoreDel();
+            return;
+        }
+
+        if (button == this.coreViewButton && this.canOpenStoredKnowledgeCore()) {
+            this.inscriberContainer.requestKnowledgeCoreView();
+            return;
+        }
+
+        super.actionPerformed(button);
     }
 
     public void setIsArcane(boolean isArcane) {
-        ((ContainerArcaneInscriber) this.container).recipeIsArcane = isArcane;
+        this.inscriberContainer.recipeIsArcane = isArcane;
     }
 
     @Override
-    protected void recalcSlotY(Slot slot) {
-        super.recalcSlotY(slot);
-        if (slot instanceof ThEGhostSlot)
-            ((ThEGhostSlot) slot).recalculateY(this.rows);
+    public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
+        super.drawFG(offsetX, offsetY, mouseX, mouseY);
+        this.updateKnowledgeCoreButtons(mouseX, mouseY);
     }
 
     @Override
-    protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-        this.setCurrMousePos(mouseX, mouseY);
+    protected void drawVisInfo() {
+        this.fontRenderer.drawString(
+                ThEApi.instance().lang().guiVisRequired().getLocalizedKey(this.getVisIfSet(this.visRequired)),
+                60,
+                this.ySize - 168,
+                4210752);
+    }
 
-        this.fontRenderer.drawString(ThEApi.instance().lang().guiVisRequired().getLocalizedKey(this.visRequired > -1 ? this.visRequired : 0), 60, this.getYSize() - 168, 4210752);
-        this.fontRenderer.drawString(ThEApi.instance().lang().guiArcaneInscriber().getLocalizedKey(), 8, 6, 4210752);
-        this.fontRenderer.drawString(I18n.format("container.inventory"), 8, this.getYSize() - 91, 4210752);
-
-        if (this.scrollBar != null)
-            this.scrollBar.draw(this);
-
-        ItemStack knowledgeCore = this.container.getInventory("upgrades").getStackInSlot(0);
-        boolean hasArcaneRecipe = ((ContainerArcaneInscriber) this.container).recipeIsArcane;
-        ItemStack result = this.container.getInventory("result").getStackInSlot(0);
+    private void updateKnowledgeCoreButtons(int mouseX, int mouseY) {
+        ItemStack knowledgeCore = this.inscriberContainer.getInventory("upgrades").getStackInSlot(0);
+        boolean hasArcaneRecipe = this.inscriberContainer.recipeIsArcane;
+        ItemStack result = this.inscriberContainer.getInventory("result").getStackInSlot(0);
         boolean hasRecipe = !result.isEmpty();
-        boolean recipeExists = KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem());
-        boolean currentIsBlank = knowledgeCore.getItem().getClass() != ItemKnowledgeCore.class;
+        boolean recipeExists = hasRecipe && KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem());
+        boolean currentIsBlank = this.isKnowledgeCoreBlank(knowledgeCore);
         if (!knowledgeCore.isEmpty()) {
             renderButton(coreAddButton, hasRecipe && hasArcaneRecipe && !recipeExists);
             if (currentIsBlank) {
@@ -119,6 +115,25 @@ public class GuiArcaneInscriber extends GuiArcaneTerminal {
             if ((coreViewButton.isHovered() || coreDelButton.isHovered() || coreAddButton.isHovered()))
                 renderText(ThEApi.instance().lang().guiInsertKnowledgeCore().getLocalizedKey(), mouseX, mouseY);
         }
+    }
+
+    private boolean canAddKnowledgeCoreRecipe() {
+        ItemStack knowledgeCore = this.inscriberContainer.getInventory("upgrades").getStackInSlot(0);
+        ItemStack result = this.inscriberContainer.getInventory("result").getStackInSlot(0);
+        return !knowledgeCore.isEmpty()
+                && !result.isEmpty()
+                && this.inscriberContainer.recipeIsArcane
+                && !KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem());
+    }
+
+    private boolean canOpenStoredKnowledgeCore() {
+        ItemStack knowledgeCore = this.inscriberContainer.getInventory("upgrades").getStackInSlot(0);
+        return !knowledgeCore.isEmpty() && !this.isKnowledgeCoreBlank(knowledgeCore);
+    }
+
+    private boolean isKnowledgeCoreBlank(ItemStack knowledgeCore) {
+        return !(knowledgeCore.getItem() instanceof ItemKnowledgeCore)
+                || ((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
     }
 
     protected void renderButton(GuiImageButton button, boolean enabled) {

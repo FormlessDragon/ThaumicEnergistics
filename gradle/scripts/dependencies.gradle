@@ -33,7 +33,7 @@ dependencies {
     modImplementation 'curse.maven:hwyla-253449:2568753'
     modRuntimeOnly 'curse.maven:thaumic-jei-285492:5646810'
 
-    modImplementation ":AppliedEnergistics2-Supergiant:0.0.0+e39f434d5:dev"
+    modImplementation ":AppliedEnergistics2-Supergiant:0.0.0+24f8ac5b7:dev"
 
     modImplementation "curse.maven:baubles-227083:2518667"
     modImplementation "curse.maven:thaumcraft-223628:2629023"

@@ -11,7 +11,6 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import thaumicenergistics.client.gui.helpers.TerminalDisplayStack;
 import thaumicenergistics.client.gui.helpers.TerminalDisplayStacks;
-import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.client.gui.part.GuiArcaneTerminal;
 import thaumicenergistics.util.ThELog;
 
@@ -140,10 +139,6 @@ public class PacketMEItemUpdate implements IMessage {
             FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(() -> {
                 if (Minecraft.getMinecraft().currentScreen instanceof GuiArcaneTerminal) {
                     GuiArcaneTerminal gui = (GuiArcaneTerminal) Minecraft.getMinecraft().currentScreen;
-                    gui.onMEStorageUpdate(message.list, message.clearExisting);
-                }
-                if (Minecraft.getMinecraft().currentScreen instanceof GuiArcaneInscriber) {
-                    GuiArcaneInscriber gui = (GuiArcaneInscriber) Minecraft.getMinecraft().currentScreen;
                     gui.onMEStorageUpdate(message.list, message.clearExisting);
                 }
             });

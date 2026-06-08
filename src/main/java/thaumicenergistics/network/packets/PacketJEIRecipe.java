@@ -12,6 +12,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import thaumicenergistics.container.ContainerBase;
+import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.util.ThELog;
 
 import java.io.IOException;
@@ -67,7 +68,12 @@ public class PacketJEIRecipe implements IMessage {
             EntityPlayerMP player = handler.player;
             IThreadListener thread = (IThreadListener) player.world;
             thread.addScheduledTask(() -> {
-                if (player.openContainer instanceof ContainerBase) {
+                if (message.tag == null || message.tag.isEmpty()) {
+                    return;
+                }
+                if (player.openContainer instanceof ContainerArcaneTerm) {
+                    ((ContainerArcaneTerm) player.openContainer).handleJEITransfer(player, message.tag);
+                } else if (player.openContainer instanceof ContainerBase) {
                     ((ContainerBase) player.openContainer).handleJEITransfer(player, message.tag);
                 }
             });

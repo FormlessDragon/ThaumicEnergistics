@@ -33,8 +33,9 @@ public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKe
 
             drawAspectQuad(x, y, x + 16.0D, y + 16.0D, new Color(aspect.getColor()));
         } finally {
-            GlStateManager.enableLighting();
-            GlStateManager.disableBlend();
+            GlStateManager.enableBlend();
+            GlStateManager.disableDepth();
+            GlStateManager.disableLighting();
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
         }

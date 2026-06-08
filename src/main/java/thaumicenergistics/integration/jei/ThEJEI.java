@@ -14,7 +14,6 @@ import net.minecraft.item.ItemStack;
 import thaumicenergistics.api.IThEItems;
 import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
-import thaumicenergistics.client.gui.part.GuiSharedEssentiaBus;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 

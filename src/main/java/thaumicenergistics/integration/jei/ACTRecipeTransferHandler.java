@@ -10,7 +10,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import thaumicenergistics.container.part.ContainerArcaneTerminal;
+import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketJEIRecipe;
 import thaumicenergistics.util.ForgeUtil;
@@ -23,7 +23,7 @@ import java.util.Map;
  * @author BrockWS
  * @author Alex811
  */
-public class ACTRecipeTransferHandler<C extends ContainerArcaneTerminal> implements IRecipeTransferHandler<C> {
+public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements IRecipeTransferHandler<C> {
 
     private final IRecipeTransferHandlerHelper recipeTransferHelper;
 
@@ -35,7 +35,7 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerminal> impleme
     @SuppressWarnings("unchecked")
     @MethodsReturnNonnullByDefault
     public Class<C> getContainerClass() {
-        return (Class<C>) ContainerArcaneTerminal.class;
+        return (Class<C>) ContainerArcaneTerm.class;
     }
 
     @Nullable

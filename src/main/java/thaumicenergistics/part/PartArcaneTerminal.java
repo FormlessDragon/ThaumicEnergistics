@@ -83,6 +83,15 @@ public class PartArcaneTerminal extends PartSharedTerminal {
         if ((player.isSneaking() && AEUtil.isWrench(player.getHeldItem(hand), player, this.getTile().getPos())))
             return false;
 
+        return this.openTerminalGui(player);
+    }
+
+    @Override
+    public boolean onUseWithoutItem(EntityPlayer player, Vec3d pos) {
+        return this.openTerminalGui(player);
+    }
+
+    private boolean openTerminalGui(EntityPlayer player) {
         if (ForgeUtil.isServer())
             GuiHandler.openGUI(this.getGui(), player, this.hostTile.getPos(), this.side);
 

@@ -12,6 +12,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import thaumicenergistics.client.gui.helpers.TerminalDisplayStack;
 import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.ContainerBase;
+import thaumicenergistics.container.part.ContainerArcaneInscriber;
 
 /**
  * @author BrockWS
@@ -98,6 +99,12 @@ public class PacketUIAction implements IMessage {
             EntityPlayerMP player = handler.player;
             IThreadListener thread = (IThreadListener) player.world;
             thread.addScheduledTask(() -> {
+                if (message.action == ActionType.MOVE_GHOST_ITEM
+                        && player.openContainer instanceof ContainerArcaneInscriber) {
+                    ((ContainerArcaneInscriber) player.openContainer).onAction(player, message);
+                    return;
+                }
+
                 if (message.action != null && player.openContainer instanceof ContainerBase) {
                     ((ContainerBase) player.openContainer).onAction(player, message);
                 }
