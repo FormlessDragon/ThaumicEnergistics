@@ -9,7 +9,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
-import thaumicenergistics.api.ThEApi;
+import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import javax.annotation.Nullable;
@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -35,9 +36,9 @@ public abstract class KnowledgeCoreUtil {
             return;
         }
         NBTTagCompound nbtRecipe = new NBTTagCompound();
-        nbtRecipe.setTag("ingredients", recipe.getIngredients().serializeNBT());
-        nbtRecipe.setTag("result", recipe.getResult().serializeNBT());
-        nbtRecipe.setFloat("visCost", recipe.getVisCost());
+        nbtRecipe.setTag("ingredients", recipe.ingredients().serializeNBT());
+        nbtRecipe.setTag("result", recipe.result().serializeNBT());
+        nbtRecipe.setFloat("visCost", recipe.visCost());
         nbt.setTag(slotKey, nbtRecipe);
         knowledgeCoreStack.setTagCompound(nbt);
     }
@@ -69,7 +70,7 @@ public abstract class KnowledgeCoreUtil {
     public static Recipe getRecipe(ItemStack knowledgeCoreStack, ItemStack result) {
         for (int i = 0; i < SLOT_NUM; i++) {
             Recipe recipe = getRecipe(knowledgeCoreStack, i);
-            if (recipe != null && recipe.getResult().getItem().equals(result.getItem()))
+            if (recipe != null && recipe.result().getItem().equals(result.getItem()))
                 return recipe;
         }
         return null;
@@ -119,29 +120,28 @@ public abstract class KnowledgeCoreUtil {
     }
 
     /**
-     * Similar to {@link KnowledgeCoreUtil#getAEPattern(Recipe, World)},
+     * Similar to {@link KnowledgeCoreUtil#getAEPattern(Recipe)},
      * for when you don't have the actual recipe yet
      * and you want to extract it from a Knowledge Core
      *
      * @param knowledgeCore Knowledge Core to extract from
      * @param slot          The Knowledge Core slot to read from
-     * @param world         The world we'll craft it in
      * @return IPatternDetails instance to send to AE2.
      */
-    public static IPatternDetails getAEPattern(ItemStack knowledgeCore, int slot, World world) {
+    public static IPatternDetails getAEPattern(ItemStack knowledgeCore, int slot) {
         Recipe recipe = getRecipe(knowledgeCore, slot);
-        return getAEPattern(recipe, world);
+        return getAEPattern(recipe);
     }
 
     /**
      * Method to extract an IPatternDetails instance from a Knowledge Core recipe, to use with AE2
      *
      * @param recipe Recipe to extract from
-     * @param world  The world we'll craft it in
+     *
      * @return IPatternDetails instance to send to AE2.
      * @throws IllegalArgumentException If the recipe slot is empty, it lets AE2 deal with it, which currently means you'll get an exception indirectly
      */
-    public static IPatternDetails getAEPattern(Recipe recipe, World world) {
+    public static IPatternDetails getAEPattern(Recipe recipe) {
         if (recipe == null) {
             throw new IllegalArgumentException("Knowledge core recipe cannot be null");
         }
@@ -156,73 +156,62 @@ public abstract class KnowledgeCoreUtil {
         return getRecipe(knowledgeCoreStack, ((AEItemKey) output.what()).toStack((int) Math.min(output.amount(), Integer.MAX_VALUE)));
     }
 
-    public static class Recipe {
-        private final ThEInternalInventory ingredients;
-        private final ItemStack result;
-        private final float visCost;
-
-        public Recipe(ThEInternalInventory ingredients, ItemStack result, float visCost) {
-            this.ingredients = ingredients;
-            this.result = result.copy();
-            this.visCost = visCost;
-        }
-
-        public ItemStack getResult() {
-            return this.result;
-        }
-
-        /**
-         * @return The recipe ingredients, aspect crystals included as the last 6 elements
-         */
-        public ThEInternalInventory getIngredients() {
-            return this.ingredients;
-        }
-
-        /**
-         * Get the part of the ingredients that excludes aspects, or the part that only has the aspects
-         *
-         * @param aspect true to get the aspect part
-         * @return the ingredients
-         */
-        public ThEInternalInventory getIngredientPart(boolean aspect) {
-            ThEInternalInventory ingredients;
-            ThEInternalInventory ingredientsWithAspect = getIngredients();
-            if (aspect) {
-                ingredients = new ThEInternalInventory("ingredients", 6, 64);
-                for (int i = 0; i < 6; i++)
-                    ingredients.setInventorySlotContents(i, ingredientsWithAspect.getStackInSlot(i + 9));
-            } else {
-                ingredients = new ThEInternalInventory("ingredients", 9, 64);
-                for (int i = 0; i < 9; i++)
-                    ingredients.setInventorySlotContents(i, ingredientsWithAspect.getStackInSlot(i));
+    public record Recipe(ThEInternalInventory ingredients, ItemStack result, float visCost) {
+            public Recipe(ThEInternalInventory ingredients, ItemStack result, float visCost) {
+                this.ingredients = ingredients;
+                this.result = result.copy();
+                this.visCost = visCost;
             }
-            return ingredients;
-        }
 
-        public float getVisCost() {
-            return this.visCost;
-        }
+            /**
+             * @return The recipe ingredients, aspect crystals included as the last 6 elements
+             */
+            @Override
+            public ThEInternalInventory ingredients() {
+                return this.ingredients;
+            }
 
-        /**
-         * Transforms the recipe to an ItemStack that includes tags like the ones a normal AE2 pattern would have.
-         * Mainly for internal use, you're probably looking for {@link KnowledgeCoreUtil#getAEPattern(ItemStack, int, World)}
-         *
-         * @return AE2 pattern ItemStack
-         */
-        public ItemStack toAEPatternStack() {
-            ItemStack stack = ThEApi.instance().items().knowledgeCore().maybeStack(1).orElseThrow(RuntimeException::new);
-            NBTTagCompound nbt = new NBTTagCompound();
-            nbt.setTag("in", this.getIngredientPart(false).serializeNBT(true));
-            //nbt.setTag("aspects", this.getIngredientPart(true).serializeNBT(true));
-            NBTTagList out = new NBTTagList();
-            out.appendTag(this.getResult().serializeNBT());
-            nbt.setTag("out", out);
-            nbt.setBoolean("crafting", false);
-            nbt.setBoolean("substitute", false);
-            stack.setTagCompound(nbt);
-            return stack;
+            /**
+             * Get the part of the ingredients that excludes aspects, or the part that only has the aspects
+             *
+             * @param aspect true to get the aspect part
+             * @return the ingredients
+             */
+            public ThEInternalInventory getIngredientPart(boolean aspect) {
+                ThEInternalInventory ingredients;
+                ThEInternalInventory ingredientsWithAspect = ingredients();
+                if (aspect) {
+                    ingredients = new ThEInternalInventory("ingredients", 6, 64);
+                    for (int i = 0; i < 6; i++)
+                        ingredients.setInventorySlotContents(i, ingredientsWithAspect.getStackInSlot(i + 9));
+                } else {
+                    ingredients = new ThEInternalInventory("ingredients", 9, 64);
+                    for (int i = 0; i < 9; i++)
+                        ingredients.setInventorySlotContents(i, ingredientsWithAspect.getStackInSlot(i));
+                }
+                return ingredients;
+            }
+
+            /**
+             * Transforms the recipe to an ItemStack that includes tags like the ones a normal AE2 pattern would have.
+             * Mainly for internal use, you're probably looking for {@link #getAEPattern(ItemStack, int)}
+             *
+             * @return AE2 pattern ItemStack
+             */
+            public ItemStack toAEPatternStack() {
+                ItemStack stack = Optional.of(ThEItems.KNOWLEDGE_CORE.stack(1)).orElseThrow(RuntimeException::new);
+                NBTTagCompound nbt = new NBTTagCompound();
+                nbt.setTag("in", this.getIngredientPart(false).serializeNBT(true));
+                //nbt.setTag("aspects", this.getIngredientPart(true).serializeNBT(true));
+                NBTTagList out = new NBTTagList();
+                out.appendTag(this.result().serializeNBT());
+                nbt.setTag("out", out);
+                nbt.setBoolean("crafting", false);
+                nbt.setBoolean("substitute", false);
+                stack.setTagCompound(nbt);
+                return stack;
+            }
         }
-    }
 
     public static class KnowledgeCorePatternDetails implements IPatternDetails {
         private final Recipe recipe;
@@ -234,7 +223,7 @@ public abstract class KnowledgeCoreUtil {
             this.recipe = recipe;
             this.definition = AEItemKey.of(recipe.toAEPatternStack());
             this.inputs = buildInputs(recipe);
-            this.outputs = Collections.singletonList(new GenericStack(AEItemKey.of(recipe.getResult()), recipe.getResult().getCount()));
+            this.outputs = Collections.singletonList(new GenericStack(Objects.requireNonNull(AEItemKey.of(recipe.result())), recipe.result().getCount()));
         }
 
         public Recipe getRecipe() {
@@ -275,7 +264,7 @@ public abstract class KnowledgeCoreUtil {
         private final GenericStack[] possibleInputs;
 
         private ItemPatternInput(ItemStack stack) {
-            this.key = AEItemKey.of(stack);
+            this.key = Objects.requireNonNull(AEItemKey.of(stack));
             this.amount = stack.getCount();
             this.possibleInputs = new GenericStack[]{new GenericStack(this.key, this.amount)};
         }

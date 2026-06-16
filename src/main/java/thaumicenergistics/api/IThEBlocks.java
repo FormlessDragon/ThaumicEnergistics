@@ -9,6 +9,7 @@ import thaumicenergistics.api.definitions.IThETileDefinition;
  * @version 1.0.0
  * @since 1.0.0
  */
+@Deprecated
 public interface IThEBlocks {
 
     IThETileDefinition infusionProvider();

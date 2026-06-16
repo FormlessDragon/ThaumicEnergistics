@@ -7,6 +7,7 @@ package thaumicenergistics.api;
  * @version 1.0.1
  * @since 1.0.0
  */
+@Deprecated
 public interface IThEApi {
 
     /**

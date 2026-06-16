@@ -19,7 +19,6 @@ import org.apache.logging.log4j.Logger;
 import thaumicenergistics.core.CommonProxy;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.api.IThEBlocks;
-import thaumicenergistics.api.IThEItems;
 import thaumicenergistics.api.IThEUpgrades;
 import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.ThEItemColors;
@@ -87,19 +86,19 @@ public class ThaumicEnergistics {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         NetworkRegistry.INSTANCE.registerGuiHandler(ThaumicEnergistics.INSTANCE, new GuiHandler());
-        if (ForgeUtil.isClient()) {
+        /*if (ForgeUtil.isClient()) {
             ThEItemColors.registerItemColors();
-        }
+        }*/
 
         IThEUpgrades upgrades = ThaumicEnergisticsApi.instance().upgrades();
-        IThEItems items = ThaumicEnergisticsApi.instance().items();
         IThEBlocks blocks = ThaumicEnergisticsApi.instance().blocks();
 
-        upgrades.registerUpgrade(items.arcaneTerminal(), upgrades.arcaneCharger(), 1);
-        upgrades.registerUpgrade(items.arcaneInscriber(), upgrades.blankKnowledgeCore(), 1);
-        upgrades.registerUpgrade(items.arcaneInscriber(), upgrades.knowledgeCore(), 1);
-        upgrades.registerUpgrade(blocks.arcaneAssembler(), upgrades.knowledgeCore(), 1);
-        upgrades.registerUpgrade(blocks.arcaneAssembler(), upgrades.arcaneCharger(), 1);
+        //upgrades.registerUpgrade(items.arcaneTerminal(), upgrades.arcaneCharger(), 1);
+        //upgrades.registerUpgrade(items.wirelessArcaneTerminal(), upgrades.arcaneCharger(), 1);
+        //upgrades.registerUpgrade(items.arcaneInscriber(), upgrades.blankKnowledgeCore(), 1);
+        //upgrades.registerUpgrade(items.arcaneInscriber(), upgrades.knowledgeCore(), 1);
+        //upgrades.registerUpgrade(blocks.arcaneAssembler(), upgrades.knowledgeCore(), 1);
+        //upgrades.registerUpgrade(blocks.arcaneAssembler(), upgrades.arcaneCharger(), 1);
         upgrades.registerUpgrade(blocks.arcaneAssembler(), upgrades.cardSpeed(), 5);
 
         proxy.init(event);

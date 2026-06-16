@@ -29,7 +29,6 @@ public class PacketHandler {
         PacketHandler.INSTANCE = NetworkRegistry.INSTANCE.newSimpleChannel(Reference.MOD_ID);
 
         PacketHandler.INSTANCE.registerMessage(PacketEssentiaFilter.Handler.class, PacketEssentiaFilter.class, PacketHandler.nextID(), Side.CLIENT);
-        PacketHandler.INSTANCE.registerMessage(PacketMEItemUpdate.Handler.class, PacketMEItemUpdate.class, PacketHandler.nextID(), Side.CLIENT);
         PacketHandler.INSTANCE.registerMessage(PacketInvHeldUpdate.Handler.class, PacketInvHeldUpdate.class, PacketHandler.nextID(), Side.CLIENT);
         PacketHandler.INSTANCE.registerMessage(PacketVisUpdate.Handler.class, PacketVisUpdate.class, PacketHandler.nextID(), Side.CLIENT);
         PacketHandler.INSTANCE.registerMessage(PacketSettingChange.HandlerClient.class, PacketSettingChange.class, PacketHandler.nextID(), Side.CLIENT);
@@ -42,7 +41,6 @@ public class PacketHandler {
         PacketHandler.INSTANCE.registerMessage(PacketJEIRecipe.Handler.class, PacketJEIRecipe.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketOpenGUI.Handler.class, PacketOpenGUI.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketSubscribe.Handler.class, PacketSubscribe.class, PacketHandler.nextID(), Side.SERVER);
-        PacketHandler.INSTANCE.registerMessage(PacketEssentiaFilterAction.Handler.class, PacketEssentiaFilterAction.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketAssemblerGUIUpdateRequest.Handler.class, PacketAssemblerGUIUpdateRequest.class, PacketHandler.nextID(), Side.SERVER);
     }
 

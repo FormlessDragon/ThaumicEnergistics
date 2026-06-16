@@ -24,6 +24,8 @@ item.thaumicenergistics.essentia_export.name=МЭ Шина экспорта эс
 item.thaumicenergistics.essentia_storage.name=МЭ Шина хранения эссенции
 item.thaumicenergistics.essentia_terminal.name=Терминал эссенции
 item.thaumicenergistics.arcane_terminal.name=Мистический терминал создания
+item.thaumicenergistics.wireless_arcane_terminal.name=Беспроводной мистический терминал создания
+item.thaumicenergistics.arcane_p2p_tunnel.name=МЭ мистический P2P-туннель
 
 item.thaumicenergistics.upgrade_arcane.name=Улучшение для Мистического Заряжателя
 
@@ -99,6 +101,7 @@ research.essentiastorage64k.stage.2=Теперь я могу хранить ог
 research.essentiabuses.title=Шина эссенции
 research.essentiabuses.stage.1=Теперь, когда я могу оцифровать основы, пришло время применить эту технологию к работе.
 research.essentiabuses.stage.2=Теперь я могу сделать МЭ Шина экспорта и импорта эссеции, МЭ Шина хранения эссенции.
+research.essentiabuses.addenda.1=После дополнительной настройки P2P-туннели могут переносить Vis между удаленными точками ауры через МЭ-сеть.
 
 # Research Essentia Terminal
 research.essentiaterminal.title=Монитор эссенции
@@ -115,3 +118,4 @@ research.arcaneterminal.title=Arcane Crafting Terminal
 research.arcaneterminal.stage.1=Maybe Я могу объединить терминал МЭ с тайным верстаком, чтобы получить что-то, что поможет мне в моих тайных начинаниях.
 research.arcaneterminal.stage.2=Теперь я могу сделать Мистический терминал создания.
 research.arcaneterminal.addenda.1=Я могу улучшить свой Мистический терминал создания, чтобы увеличить дальность его прорисовки вис.
+research.arcaneterminal.addenda.2=Объединение мистического терминала создания с беспроводным доступом МЭ заметно упрощает работу в поле, если терминал привязан к стабильной сети.

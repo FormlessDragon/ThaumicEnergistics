@@ -20,20 +20,21 @@ import javax.annotation.Nullable;
  *
  * @author BrockWS
  */
+@Deprecated
 @SideOnly(Side.CLIENT)
 public class ThEItemColors {
 
     public static void registerItemColors() {
-        IItemColor dummyItemColor = new ThEItemColors.DummyAspectItemColors();
-        ThEApi.instance().items().dummyAspect().maybeItem()
-                .ifPresent(item -> Minecraft.getMinecraft().getItemColors().registerItemColorHandler(dummyItemColor, item));
+        //IItemColor dummyItemColor = new ThEItemColors.DummyAspectItemColors();
+        //ThEApi.instance().items().dummyAspect().maybeItem()
+                //.ifPresent(item -> Minecraft.getMinecraft().getItemColors().registerItemColorHandler(dummyItemColor, item));
 
-        IItemColor terminalItemColor = new ThEItemColors.TerminalItemColor();
+        //IItemColor terminalItemColor = new ThEItemColors.TerminalItemColor();
         //IBlockColor terminalBlockColor = new ThEItemColors.TerminalBlockColor();
-        ThEApi.instance().items().arcaneTerminal().maybeItem().ifPresent(item -> {
-            Minecraft.getMinecraft().getItemColors().registerItemColorHandler(terminalItemColor, item);
+        //ThEApi.instance().items().arcaneTerminal().maybeItem().ifPresent(item -> {
+            //Minecraft.getMinecraft().getItemColors().registerItemColorHandler(terminalItemColor, item);
             // Minecraft.getMinecraft().getBlockColors().registerBlockColorHandler(terminalBlockColor, item);
-        });
+        //});
     }
 
     @SideOnly(Side.CLIENT)

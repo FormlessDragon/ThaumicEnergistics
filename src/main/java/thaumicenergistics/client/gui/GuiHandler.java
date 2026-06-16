@@ -2,6 +2,10 @@ package thaumicenergistics.client.gui;
 
 import ae2.api.parts.IPart;
 import ae2.api.parts.IPartHost;
+import ae2.core.gui.locator.GuiHostLocator;
+import ae2.core.gui.locator.GuiHostLocators;
+import ae2.core.gui.locator.PartLocator;
+import ae2.container.AEBaseContainer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -9,6 +13,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.IGuiHandler;
 import thaumicenergistics.ThaumicEnergistics;
+import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.client.gui.block.GuiArcaneAssembler;
 import thaumicenergistics.client.gui.crafting.GuiCraftAmountBridge;
 import thaumicenergistics.client.gui.crafting.GuiCraftConfirmBridge;
@@ -20,6 +25,7 @@ import thaumicenergistics.container.crafting.ContainerCraftAmountBridge;
 import thaumicenergistics.container.crafting.ContainerCraftConfirmBridge;
 import thaumicenergistics.container.crafting.ContainerCraftingStatusBridge;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
+import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
 import thaumicenergistics.container.part.*;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.part.*;
@@ -38,6 +44,16 @@ public class GuiHandler implements IGuiHandler {
 
     public static void openGUI(ModGUIs gui, EntityPlayer player, BlockPos pos) {
         GuiHandler.openGUI(gui, player, pos, null);
+    }
+
+    public static void openGUI(ModGUIs gui, EntityPlayer player, int slot) {
+        if (gui == null)
+            throw new IllegalArgumentException("gui cannot be null!");
+        else if (player == null)
+            throw new IllegalArgumentException("player cannot be null!");
+
+        player.openGui(ThaumicEnergistics.INSTANCE, GuiHandler.calculateOrdinal(gui, EnumFacing.UP),
+                player.getEntityWorld(), slot, 0, 0);
     }
 
     public static void openGUI(ModGUIs gui, EntityPlayer player, BlockPos pos, EnumFacing side) {
@@ -74,6 +90,18 @@ public class GuiHandler implements IGuiHandler {
         return null;
     }
 
+    private GuiHostLocator getArcaneLocator(IPart part, BlockPos pos, EnumFacing side, int inventorySlot) {
+        if (part != null) {
+            return new PartLocator(pos, side);
+        }
+        return GuiHostLocators.forInventorySlot(inventorySlot);
+    }
+
+    private <T extends AEBaseContainer> T initContainer(T container, GuiHostLocator locator) {
+        container.setLocator(locator);
+        return container;
+    }
+
     @Nullable
     @Override
     public Object getServerGuiElement(int ordinal, EntityPlayer player, World world, int x, int y, int z) {
@@ -83,20 +111,45 @@ public class GuiHandler implements IGuiHandler {
         BlockPos pos = new BlockPos(x, y, z);
         IPart part = GuiHandler.getPartFromWorld(world, pos, side);
         if (part == null) te = world.getTileEntity(pos);
+        IArcaneTerminalHost arcaneHost = part instanceof IArcaneTerminalHost ? (IArcaneTerminalHost) part : null;
+        GuiHostLocator arcaneLocator = this.getArcaneLocator(part, pos, side, x);
 
         switch (guiID) {
             case ARCANE_ASSEMBLER:
                 return new ContainerArcaneAssembler(player, (TileArcaneAssembler) te);
             case ARCANE_TERMINAL:
-                return new ContainerArcaneTerm(player.inventory, (PartArcaneTerminal) part);
+                if (arcaneHost == null) {
+                    return null;
+                }
+                return this.initContainer(new ContainerArcaneTerm(player.inventory, arcaneHost), arcaneLocator);
+            case WIRELESS_ARCANE_TERMINAL: {
+                arcaneLocator = GuiHostLocators.forInventorySlot(x);
+                IArcaneTerminalHost wirelessHost = arcaneLocator.locate(player, WirelessArcaneTerminalGuiHost.class);
+                if (wirelessHost == null) {
+                    return null;
+                }
+                return this.initContainer(new ContainerArcaneTerm(player.inventory, wirelessHost), arcaneLocator);
+            }
             case ARCANE_INSCRIBER:
-                return new ContainerArcaneInscriber(player.inventory, (PartArcaneInscriber) part);
+                if (arcaneHost == null) {
+                    return null;
+                }
+                return this.initContainer(new ContainerArcaneInscriber(player.inventory, arcaneHost), arcaneLocator);
             case AE2_CRAFT_AMOUNT:
-                return new ContainerCraftAmountBridge(player.inventory, (PartSharedTerminal) part);
+                if (arcaneHost == null) {
+                    return null;
+                }
+                return this.initContainer(new ContainerCraftAmountBridge(player.inventory, arcaneHost), arcaneLocator);
             case AE2_CRAFT_CONFIRM:
-                return new ContainerCraftConfirmBridge(player.inventory, (PartSharedTerminal) part);
+                if (arcaneHost == null) {
+                    return null;
+                }
+                return this.initContainer(new ContainerCraftConfirmBridge(player.inventory, arcaneHost), arcaneLocator);
             case AE2_CRAFT_STATUS:
-                return new ContainerCraftingStatusBridge(player.inventory, (PartSharedTerminal) part);
+                if (arcaneHost == null) {
+                    return null;
+                }
+                return this.initContainer(new ContainerCraftingStatusBridge(player.inventory, arcaneHost), arcaneLocator);
             case KNOWLEDGE_CORE_ADD:
             case KNOWLEDGE_CORE_DEL:
             case KNOWLEDGE_CORE_VIEW:
@@ -115,20 +168,57 @@ public class GuiHandler implements IGuiHandler {
         BlockPos pos = new BlockPos(x, y, z);
         IPart part = GuiHandler.getPartFromWorld(world, pos, side);
         if (part == null) te = world.getTileEntity(pos);
+        IArcaneTerminalHost arcaneHost = part instanceof IArcaneTerminalHost ? (IArcaneTerminalHost) part : null;
+        GuiHostLocator arcaneLocator = this.getArcaneLocator(part, pos, side, x);
 
         switch (guiID) {
             case ARCANE_ASSEMBLER:
                 return new GuiArcaneAssembler(new ContainerArcaneAssembler(player, (TileArcaneAssembler) te));
             case ARCANE_TERMINAL:
-                return new GuiArcaneTerm(new ContainerArcaneTerm(player.inventory, (PartArcaneTerminal) part), player.inventory);
+                if (arcaneHost == null) {
+                    return null;
+                }
+                return new GuiArcaneTerm(
+                        this.initContainer(new ContainerArcaneTerm(player.inventory, arcaneHost), arcaneLocator),
+                        player.inventory);
+            case WIRELESS_ARCANE_TERMINAL: {
+                arcaneLocator = GuiHostLocators.forInventorySlot(x);
+                IArcaneTerminalHost wirelessHost = arcaneLocator.locate(player, WirelessArcaneTerminalGuiHost.class);
+                if (wirelessHost == null) {
+                    return null;
+                }
+                return new GuiArcaneTerm(
+                        this.initContainer(new ContainerArcaneTerm(player.inventory, wirelessHost), arcaneLocator),
+                        player.inventory);
+            }
             case ARCANE_INSCRIBER:
-                return new GuiArcaneInscriber(new ContainerArcaneInscriber(player.inventory, (PartArcaneInscriber) part), player.inventory);
+                if (arcaneHost == null) {
+                    return null;
+                }
+                return new GuiArcaneInscriber(
+                        this.initContainer(new ContainerArcaneInscriber(player.inventory, arcaneHost), arcaneLocator),
+                        player.inventory);
             case AE2_CRAFT_AMOUNT:
-                return new GuiCraftAmountBridge(new ContainerCraftAmountBridge(player.inventory, (PartSharedTerminal) part), player.inventory, (PartSharedTerminal) part);
+                if (arcaneHost == null) {
+                    return null;
+                }
+                return new GuiCraftAmountBridge(
+                        this.initContainer(new ContainerCraftAmountBridge(player.inventory, arcaneHost), arcaneLocator),
+                        player.inventory, arcaneHost);
             case AE2_CRAFT_CONFIRM:
-                return new GuiCraftConfirmBridge(new ContainerCraftConfirmBridge(player.inventory, (PartSharedTerminal) part), player.inventory, (PartSharedTerminal) part);
+                if (arcaneHost == null) {
+                    return null;
+                }
+                return new GuiCraftConfirmBridge(
+                        this.initContainer(new ContainerCraftConfirmBridge(player.inventory, arcaneHost), arcaneLocator),
+                        player.inventory, arcaneHost);
             case AE2_CRAFT_STATUS:
-                return new GuiCraftingStatusBridge(new ContainerCraftingStatusBridge(player.inventory, (PartSharedTerminal) part), player.inventory, (PartSharedTerminal) part);
+                if (arcaneHost == null) {
+                    return null;
+                }
+                return new GuiCraftingStatusBridge(
+                        this.initContainer(new ContainerCraftingStatusBridge(player.inventory, arcaneHost), arcaneLocator),
+                        player.inventory, arcaneHost);
             case KNOWLEDGE_CORE_ADD:
             case KNOWLEDGE_CORE_DEL:
             case KNOWLEDGE_CORE_VIEW:

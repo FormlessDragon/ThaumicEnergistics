@@ -96,7 +96,7 @@ public abstract class ContainerBase extends Container {
             }
             return ItemStack.EMPTY;
         }
-        if (!(this instanceof ContainerBaseTerminal) && clickType == ClickType.QUICK_MOVE) {
+        if (clickType == ClickType.QUICK_MOVE) {
             if (slot instanceof SlotUpgrade || slot instanceof SlotKnowledgeCore)
                 ItemHandlerUtil.quickMoveSlot(new InvWrapper(this.player.inventory), slot, false, true);
             else

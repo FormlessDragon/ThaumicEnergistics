@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 /**
  * @author BrockWS
  */
+@Deprecated
 public class ThEUpgrade implements IThEUpgrade {
 
     private final IThEItemDefinition definition;

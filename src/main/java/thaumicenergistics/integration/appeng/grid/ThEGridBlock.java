@@ -6,8 +6,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import thaumicenergistics.integration.appeng.compat.DimensionalCoord;
-import thaumicenergistics.integration.appeng.compat.ThEPartItemStack;
-import thaumicenergistics.part.PartBase;
 
 import javax.annotation.Nonnull;
 
@@ -33,14 +31,6 @@ public class ThEGridBlock {
         this.rep = rep;
         this.repTE = null;
         this.inWorld = inWorld;
-    }
-
-    public ThEGridBlock(PartBase part) {
-        this.host = part;
-        this.rep = part.getItemStack(ThEPartItemStack.NETWORK);
-        this.repTE = null;
-        this.inWorld = false;
-        this.idlePower = part.getIdlePowerUsage();
     }
 
     public double getIdlePowerUsage() {

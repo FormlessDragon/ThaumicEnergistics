@@ -23,6 +23,7 @@ import thaumicenergistics.me.key.AEEssentiaKeys;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.ThEUtil;
 
+@SuppressWarnings("UnstableApiUsage")
 public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEssentiaKey, EssentiaContainerItemStrategy.Context> {
 
     public static void register() {
@@ -262,11 +263,10 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
     }
 
     private static @Nullable Context findNetworkEmptyContainerContext(EntityPlayer player, Container container) {
-        if (!(container instanceof AEBaseContainer)) {
+        if (!(container instanceof AEBaseContainer aeContainer)) {
             return null;
         }
 
-        AEBaseContainer aeContainer = (AEBaseContainer) container;
         Object target = aeContainer.getTarget();
         if (!(target instanceof ITerminalHost)) {
             return null;
@@ -287,7 +287,7 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
         return container.ignoreContainedAspects() ? null : container;
     }
 
-    interface Context {
+    public interface Context {
 
         ItemStack getStack();
 

@@ -3,9 +3,6 @@ apply from: 'gradle/scripts/helpers.gradle'
 repositories {
     // Other repositories described by default:
     // CleanroomMC: https://maven.cleanroommc.com
-    flatDir {
-        dirs("lib")
-    }
     maven {
         name = 'CurseMaven'
         url = 'https://cursemaven.com'
@@ -33,7 +30,10 @@ dependencies {
     modImplementation 'curse.maven:hwyla-253449:2568753'
     modRuntimeOnly 'curse.maven:thaumic-jei-285492:5646810'
 
-    modImplementation ":AppliedEnergistics2-Supergiant:0.0.0+24f8ac5b7:dev"
+    compileOnly("io.github.formlessdragon:AppliedEnergistics2-Supergiant:${ae2_version}:dev")
+    modRuntimeOnly("io.github.formlessdragon:AppliedEnergistics2-Supergiant:${ae2_version}:dev") {
+        transitive = false
+    }
 
     modImplementation "curse.maven:baubles-227083:2518667"
     modImplementation "curse.maven:thaumcraft-223628:2629023"

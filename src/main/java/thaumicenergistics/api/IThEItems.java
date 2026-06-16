@@ -9,17 +9,22 @@ import thaumicenergistics.api.definitions.IThEItemDefinition;
  * @version 1.0.0
  * @since 1.0.0
  */
+@Deprecated
 public interface IThEItems {
 
     // Cells
 
-    IThEItemDefinition essentiaCellCreative();
+    //IThEItemDefinition essentiaCellCreative();
 
     // Parts
 
-    IThEItemDefinition arcaneTerminal();
+    /*IThEItemDefinition arcaneTerminal();
+
+    IThEItemDefinition wirelessArcaneTerminal();
 
     IThEItemDefinition arcaneInscriber();
+
+    IThEItemDefinition arcaneP2PTunnel();
 
     // Materials
 
@@ -35,5 +40,5 @@ public interface IThEItems {
 
     // Other
 
-    IThEItemDefinition dummyAspect();
+    IThEItemDefinition dummyAspect();*/
 }

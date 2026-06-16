@@ -2,7 +2,7 @@ package thaumicenergistics.integration.appeng;
 
 import ae2.api.storage.StorageCells;
 import thaumicenergistics.integration.IThEIntegration;
-import thaumicenergistics.integration.appeng.cell.CreativeEssentiaCellHandler;
+import thaumicenergistics.me.cell.CreativeEssentiaCellHandler;
 
 /**
  * @author BrockWS

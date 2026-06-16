@@ -2,8 +2,8 @@ package thaumicenergistics;
 
 import thaumicenergistics.api.*;
 import thaumicenergistics.config.ThEConfig;
+import thaumicenergistics.core.definitions.ThEApiItems;
 import thaumicenergistics.init.ThEBlocks;
-import thaumicenergistics.init.ThEItems;
 import thaumicenergistics.init.ThESounds;
 import thaumicenergistics.init.ThETextures;
 import thaumicenergistics.lang.ThELang;
@@ -12,6 +12,7 @@ import thaumicenergistics.upgrade.ThEUpgrades;
 /**
  * @author BrockWS
  */
+@Deprecated
 public class ThaumicEnergisticsApi implements IThEApi {
 
     private static IThEApi INSTANCE;
@@ -25,7 +26,7 @@ public class ThaumicEnergisticsApi implements IThEApi {
 
     private ThaumicEnergisticsApi() {
         this.sounds = new ThESounds();
-        this.items = new ThEItems();
+        this.items = new ThEApiItems();
         this.blocks = new ThEBlocks();
         this.upgrades = new ThEUpgrades(this.items());
         this.config = new ThEConfig();

@@ -1,14 +1,14 @@
 package thaumicenergistics.part;
 
+import ae2.api.parts.IPartItem;
 import ae2.api.parts.IPartModel;
+import ae2.items.parts.PartModels;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.integration.appeng.ThEPartModel;
-import thaumicenergistics.integration.appeng.compat.ThEPartItemStack;
-import thaumicenergistics.items.part.ItemArcaneInscriber;
 import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
 
@@ -20,22 +20,29 @@ import java.util.List;
  */
 public class PartArcaneInscriber extends PartArcaneTerminal {
 
-    public static ResourceLocation[] MODELS = new ResourceLocation[]{
-            new ResourceLocation(Reference.MOD_ID, "part/arcane_inscriber/base"), // 0
-            new ResourceLocation(Reference.MOD_ID, "part/arcane_inscriber/on"), // 1
-            new ResourceLocation(Reference.MOD_ID, "part/arcane_inscriber/off"), // 2
-            new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_has_channel"), // 3
-            new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_on"), // 4
-            new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_off") // 5
-    };
+    @PartModels
+    public static final ResourceLocation MODEL_BASE = new ResourceLocation(Reference.MOD_ID, "part/arcane_inscriber/base");
+    @PartModels
+    public static final ResourceLocation MODEL_ON = new ResourceLocation(Reference.MOD_ID, "part/arcane_inscriber/on");
+    @PartModels
+    public static final ResourceLocation MODEL_OFF = new ResourceLocation(Reference.MOD_ID, "part/arcane_inscriber/off");
 
-    private static final IPartModel MODEL_ON = new ThEPartModel(MODELS[0], MODELS[1], MODELS[4]);
-    private static final IPartModel MODEL_OFF = new ThEPartModel(MODELS[0], MODELS[2], MODELS[5]);
-    private static final IPartModel MODEL_HAS_CHANNEL = new ThEPartModel(MODELS[0], MODELS[1], MODELS[3]);
+    private static final IPartModel MODELS_ON = new ThEPartModel(MODEL_BASE, MODEL_ON,
+            new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_on"));
+    private static final IPartModel MODELS_OFF = new ThEPartModel(MODEL_BASE, MODEL_OFF,
+            new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_off"));
+    private static final IPartModel MODELS_HAS_CHANNEL = new ThEPartModel(MODEL_BASE, MODEL_ON,
+            new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_has_channel"));
 
-    public PartArcaneInscriber(ItemArcaneInscriber item) {
+    public PartArcaneInscriber(IPartItem<?> item) {
         super(item, ModGUIs.ARCANE_INSCRIBER);
-        this.upgradeInventory = new ThEKnowledgeCoreInventory("upgrades", 1, 1, this.getItemStack(ThEPartItemStack.NETWORK));
+        this.upgradeInventory = new ThEKnowledgeCoreInventory("upgrades", 1, 1, this.getPartItem().asItemStack()) {
+            @Override
+            public void markDirty() {
+                super.markDirty();
+                PartArcaneInscriber.this.saveChanges();
+            }
+        };
     }
 
     @Nonnull
@@ -43,14 +50,14 @@ public class PartArcaneInscriber extends PartArcaneTerminal {
     public IPartModel getStaticModels() {
         if (this.isPowered())
             if (this.isActive())
-                return MODEL_HAS_CHANNEL;
+                return MODELS_HAS_CHANNEL;
             else
-                return MODEL_ON;
-        return MODEL_OFF;
+                return MODELS_ON;
+        return MODELS_OFF;
     }
 
     @Override
-    public void addPartDrop(List<ItemStack> list, boolean b) {
+    protected void addArcaneDrops(List<ItemStack> list) {
         list.addAll(ItemHandlerUtil.getInventoryAsList(this.getInventoryByName("upgrades")));
     }
 }

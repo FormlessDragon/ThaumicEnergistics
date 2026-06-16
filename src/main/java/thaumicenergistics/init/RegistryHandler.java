@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thaumicenergistics.core.definitions.ThEItems;
+import thaumicenergistics.core.definitions.ThEParts;
 import thaumicenergistics.init.client.InitModelRegistration;
 import thaumicenergistics.init.internal.InitStorageCells;
 import thaumicenergistics.thaumicenergistics.Reference;
@@ -18,6 +19,7 @@ public final class RegistryHandler {
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
         ThEItems.register(event);
+        ThEParts.register(event);
         InitStorageCells.init();
     }
 

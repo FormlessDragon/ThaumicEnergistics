@@ -20,6 +20,7 @@ import static net.minecraft.client.renderer.block.model.ItemCameraTransforms.Tra
 /**
  * @author BrockWS
  */
+@Deprecated
 @SideOnly(Side.CLIENT)
 public class DummyAspectRenderer extends TileEntityItemStackRenderer {
 

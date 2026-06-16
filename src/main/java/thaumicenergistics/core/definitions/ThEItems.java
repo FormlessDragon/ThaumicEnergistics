@@ -8,9 +8,15 @@ import net.minecraftforge.event.RegistryEvent;
 import thaumicenergistics.api.ids.ThEItemIds;
 import thaumicenergistics.api.storage.EssentiaStorageCell;
 import thaumicenergistics.init.ModGlobals;
+import thaumicenergistics.items.CreativeEssentiaCell;
+import thaumicenergistics.items.ItemKnowledgeCore;
+import thaumicenergistics.items.ItemMaterial;
+import thaumicenergistics.items.ItemWirelessArcaneTerminal;
 
 public final class ThEItems {
 
+    public static final ItemDefinition<CreativeEssentiaCell> CREATIVE_ESSENTIA_CELL = new ItemDefinition<>(ThEItemIds.CREATIVE_ESSENTIA_CELL,
+            new CreativeEssentiaCell(), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<BasicStorageCell> ESSENTIA_CELL_1K = new ItemDefinition<>(ThEItemIds.ESSENTIA_STORAGE_CELL_1K,
             new EssentiaStorageCell(1), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<BasicStorageCell> ESSENTIA_CELL_4K = new ItemDefinition<>(ThEItemIds.ESSENTIA_STORAGE_CELL_4K,
@@ -28,7 +34,21 @@ public final class ThEItems {
     public static final ItemDefinition<StorageComponentItem> ESSENTIA_COMPONENT_64K = new ItemDefinition<>(ThEItemIds.ESSENTIA_COMPONENT_64K,
             new StorageComponentItem(64), ModGlobals.CREATIVE_TAB);
 
+    public static final ItemDefinition<ItemWirelessArcaneTerminal> WIRELESS_ARCANE_TERMINAL = new ItemDefinition<>(ThEItemIds.WIRELESS_ARCANE_TERMINAL,
+            new ItemWirelessArcaneTerminal("wireless_arcane_terminal"), ModGlobals.CREATIVE_TAB);
+    public static final ItemDefinition<ItemKnowledgeCore> BLANK_KNOWLEDGE_CORE = new ItemDefinition<>(ThEItemIds.BLANK_KNOWLEDGE_CORE,
+            new ItemKnowledgeCore("blank_knowledge_core", true), ModGlobals.CREATIVE_TAB);
+    public static final ItemDefinition<ItemKnowledgeCore> KNOWLEDGE_CORE = new ItemDefinition<>(ThEItemIds.KNOWLEDGE_CORE,
+            new ItemKnowledgeCore("knowledge_core", false), ModGlobals.CREATIVE_TAB);
+    public static final ItemDefinition<ItemMaterial> UPGRADE_ARCANE = new ItemDefinition<>(ThEItemIds.UPGRADE_ARCANE,
+            new ItemMaterial("upgrade_arcane"), ModGlobals.CREATIVE_TAB);
+    public static final ItemDefinition<ItemMaterial> DIFFUSION_CORE = new ItemDefinition<>(ThEItemIds.DIFFUSION_CORE,
+            new ItemMaterial("diffusion_core"), ModGlobals.CREATIVE_TAB);
+    public static final ItemDefinition<ItemMaterial> COALESCENCE_CORE = new ItemDefinition<>(ThEItemIds.COALESCENCE_CORE,
+            new ItemMaterial("coalescence_core"), ModGlobals.CREATIVE_TAB);
+
     private static final ItemDefinition<?>[] ITEMS = {
+            CREATIVE_ESSENTIA_CELL,
             ESSENTIA_CELL_1K,
             ESSENTIA_CELL_4K,
             ESSENTIA_CELL_16K,
@@ -36,7 +56,14 @@ public final class ThEItems {
             ESSENTIA_COMPONENT_1K,
             ESSENTIA_COMPONENT_4K,
             ESSENTIA_COMPONENT_16K,
-            ESSENTIA_COMPONENT_64K
+            ESSENTIA_COMPONENT_64K,
+
+            WIRELESS_ARCANE_TERMINAL,
+            BLANK_KNOWLEDGE_CORE,
+            KNOWLEDGE_CORE,
+            UPGRADE_ARCANE,
+            DIFFUSION_CORE,
+            COALESCENCE_CORE
     };
 
     public static void register(RegistryEvent.Register<Item> event) {

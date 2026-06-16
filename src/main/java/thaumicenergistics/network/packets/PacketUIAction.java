@@ -101,7 +101,7 @@ public class PacketUIAction implements IMessage {
             thread.addScheduledTask(() -> {
                 if (message.action == ActionType.MOVE_GHOST_ITEM
                         && player.openContainer instanceof ContainerArcaneInscriber) {
-                    ((ContainerArcaneInscriber) player.openContainer).onAction(player, message);
+                    ((ContainerArcaneInscriber) player.openContainer).onAction(message);
                     return;
                 }
 

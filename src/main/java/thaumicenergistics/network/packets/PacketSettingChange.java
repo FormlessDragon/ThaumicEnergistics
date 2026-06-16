@@ -16,7 +16,6 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import thaumicenergistics.client.gui.GuiBase;
 import thaumicenergistics.config.ThESettings;
-import thaumicenergistics.container.IPartContainer;
 
 /**
  * @author BrockWS
@@ -103,8 +102,6 @@ public class PacketSettingChange implements IMessage {
                             return;
                         }
                         putSetting(cm, resolvedSetting, resolvedValue);
-                        if (player.openContainer instanceof IPartContainer)
-                            ((IPartContainer) player.openContainer).getPart().settingChanged(resolvedSetting);
                     }
                 }
             });

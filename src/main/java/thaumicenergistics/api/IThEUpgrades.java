@@ -11,11 +11,11 @@ import java.util.Optional;
  */
 public interface IThEUpgrades {
 
-    IThEUpgrade arcaneCharger();
+    //IThEUpgrade arcaneCharger();
 
-    IThEUpgrade knowledgeCore();
+    //IThEUpgrade knowledgeCore();
 
-    IThEUpgrade blankKnowledgeCore();
+    //IThEUpgrade blankKnowledgeCore();
 
     IThEUpgrade cardSpeed();
 

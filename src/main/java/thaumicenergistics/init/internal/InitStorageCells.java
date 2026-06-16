@@ -10,10 +10,11 @@ import java.util.Objects;
 public final class InitStorageCells {
 
     // TODO: 绘制源质元件的驱动器模型
-    private static final ResourceLocation MODEL_CELL_ESSENTIA_1K = ThaumicEnergistics.id("block/drive/cells/1k_essentia_cells");
-    private static final ResourceLocation MODEL_CELL_ESSENTIA_4K = ThaumicEnergistics.id("block/drive/cells/1k_essentia_cells");
-    private static final ResourceLocation MODEL_CELL_ESSENTIA_16K = ThaumicEnergistics.id("block/drive/cells/1k_essentia_cells");
-    private static final ResourceLocation MODEL_CELL_ESSENTIA_64K = ThaumicEnergistics.id("block/drive/cells/1k_essentia_cells");
+    private static final ResourceLocation MODEL_CELL_CREATIVE_ESSENTIA = id("block/drive/cells/1k_essentia_cells");
+    private static final ResourceLocation MODEL_CELL_ESSENTIA_1K = id("block/drive/cells/1k_essentia_cells");
+    private static final ResourceLocation MODEL_CELL_ESSENTIA_4K = id("block/drive/cells/1k_essentia_cells");
+    private static final ResourceLocation MODEL_CELL_ESSENTIA_16K = id("block/drive/cells/1k_essentia_cells");
+    private static final ResourceLocation MODEL_CELL_ESSENTIA_64K = id("block/drive/cells/1k_essentia_cells");
 
     private static boolean initialized;
 
@@ -23,10 +24,16 @@ public final class InitStorageCells {
         }
         initialized = true;
 
+        StorageCellModels.registerModel(Objects.requireNonNull(ThEItems.CREATIVE_ESSENTIA_CELL.item()), MODEL_CELL_CREATIVE_ESSENTIA);
         StorageCellModels.registerModel(Objects.requireNonNull(ThEItems.ESSENTIA_CELL_1K.item()), MODEL_CELL_ESSENTIA_1K);
         StorageCellModels.registerModel(Objects.requireNonNull(ThEItems.ESSENTIA_CELL_4K.item()), MODEL_CELL_ESSENTIA_4K);
         StorageCellModels.registerModel(Objects.requireNonNull(ThEItems.ESSENTIA_CELL_16K.item()), MODEL_CELL_ESSENTIA_16K);
         StorageCellModels.registerModel(Objects.requireNonNull(ThEItems.ESSENTIA_CELL_64K.item()), MODEL_CELL_ESSENTIA_64K);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static ResourceLocation id(String id)  {
+        return ThaumicEnergistics.id(id);
     }
 
 }

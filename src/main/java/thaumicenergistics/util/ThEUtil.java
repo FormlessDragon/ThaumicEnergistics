@@ -2,12 +2,9 @@ package thaumicenergistics.util;
 
 import ae2.api.config.TerminalStyle;
 import net.minecraft.item.ItemStack;
-import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.items.ItemDummyAspect;
 
-import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
@@ -16,30 +13,6 @@ import java.util.stream.IntStream;
  * @author BrockWS
  */
 public class ThEUtil {
-
-    /**
-     * Safe divide
-     *
-     * @param x amount
-     * @param y amount
-     * @return if x or y is 0, returns 0, else divides x by y
-     */
-    public static int divide(int x, int y) {
-        return x == 0 || y == 0 ? 0 : x / y;
-    }
-
-    public static ItemStack setAspect(ItemStack stack, Aspect aspect) {
-        if (stack.isEmpty() || !(stack.getItem() instanceof ItemDummyAspect))
-            return stack;
-        ItemDummyAspect item = (ItemDummyAspect) stack.getItem();
-        item.setAspect(stack, aspect);
-        return stack;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T extends Enum<?>> T rotateEnum(T e, EnumSet<? extends T> options, boolean backwards) {
-        return rotateEnum(e, (Set<? extends T>) options, backwards);
-    }
 
     @SuppressWarnings("unchecked")
     public static <T extends Enum<?>> T rotateEnum(T e, Set<? extends T> options, boolean backwards) {
@@ -79,4 +52,5 @@ public class ThEUtil {
     public static boolean areItemStacksEqual(ItemStack a, ItemStack b) {
         return a != null && b != null && ItemStack.areItemsEqual(a, b) && (a.hasTagCompound() == b.hasTagCompound()) && ForgeUtil.areNBTTagsEqual(a.getTagCompound(), b.getTagCompound());
     }
+
 }

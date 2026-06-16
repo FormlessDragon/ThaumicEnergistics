@@ -8,6 +8,7 @@ import java.util.Map;
 /**
  * @author BrockWS
  */
+@Deprecated
 public interface IThEUpgrade {
 
     void registerItem(IThEItemDefinition item, int max);

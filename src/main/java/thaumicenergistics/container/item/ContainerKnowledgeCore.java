@@ -12,11 +12,15 @@ import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.slot.SlotGhost;
+import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.network.packets.PacketUIAction;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.KnowledgeCoreUtil;
+import thaumicenergistics.util.ThELog;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
+
+import java.util.Optional;
 
 /**
  * @author Alex811
@@ -37,7 +41,7 @@ public class ContainerKnowledgeCore extends ContainerBase {
             initInv();
             addSlots(8, 15);
         } catch (ClassCastException ex) {
-            ex.printStackTrace();
+            ThELog.error("", ex);
         }
     }
 
@@ -45,12 +49,13 @@ public class ContainerKnowledgeCore extends ContainerBase {
         inventory = new ThEInternalInventory("KCore", 9, 1);
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void addSlots(int offsetX, int offsetY) {
         for (int i = 0; i < SLOT_NUM; i++) {
             SlotGhost slotGhost = new SlotGhost(inventory, i, offsetX + (i * 18), offsetY);
             if (KnowledgeCoreUtil.hasRecipe(knowledgeCoreStack, i)) {
                 KnowledgeCoreUtil.Recipe recipe = KnowledgeCoreUtil.getRecipe(knowledgeCoreStack, i);
-                if (recipe != null) slotGhost.putStack(recipe.getResult());
+                if (recipe != null) slotGhost.putStack(recipe.result());
             }
             this.addSlotToContainer(slotGhost);
         }
@@ -73,7 +78,7 @@ public class ContainerKnowledgeCore extends ContainerBase {
                         break;
                 }
             if (KnowledgeCoreUtil.isEmpty(knowledgeCoreStack))
-                ThEApi.instance().items().blankKnowledgeCore().maybeStack(1).ifPresent(blank -> ((InvWrapper) inscriber.getInventory("upgrades")).getInv().setInventorySlotContents(0, blank));
+                Optional.of(ThEItems.BLANK_KNOWLEDGE_CORE.stack(1)).ifPresent(blank -> ((InvWrapper) inscriber.getInventory("upgrades")).getInv().setInventorySlotContents(0, blank));
             GuiHandler.openGUI(ModGUIs.ARCANE_INSCRIBER, player, inscriber.getPartPos(), inscriber.getPartSide());
         }
     }
@@ -86,11 +91,4 @@ public class ContainerKnowledgeCore extends ContainerBase {
         return GUIAction;
     }
 
-    public ItemStack getKnowledgeCoreStack() {
-        return knowledgeCoreStack;
-    }
-
-    public ContainerArcaneInscriber getInscriber() {
-        return inscriber;
-    }
 }

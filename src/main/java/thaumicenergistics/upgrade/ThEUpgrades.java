@@ -15,37 +15,38 @@ import java.util.Optional;
 /**
  * @author BrockWS
  */
+@Deprecated
 public class ThEUpgrades implements IThEUpgrades {
 
-    private final IThEUpgrade arcaneCharger;
-    private final IThEUpgrade knowledgeCore;
-    private final IThEUpgrade blankKnowledgeCore;
+    //private final IThEUpgrade arcaneCharger;
+    //private final IThEUpgrade knowledgeCore;
+    //private final IThEUpgrade blankKnowledgeCore;
     private final IThEUpgrade cardSpeed;
     private final List<IThEUpgrade> upgrades;
 
     public ThEUpgrades(IThEItems items) {
         this.upgrades = new ArrayList<>();
 
-        this.upgrades.add(this.arcaneCharger = new ThEUpgrade(items.upgradeArcane()));
-        this.upgrades.add(this.knowledgeCore = new ThEUpgrade(items.knowledgeCore()));
-        this.upgrades.add(this.blankKnowledgeCore = new ThEUpgrade(items.blankKnowledgeCore()));
+        //this.upgrades.add(this.arcaneCharger = new ThEUpgrade(items.upgradeArcane()));
+        //this.upgrades.add(this.knowledgeCore = new ThEUpgrade(items.knowledgeCore()));
+        //this.upgrades.add(this.blankKnowledgeCore = new ThEUpgrade(items.blankKnowledgeCore()));
         this.upgrades.add(this.cardSpeed = new ThEUpgrade(new ThEItemDefinition(AEItems.SPEED_CARD.item())));
     }
 
-    @Override
+    /*@Override
     public IThEUpgrade arcaneCharger() {
         return this.arcaneCharger;
-    }
+    }*/
 
-    @Override
+    /*@Override
     public IThEUpgrade knowledgeCore() {
         return this.knowledgeCore;
-    }
+    }*/
 
-    @Override
+    /*@Override
     public IThEUpgrade blankKnowledgeCore() {
         return this.blankKnowledgeCore;
-    }
+    }*/
 
     @Override
     public IThEUpgrade cardSpeed() {

@@ -1,8 +1,5 @@
 package thaumicenergistics.util;
 
-import ae2.api.config.Actionable;
-import ae2.api.networking.security.IActionSource;
-import ae2.api.storage.MEStorage;
 import ae2.util.InteractionUtil;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -13,8 +10,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import thaumcraft.api.aspects.Aspect;
-import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
 
 /**
  * @author BrockWS
@@ -49,26 +44,6 @@ public class AEUtil {
         return rl != null ? rl.getNamespace() : "MODIDNOTFOUND";
     }
 
-    public static long getStackSize(Object o) {
-        if (o instanceof ItemStack)
-            return ((ItemStack) o).getCount();
-        if (o instanceof EntityItem)
-            return AEUtil.getStackSize(((EntityItem) o).getItem());
-        return 0;
-    }
-
-    public static long insertEssentia(MEStorage storage, Aspect aspect, long amount, Actionable mode, IActionSource source) {
-        return SupergiantEssentiaUtil.insert(storage, aspect, amount, mode, source);
-    }
-
-    public static long extractEssentia(MEStorage storage, Aspect aspect, long amount, Actionable mode, IActionSource source) {
-        return SupergiantEssentiaUtil.extract(storage, aspect, amount, mode, source);
-    }
-
-    public static long getStoredEssentiaAmount(MEStorage storage, Aspect aspect) {
-        return SupergiantEssentiaUtil.getStoredAmount(storage, aspect);
-    }
-
     public static KeyBinding getFocusKeyBinding() {
         if (AEUtil.focusKeyBinding == null) {
             for (KeyBinding key : Minecraft.getMinecraft().gameSettings.keyBindings)
@@ -84,6 +59,6 @@ public class AEUtil {
     public static boolean isWrench(ItemStack stack, EntityPlayer player, BlockPos pos) {
         if (stack.isEmpty())
             return false;
-        return InteractionUtil.canWrenchRotate(stack);
+        return InteractionUtil.canWrenchRotate(player, stack, pos);
     }
 }

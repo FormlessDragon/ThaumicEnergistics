@@ -25,7 +25,9 @@ item.thaumicenergistics.essentia_export.name=ME Essentia Export Bus
 item.thaumicenergistics.essentia_storage.name=ME Essentia Storage Bus
 item.thaumicenergistics.essentia_terminal.name=ME Essentia Terminal
 item.thaumicenergistics.arcane_terminal.name=Arcane Crafting Terminal
+item.thaumicenergistics.wireless_arcane_terminal.name=Wireless Arcane Crafting Terminal
 item.thaumicenergistics.arcane_inscriber.name=Arcane Inscriber
+item.thaumicenergistics.arcane_p2p_tunnel.name=ME Arcane P2P Tunnel
 
 item.thaumicenergistics.upgrade_arcane.name=Arcane Charging Upgrade
 item.thaumicenergistics.knowledge_core.name=Knowledge Core
@@ -124,6 +126,7 @@ research.essentiastorage64k.stage.2=I can now store massive amounts of essentia 
 research.essentiabuses.title=Digisentia Transportation
 research.essentiabuses.stage.1=Now that I have the components to safely transport essentia with my ME system, I can now work on creating buses for essentia.
 research.essentiabuses.stage.2=I can now make Import, Export, and Storage Buses. They all function exactly like their item counterparts.
+research.essentiabuses.addenda.1=With a little more tuning, P2P tunnels can move Vis between distant aura points through the ME network.
 
 # Research Essentia Terminal
 research.essentiaterminal.title=Essentia Monitoring
@@ -140,6 +143,7 @@ research.arcaneterminal.title=Arcane Crafting Terminal
 research.arcaneterminal.stage.1=Having to hop back and forth between my ME system and my Arcane Workbench for every craft is getting frustrating. While it is vastly more complex than a mere Crafting Terminal, using the same principles, I should be able to hook my Arcane Workbench into my ME system.
 research.arcaneterminal.stage.2=The Arcane Crafting Terminal allows my Arcane Workbench to take full advantage of my ME system.
 research.arcaneterminal.addenda.1=I can upgrade my Arcane Crafting Terminal with the Arcane Charging Upgrade to allow it to access and draw vis from all neighboring chunks.
+research.arcaneterminal.addenda.2=Combining the Arcane Crafting Terminal with wireless ME access makes field work much less tedious, provided I bind it to a stable network.
 
 # Research Arcane Assembler
 research.arcaneassembler.title=Arcane Assembler

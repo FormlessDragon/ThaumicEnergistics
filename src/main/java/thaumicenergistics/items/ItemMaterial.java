@@ -1,15 +1,12 @@
 package thaumicenergistics.items;
 
-import com.google.common.base.Preconditions;
-import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
-import net.minecraftforge.client.model.ModelLoader;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.api.IThEUpgrade;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.client.render.IThEModel;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -19,10 +16,10 @@ import java.util.stream.Collectors;
 /**
  * @author BrockWS
  */
-public class ItemMaterial extends ItemBase implements IThEModel {
+public class ItemMaterial extends Item {
 
     public ItemMaterial(String id) {
-        super(id);
+        this.setTranslationKey(Reference.MOD_ID + "." + id);
     }
 
     public ItemMaterial(String id, int stackSize) {
@@ -41,11 +38,4 @@ public class ItemMaterial extends ItemBase implements IThEModel {
         super.addInformation(stack, worldIn, tooltip, flagIn);
     }
 
-    @Override
-    public void initModel() {
-        Preconditions.checkNotNull(this.getRegistryName());
-        Preconditions.checkNotNull(this.getRegistryName().getPath());
-
-        ModelLoader.setCustomModelResourceLocation(this, 0, new ModelResourceLocation(Reference.MOD_ID + ":material/" + this.getRegistryName().getPath(), "inventory"));
-    }
 }

@@ -22,10 +22,10 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
@@ -39,10 +39,10 @@ import thaumicenergistics.container.ICraftingContainer;
 import thaumicenergistics.container.slot.SlotArcaneMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.container.slot.SlotUpgrade;
+import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketVisUpdate;
-import thaumicenergistics.part.PartArcaneTerminal;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.TCUtil;
@@ -58,19 +58,19 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     private static final String ACTION_CLEAR_GRID = "clearGrid";
     private static final String ACTION_SET_CLEAR_ON_CLOSE = "setClearOnClose";
 
-    protected final PartArcaneTerminal part;
+    protected final IArcaneTerminalHost host;
     protected final IInventory craftingResult;
     protected SlotArcaneResult resultSlot;
     protected IRecipe recipe;
     private boolean clearGridOnClose;
 
-    public ContainerArcaneTerm(InventoryPlayer ip, PartArcaneTerminal part) {
-        this(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, part);
+    public ContainerArcaneTerm(InventoryPlayer ip, IArcaneTerminalHost host) {
+        this(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, host);
     }
 
-    protected ContainerArcaneTerm(GuiIds.GuiKey guiKey, InventoryPlayer ip, PartArcaneTerminal part) {
-        super(guiKey, ip, part);
-        this.part = part;
+    protected ContainerArcaneTerm(GuiIds.GuiKey guiKey, InventoryPlayer ip, IArcaneTerminalHost host) {
+        super(guiKey, ip, host);
+        this.host = host;
         this.craftingResult = new ThEInternalInventory("Result", 1, 64);
 
         this.addMatrixSlots(32, 36);
@@ -80,9 +80,12 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         this.onMatrixChanged();
     }
 
-    @Override
-    public PartArcaneTerminal getPart() {
-        return this.part;
+    public IArcaneTerminalHost getArcaneHost() {
+        return this.host;
+    }
+
+    public IArcaneTerminalHost getHost() {
+        return this.host;
     }
 
     @Override
@@ -91,11 +94,11 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     public BlockPos getPartPos() {
-        return this.part.getLocation().getPos();
+        return this.host.getReturnPos();
     }
 
     public EnumFacing getPartSide() {
-        return this.part.side;
+        return this.host.getReturnSide();
     }
 
     public IRecipe getCurrentRecipe() {
@@ -133,7 +136,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         switch (name.toLowerCase(Locale.ROOT)) {
             case "crafting":
             case "upgrades":
-                return this.part.getInventoryByName(name);
+                return this.host.getInventoryByName(name);
             case "result":
                 return new InvWrapper(this.craftingResult);
             case "player":
@@ -279,8 +282,8 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             }
 
             if (this.getCurrentRequiredVis() > 0) {
-                TCUtil.drainVis(this.part.getTile().getWorld(),
-                        this.part.getTile().getPos(),
+                TCUtil.drainVis(this.host.getVisWorld(),
+                        this.host.getVisPos(),
                         this.getCurrentRequiredVis(),
                         this.getInventory("upgrades").getStackInSlot(0).isEmpty() ? 0 : 1);
             }
@@ -370,19 +373,23 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     protected float getWorldVis() {
-        TileEntity te = this.part.getTile();
-        float vis = AuraHelper.getVis(te.getWorld(), te.getPos());
+        if (!this.host.hasVisSource()) {
+            return 0;
+        }
+        World world = this.host.getVisWorld();
+        BlockPos pos = this.host.getVisPos();
+        float vis = AuraHelper.getVis(world, pos);
         if (!this.getInventory("upgrades").getStackInSlot(0).isEmpty()) {
-            vis += AuraHelper.getVis(te.getWorld(), te.getPos().add(-16, 0, -16));
-            vis += AuraHelper.getVis(te.getWorld(), te.getPos().add(-16, 0, 0));
-            vis += AuraHelper.getVis(te.getWorld(), te.getPos().add(-16, 0, 16));
+            vis += AuraHelper.getVis(world, pos.add(-16, 0, -16));
+            vis += AuraHelper.getVis(world, pos.add(-16, 0, 0));
+            vis += AuraHelper.getVis(world, pos.add(-16, 0, 16));
 
-            vis += AuraHelper.getVis(te.getWorld(), te.getPos().add(0, 0, -16));
-            vis += AuraHelper.getVis(te.getWorld(), te.getPos().add(0, 0, 16));
+            vis += AuraHelper.getVis(world, pos.add(0, 0, -16));
+            vis += AuraHelper.getVis(world, pos.add(0, 0, 16));
 
-            vis += AuraHelper.getVis(te.getWorld(), te.getPos().add(16, 0, -16));
-            vis += AuraHelper.getVis(te.getWorld(), te.getPos().add(16, 0, 0));
-            vis += AuraHelper.getVis(te.getWorld(), te.getPos().add(16, 0, 16));
+            vis += AuraHelper.getVis(world, pos.add(16, 0, -16));
+            vis += AuraHelper.getVis(world, pos.add(16, 0, 0));
+            vis += AuraHelper.getVis(world, pos.add(16, 0, 16));
         }
         return vis;
     }

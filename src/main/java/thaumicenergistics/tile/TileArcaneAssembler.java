@@ -26,6 +26,7 @@ import thaumicenergistics.api.IThELangKey;
 import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.client.gui.IThEGuiTile;
+import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
 import thaumicenergistics.network.PacketHandler;
@@ -43,6 +44,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -118,11 +120,6 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
     }
 
     @Override
-    public boolean shouldRenderInPass(int pass) {
-        return pass == 0;
-    }
-
-    @Override
     public void openGUI(EntityPlayer player) {
         GuiHandler.openGUI(this.getGUI(), player, this.getPos());
     }
@@ -134,13 +131,11 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
 
     @Override
     public IItemHandler getInventoryByName(String name) {
-        switch (name) {
-            case "cores":
-                return new InvWrapper(this.coreInv);
-            case "upgrades":
-                return new InvWrapper(this.upgradeInv);
-        }
-        return null;
+        return switch (name) {
+            case "cores" -> new InvWrapper(this.coreInv);
+            case "upgrades" -> new InvWrapper(this.upgradeInv);
+            default -> null;
+        };
     }
 
     @Override
@@ -158,7 +153,7 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
         final ItemStack knowledgeCore = this.coreInv.getStackInSlot(0);
         List<IPatternDetails> patterns = new ArrayList<>();
         KnowledgeCoreUtil.recipeStreamOf(knowledgeCore)
-                .map(recipe -> KnowledgeCoreUtil.getAEPattern(recipe, this.world))
+                .map(KnowledgeCoreUtil::getAEPattern)
                 .forEach(patterns::add);
         return patterns;
     }
@@ -172,14 +167,14 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
     public boolean pushPattern(IPatternDetails patternDetails, KeyCounter[] inputs, int multiplier) {
         KnowledgeCoreUtil.Recipe recipe = KnowledgeCoreUtil.getRecipe(this.coreInv.getStackInSlot(0), patternDetails);
         if (recipe == null) return false;
-        ItemStack result = recipe.getResult().copy();
+        ItemStack result = recipe.result().copy();
         result.setCount(result.getCount() * Math.max(1, multiplier));
         boolean prevHasEnoughVis = this.hasEnoughVis;
         boolean prevMissingAspect = this.missingAspect.get();
         HashMap<String, Boolean> prevAspectExists = this.aspectExists;
         // Check vis
         int pushMultiplier = Math.max(1, multiplier);
-        this.hasEnoughVis = this.getWorldVis() >= recipe.getVisCost() * pushMultiplier;
+        this.hasEnoughVis = this.getWorldVis() >= recipe.visCost() * pushMultiplier;
         // Simulate removing aspects
         this.aspectExists = new HashMap<>();
         MEStorage inventory = this.getNetworkStorage();
@@ -237,9 +232,11 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
             }
             extractedAspects.put(requirement.getKey(), extracted);
         }
-        if (recipe.getVisCost() > 0) {
-            final ItemStack visRangeUpgrade = ThEApi.instance().items().upgradeArcane().maybeStack(1).orElseThrow(RuntimeException::new);
-            TCUtil.drainVis(this.getWorld(), this.getPos(), recipe.getVisCost() * pushMultiplier, this.upgradeInv.getUpgrades(visRangeUpgrade));
+        if (recipe.visCost() > 0) {
+            // TODO
+            //final ItemStack visRangeUpgrade = ThEApi.instance().items().upgradeArcane().maybeStack(1).orElseThrow(RuntimeException::new);
+            final ItemStack visRangeUpgrade = ThEItems.UPGRADE_ARCANE.stack(1);
+            TCUtil.drainVis(this.getWorld(), this.getPos(), recipe.visCost() * pushMultiplier, this.upgradeInv.getUpgrades(visRangeUpgrade));
         }
         this.noPushFlag = false;
         this.hasJob = true;
@@ -396,7 +393,7 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
     }
 
     protected float getWorldVis() {
-        return ThEApi.instance().items().upgradeArcane().maybeStack(1).map(visRangeUpgrade -> {
+        return Optional.of(ThEItems.UPGRADE_ARCANE.stack(1)).map(visRangeUpgrade -> {
             float vis = AuraHelper.getVis(this.getWorld(), this.getPos());
             if (this.upgradeInv.getUpgrades(visRangeUpgrade) > 0) {
                 vis += AuraHelper.getVis(this.getWorld(), this.getPos().add(-16, 0, -16));

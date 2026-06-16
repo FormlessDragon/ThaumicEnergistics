@@ -1,11 +1,12 @@
 package thaumicenergistics.integration.theoneprobe;
 
 import mcjty.theoneprobe.api.*;
+import ae2.api.parts.IPart;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import thaumicenergistics.thaumicenergistics.Reference;
-import thaumicenergistics.part.PartBase;
 
 /**
  * @author Alex811
@@ -13,12 +14,13 @@ import thaumicenergistics.part.PartBase;
 public class PartTOPDisplayOverride implements IBlockDisplayOverride {
     @Override
     public boolean overrideStandardInfo(ProbeMode mode, IProbeInfo probeInfo, EntityPlayer player, World world, IBlockState blockState, IProbeHitData data) {
-        PartBase part = TOPPartAccessor.getPart(world.getTileEntity(data.getPos()), data);
+        IPart part = TOPPartAccessor.getPart(world.getTileEntity(data.getPos()), data);
         if (part != null) {
+            ItemStack partStack = part.getPartItem().asItemStack();
             probeInfo.horizontal()
-                    .item(part.getRepr())
+                    .item(partStack)
                     .vertical()
-                    .itemLabel(part.getRepr())
+                    .itemLabel(partStack)
                     .text(TextStyleClass.MODNAME + Reference.MOD_NAME);
             return true;
         }

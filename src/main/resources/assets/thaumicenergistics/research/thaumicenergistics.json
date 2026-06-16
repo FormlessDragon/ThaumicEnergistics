@@ -273,6 +273,17 @@
             "thaumicenergistics:essentia_storage_bus"
           ]
         }
+      ],
+      "addenda": [
+        {
+          "text": "research.essentiabuses.addenda.1",
+          "recipes": [
+            "thaumicenergistics:arcane_p2p_tunnel"
+          ],
+          "required_research": [
+            "ARCANETERMINAL"
+          ]
+        }
       ]
     },
     {
@@ -379,6 +390,15 @@
           "text": "research.arcaneterminal.addenda.1",
           "recipes": [
             "thaumicenergistics:upgrade_arcane"
+          ],
+          "required_research": [
+            "WORKBENCHCHARGER"
+          ]
+        },
+        {
+          "text": "research.arcaneterminal.addenda.2",
+          "recipes": [
+            "thaumicenergistics:wireless_arcane_terminal"
           ],
           "required_research": [
             "WORKBENCHCHARGER"

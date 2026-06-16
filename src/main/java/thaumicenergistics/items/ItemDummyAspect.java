@@ -21,6 +21,7 @@ import thaumicenergistics.client.render.IThEModel;
  *
  * @author BrockWS
  */
+@Deprecated
 public class ItemDummyAspect extends ItemBase implements IThEModel {
 
     public ItemDummyAspect() {

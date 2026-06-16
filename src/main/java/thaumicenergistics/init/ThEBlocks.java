@@ -29,6 +29,7 @@ import static thaumicenergistics.ThaumicEnergistics.LOGGER;
 /**
  * @author BrockWS
  */
+@Deprecated
 @Mod.EventBusSubscriber
 public class ThEBlocks implements IThEBlocks {
 

@@ -12,6 +12,8 @@ import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.registries.IForgeRegistryEntry;
+import thaumicenergistics.core.definitions.ThEItems;
+import thaumicenergistics.core.definitions.ThEParts;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumcraft.api.ThaumcraftApi;
 import thaumcraft.api.aspects.Aspect;
@@ -38,6 +40,8 @@ import thaumicenergistics.util.ThELog;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author BrockWS
@@ -86,7 +90,7 @@ public class ThEThaumcraft implements IThEIntegration {
         List<ItemStack> netherQuartz = new ArrayList<>(Arrays.asList(CraftingHelper.getIngredient("gemQuartz").getMatchingStacks()));
         netherQuartz.add(this.aeItemStack(AEItemIds.PURIFIED_NETHER_QUARTZ_CRYSTAL));
 
-        ThEApi.instance().items().coalescenceCore().maybeStack(2).ifPresent(stack ->
+        Optional.of(ThEItems.COALESCENCE_CORE.stack(2)).ifPresent(stack ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "coalescence_core"), new ShapedArcaneRecipe(
                         recipeGroup,
                         "DIGISENTIA@2",
@@ -105,7 +109,7 @@ public class ThEThaumcraft implements IThEIntegration {
                         'L',
                         AEItems.LOGIC_PROCESSOR.stack()
                 )));
-        ThEApi.instance().items().diffusionCore().maybeStack(2).ifPresent(stack ->
+        Optional.of(ThEItems.DIFFUSION_CORE.stack(2)).ifPresent(stack ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "diffusion_core"), new ShapedArcaneRecipe(
                         recipeGroup,
                         "DIGISENTIA@2",
@@ -202,7 +206,7 @@ public class ThEThaumcraft implements IThEIntegration {
                 AEBlocks.QUARTZ_GLASS.block()
         ));
         this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_64k"));
-        ThEApi.instance().items().arcaneTerminal().maybeItem().ifPresent(arcane ->
+        Optional.of(Objects.requireNonNull(ThEParts.ARCANE_TERMINAL.item())).ifPresent(arcane ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "arcane_terminal"), new ShapelessArcaneRecipe(
                         recipeGroup,
                         "ARCANETERMINAL@2",
@@ -213,7 +217,18 @@ public class ThEThaumcraft implements IThEIntegration {
                         BlocksTC.arcaneWorkbench,
                         AEItems.CALCULATION_PROCESSOR.stack()
                 )));
-        ThEApi.instance().items().arcaneInscriber().maybeItem().ifPresent(inscriber ->
+        Optional.of(Objects.requireNonNull(ThEItems.WIRELESS_ARCANE_TERMINAL.item())).ifPresent(wireless ->
+                ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "wireless_arcane_terminal"), new ShapelessArcaneRecipe(
+                        recipeGroup,
+                        "ARCANETERMINAL@2&&WORKBENCHCHARGER",
+                        75,
+                        new AspectList().add(Aspect.AURA, 1).add(Aspect.MECHANISM, 1),
+                        wireless,
+                        AEItems.WIRELESS_CRAFTING_TERMINAL.stack(),
+                        Optional.of(ThEParts.ARCANE_TERMINAL.stack(1)).orElse(ItemStack.EMPTY),
+                        BlocksTC.arcaneWorkbenchCharger
+                )));
+        Optional.of(Objects.requireNonNull(ThEParts.ARCANE_INSCRIBER.item())).ifPresent(inscriber ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "arcane_inscriber"), new ShapelessArcaneRecipe(
                         recipeGroup,
                         "ARCANEINSCRIBER@2",
@@ -224,18 +239,29 @@ public class ThEThaumcraft implements IThEIntegration {
                         BlocksTC.arcaneWorkbench,
                         AEItems.ENGINEERING_PROCESSOR.stack()
                 )));
-        ThEApi.instance().items().upgradeArcane().maybeItem().ifPresent(upgrade -> {
-            ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "upgrade_arcane"), new ShapelessArcaneRecipe(
-                    recipeGroup,
-                    "ARCANETERMINAL@2&&WORKBENCHCHARGER",
-                    25,
-                    new AspectList(),
-                    upgrade,
-                    AEItems.ADVANCED_CARD.stack(),
-                    BlocksTC.arcaneWorkbenchCharger
-            ));
-        });
-        ThEApi.instance().items().blankKnowledgeCore().maybeItem().ifPresent(core ->
+        Optional.of(Objects.requireNonNull(ThEParts.ARCANE_P2P_TUNNEL.item())).ifPresent(arcaneP2P ->
+                ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "arcane_p2p_tunnel"), new ShapelessArcaneRecipe(
+                        recipeGroup,
+                        "ESSENTIABUSES@2&&ARCANETERMINAL",
+                        75,
+                        new AspectList().add(Aspect.AURA, 1).add(Aspect.EXCHANGE, 1),
+                        arcaneP2P,
+                        AEParts.ME_P2P_TUNNEL.stack(),
+                        Optional.of(ThEItems.DIFFUSION_CORE.stack(1)).orElse(ItemStack.EMPTY),
+                        Optional.of(ThEItems.COALESCENCE_CORE.stack(1)).orElse(ItemStack.EMPTY),
+                        ItemsTC.salisMundus
+                )));
+        Optional.of(Objects.requireNonNull(ThEItems.UPGRADE_ARCANE.item())).ifPresent(upgrade ->
+                ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "upgrade_arcane"), new ShapelessArcaneRecipe(
+                        recipeGroup,
+                        "ARCANETERMINAL@2&&WORKBENCHCHARGER",
+                        25,
+                        new AspectList(),
+                        upgrade,
+                        AEItems.ADVANCED_CARD.stack(),
+                        BlocksTC.arcaneWorkbenchCharger
+                )));
+        Optional.of(Objects.requireNonNull(ThEItems.BLANK_KNOWLEDGE_CORE.item())).ifPresent(core ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "knowledge_core"), new ShapedArcaneRecipe(
                         recipeGroup,
                         "KNOWLEDGECORE@2",
@@ -264,9 +290,9 @@ public class ThEThaumcraft implements IThEIntegration {
                         2,
                         new AspectList().add(Aspect.MECHANISM, 25).add(Aspect.MAGIC, 25).add(Aspect.EXCHANGE, 20),
                         AEBlocks.INTERFACE.block(),
-                        ThEApi.instance().items().coalescenceCore().maybeStack(1).orElse(ItemStack.EMPTY),
+                        Optional.of(ThEItems.COALESCENCE_CORE.stack(1)).orElse(ItemStack.EMPTY),
                         ItemsTC.salisMundus,
-                        ThEApi.instance().items().coalescenceCore().maybeStack(1).orElse(ItemStack.EMPTY),
+                        Optional.of(ThEItems.COALESCENCE_CORE.stack(1)).orElse(ItemStack.EMPTY),
                         ItemsTC.salisMundus
                 )));
         ThEApi.instance().blocks().arcaneAssembler().maybeStack(1).ifPresent(stack ->
@@ -276,12 +302,12 @@ public class ThEThaumcraft implements IThEIntegration {
                         6,
                         new AspectList().add(Aspect.CRAFT, 64).add(Aspect.EXCHANGE, 32).add(Aspect.AURA, 16).add(Aspect.MAGIC, 16).add(Aspect.METAL, 8).add(Aspect.CRYSTAL, 8),
                         AEBlocks.MOLECULAR_ASSEMBLER.block(),
-                        ThEApi.instance().items().coalescenceCore().maybeStack(1).orElse(ItemStack.EMPTY),
+                        Optional.of(ThEItems.COALESCENCE_CORE.stack(1)).orElse(ItemStack.EMPTY),
                         TCUtil.getCrystalWithAspect(Aspect.AIR),
                         TCUtil.getCrystalWithAspect(Aspect.WATER),
                         ItemsTC.salisMundus,
                         TCUtil.getCrystalWithAspect(Aspect.ENTROPY),
-                        ThEApi.instance().items().diffusionCore().maybeStack(1).orElse(ItemStack.EMPTY),
+                        Optional.of(ThEItems.DIFFUSION_CORE.stack(1)).orElse(ItemStack.EMPTY),
                         TCUtil.getCrystalWithAspect(Aspect.EARTH),
                         TCUtil.getCrystalWithAspect(Aspect.FIRE),
                         ItemsTC.salisMundus,

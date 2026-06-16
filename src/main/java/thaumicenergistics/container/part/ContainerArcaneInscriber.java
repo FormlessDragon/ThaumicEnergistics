@@ -16,20 +16,25 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumcraft.api.crafting.IArcaneRecipe;
-import thaumicenergistics.api.ThEApi;
+import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.slot.SlotArcaneGhostMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
+import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketIsArcaneUpdate;
 import thaumicenergistics.network.packets.PacketUIAction;
-import thaumicenergistics.part.PartArcaneInscriber;
-import thaumicenergistics.util.*;
+import thaumicenergistics.util.ForgeUtil;
+import thaumicenergistics.util.ItemHandlerUtil;
+import thaumicenergistics.util.KnowledgeCoreUtil;
+import thaumicenergistics.util.ThELog;
+
+import java.util.Optional;
 
 /**
  * @author Alex811
@@ -42,12 +47,8 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
 
     public boolean recipeIsArcane = false;
 
-    public ContainerArcaneInscriber(EntityPlayer player, PartArcaneInscriber part) {
-        this(player.inventory, part);
-    }
-
-    public ContainerArcaneInscriber(InventoryPlayer ip, PartArcaneInscriber part) {
-        super(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, part);
+    public ContainerArcaneInscriber(InventoryPlayer ip, IArcaneTerminalHost host) {
+        super(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, host);
         this.registerInscriberActions();
     }
 
@@ -97,7 +98,7 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
 
         boolean currentIsBlank = ((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
         if (currentIsBlank) {
-            ThEApi.instance().items().knowledgeCore().maybeStack(1).ifPresent(newCore ->
+            Optional.of(ThEItems.KNOWLEDGE_CORE.stack(1)).ifPresent(newCore ->
                     ((InvWrapper) this.getInventory("upgrades")).getInv().setInventorySlotContents(0, newCore));
         } else if (KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem())) {
             return;
@@ -126,7 +127,7 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
                 && !((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
     }
 
-    public void onAction(EntityPlayerMP player, PacketUIAction packet) {
+    public void onAction(PacketUIAction packet) {
         if (ForgeUtil.isClient()) {
             return;
         }
@@ -206,21 +207,19 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
             return;
         }
 
-        if (!(ingredientGroup instanceof NBTTagList)) {
+        if (!(ingredientGroup instanceof NBTTagList subs)) {
             ThELog.warn("Invalid JEI ingredient group: {}", ingredientGroup);
             return;
         }
 
-        NBTTagList subs = (NBTTagList) ingredientGroup;
         for (int i = 0; i < subs.tagCount(); i++) {
             int slot = startAtSlot + i;
             NBTBase sub = subs.get(i);
-            if (!(sub instanceof NBTTagList)) {
+            if (!(sub instanceof NBTTagList alternatives)) {
                 ThELog.warn("Invalid JEI ingredient entry: {}", sub);
                 continue;
             }
 
-            NBTTagList alternatives = (NBTTagList) sub;
             if (alternatives.tagCount() <= 0) {
                 continue;
             }
