@@ -1,14 +1,20 @@
 package thaumicenergistics.common.strategy;
 
+import ae2.api.config.Actionable;
+import ae2.api.networking.security.IActionSource;
+import ae2.api.stacks.KeyCounter;
+import ae2.api.storage.MEStorage;
 import org.junit.jupiter.api.Test;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
+import thaumicenergistics.me.key.AEEssentiaKey;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class EssentiaContainerStrategyUtilTest {
 
@@ -46,6 +52,49 @@ class EssentiaContainerStrategyUtilTest {
     }
 
     @Test
+    void sharedStorageAdapterSimulatesModulatesExtractsAndCallsBackWhenMutated() {
+        TestAspectContainer container = new TestAspectContainer(5, false, Integer.MAX_VALUE);
+        CountingCallback callback = new CountingCallback();
+        MEStorage storage = EssentiaContainerStrategyUtil.createStorage(container, false, callback);
+        AEEssentiaKey air = AEEssentiaKey.of(Aspect.AIR);
+
+        assertEquals(3, storage.insert(air, 3, Actionable.SIMULATE, IActionSource.empty()));
+        assertEquals(0, container.containerContains(Aspect.AIR));
+        assertEquals(0, callback.calls);
+
+        assertEquals(3, storage.insert(air, 3, Actionable.MODULATE, IActionSource.empty()));
+        assertEquals(3, container.containerContains(Aspect.AIR));
+        assertEquals(1, callback.calls);
+
+        KeyCounter available = storage.getAvailableStacks();
+        assertEquals(3, available.get(air));
+
+        assertEquals(2, storage.extract(air, 2, Actionable.SIMULATE, IActionSource.empty()));
+        assertEquals(3, container.containerContains(Aspect.AIR));
+        assertEquals(1, callback.calls);
+
+        assertEquals(2, storage.extract(air, 2, Actionable.MODULATE, IActionSource.empty()));
+        assertEquals(1, container.containerContains(Aspect.AIR));
+        assertEquals(2, callback.calls);
+    }
+
+    @Test
+    void sharedStorageAdapterHonorsExtractableOnly() {
+        TestAspectContainer container = new TestAspectContainer(5, false, Integer.MAX_VALUE);
+        MEStorage storage = EssentiaContainerStrategyUtil.createStorage(container, true, null);
+
+        assertEquals(0, storage.insert(AEEssentiaKey.of(Aspect.AIR), 1, Actionable.MODULATE, IActionSource.empty()));
+        assertEquals(0, container.containerContains(Aspect.AIR));
+    }
+
+    @Test
+    void containerNullPointerExceptionIsNotSilentlySwallowed() {
+        TestAspectContainer container = new ThrowingAspectContainer();
+
+        assertThrows(NullPointerException.class, () -> EssentiaContainerStrategyUtil.insert(container, Aspect.AIR, 1));
+    }
+
+    @Test
     void simulatedInsertRejectsAnotherAspectWhenContainerIsSingleAspect() {
         TestAspectContainer container = new TestAspectContainer(10, true, Integer.MAX_VALUE);
         container.addToContainer(Aspect.FIRE, 1);
@@ -57,7 +106,7 @@ class EssentiaContainerStrategyUtilTest {
         assertEquals(1, container.containerContains(Aspect.FIRE));
     }
 
-    private static final class TestAspectContainer implements IAspectContainer {
+    private static class TestAspectContainer implements IAspectContainer {
         private final Map<Aspect, Integer> aspects = new LinkedHashMap<>();
         private final int capacity;
         private final boolean singleAspect;
@@ -169,6 +218,26 @@ class EssentiaContainerStrategyUtilTest {
                 total += amount;
             }
             return total;
+        }
+    }
+
+    private static final class ThrowingAspectContainer extends TestAspectContainer {
+        private ThrowingAspectContainer() {
+            super(1, false, Integer.MAX_VALUE);
+        }
+
+        @Override
+        public int addToContainer(Aspect aspect, int amount) {
+            throw new NullPointerException("test container failure");
+        }
+    }
+
+    private static final class CountingCallback implements Runnable {
+        private int calls;
+
+        @Override
+        public void run() {
+            this.calls++;
         }
     }
 }

@@ -1,10 +1,19 @@
 package thaumicenergistics.common.strategy;
 
+import ae2.api.config.Actionable;
+import ae2.api.networking.security.IActionSource;
 import ae2.api.stacks.AEKey;
-import thaumicenergistics.util.ThELog;
+import ae2.api.stacks.KeyCounter;
+import ae2.api.storage.MEStorage;
+import net.minecraft.util.text.ITextComponent;
 import thaumcraft.api.aspects.Aspect;
+import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
+import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
+import thaumicenergistics.util.ThELog;
 import thaumicenergistics.me.key.AEEssentiaKey;
+
+import java.util.Objects;
 
 final class EssentiaContainerStrategyUtil {
 
@@ -33,6 +42,10 @@ final class EssentiaContainerStrategyUtil {
         return insert(container, aspect, requested, false);
     }
 
+    static MEStorage createStorage(IAspectContainer container, boolean extractableOnly, Runnable mutationCallback) {
+        return new EssentiaContainerStorage(Objects.requireNonNull(container, "container"), extractableOnly, mutationCallback);
+    }
+
     private static int insert(IAspectContainer container, Aspect aspect, int requested, boolean simulate) {
         if (requested <= 0 || !canAttemptInsert(container, aspect)) {
             return 0;
@@ -55,7 +68,12 @@ final class EssentiaContainerStrategyUtil {
         }
 
         if (simulate && inserted > 0 && !container.takeFromContainer(aspect, inserted)) {
-            ThELog.warn("Could not roll back simulated essentia insert of {} {}.", inserted, aspect.getTag());
+            ThELog.warn(
+                    "Could not roll back simulated essentia insert: aspect={}, tag={}, inserted={}, requested={}.",
+                    aspect,
+                    getAspectTag(aspect),
+                    inserted,
+                    requested);
             return 0;
         }
         return inserted;
@@ -71,8 +89,103 @@ final class EssentiaContainerStrategyUtil {
         try {
             int notAdded = container.addToContainer(aspect, requested);
             return Math.max(0, requested - Math.max(0, notAdded));
-        } catch (NullPointerException ignored) {
-            return 0;
+        } catch (NullPointerException e) {
+            ThELog.warn(
+                    "Thaumcraft essentia container threw while inserting essentia: aspect={}, tag={}, requested={}.",
+                    aspect,
+                    getAspectTag(aspect),
+                    requested,
+                    e);
+            throw e;
+        }
+    }
+
+    private static String getAspectTag(Aspect aspect) {
+        return aspect == null ? "<null>" : aspect.getTag();
+    }
+
+    private static final class EssentiaContainerStorage implements MEStorage {
+        private final IAspectContainer container;
+        private final boolean extractableOnly;
+        private final Runnable mutationCallback;
+
+        private EssentiaContainerStorage(IAspectContainer container, boolean extractableOnly, Runnable mutationCallback) {
+            this.container = container;
+            this.extractableOnly = extractableOnly;
+            this.mutationCallback = mutationCallback;
+        }
+
+        @Override
+        public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
+            Objects.requireNonNull(mode, "mode");
+            Objects.requireNonNull(source, "source");
+
+            AEEssentiaKey key = toEssentiaKey(what);
+            if (this.extractableOnly || key == null || amount <= 0 || !canAttemptInsert(this.container, key.getAspect())) {
+                return 0;
+            }
+
+            int requested = clampRequested(amount);
+            int inserted = mode == Actionable.SIMULATE
+                    ? simulateInsert(this.container, key.getAspect(), requested)
+                    : EssentiaContainerStrategyUtil.insert(this.container, key.getAspect(), requested);
+            if (mode == Actionable.MODULATE && inserted > 0) {
+                this.notifyMutation();
+            }
+            return inserted;
+        }
+
+        @Override
+        public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
+            Objects.requireNonNull(mode, "mode");
+            Objects.requireNonNull(source, "source");
+
+            AEEssentiaKey key = toEssentiaKey(what);
+            if (key == null || amount <= 0) {
+                return 0;
+            }
+
+            Aspect aspect = key.getAspect();
+            int available = this.container.containerContains(aspect);
+            if (available <= 0) {
+                return 0;
+            }
+
+            int extracted = (int) Math.min(available, Math.min(Integer.MAX_VALUE, amount));
+            if (mode == Actionable.MODULATE) {
+                if (!this.container.takeFromContainer(aspect, extracted)) {
+                    return 0;
+                }
+                this.notifyMutation();
+            }
+            return extracted;
+        }
+
+        @Override
+        public void getAvailableStacks(KeyCounter out) {
+            AspectList aspects = this.container.getAspects();
+            if (aspects == null) {
+                return;
+            }
+
+            for (Aspect aspect : aspects.getAspects()) {
+                AEEssentiaKey key = AEEssentiaKey.of(aspect);
+                int amount = this.container.containerContains(aspect);
+                if (key != null && amount > 0) {
+                    out.add(key, amount);
+                }
+            }
+        }
+
+        @Override
+        public ITextComponent getDescription() {
+            return SupergiantEssentiaUtil.description();
+        }
+
+        private void notifyMutation() {
+            if (this.mutationCallback != null) {
+                this.mutationCallback.run();
+            }
         }
     }
 

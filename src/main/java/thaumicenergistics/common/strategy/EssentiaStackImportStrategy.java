@@ -4,15 +4,14 @@ import ae2.api.config.Actionable;
 import ae2.api.behaviors.StackImportStrategy;
 import ae2.api.behaviors.StackTransferContext;
 import ae2.api.stacks.AEKey;
+import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
-import thaumcraft.api.aspects.Aspect;
-import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
-import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.me.key.AEEssentiaKeys;
 import thaumicenergistics.util.ThELog;
 
@@ -41,40 +40,43 @@ public class EssentiaStackImportStrategy implements StackImportStrategy {
             return false;
         }
 
-        AspectList aspects = container.getAspects();
-        if (aspects == null) {
-            return false;
-        }
-
-        MEStorage storage = context.getInternalStorage().getInventory();
-        for (Aspect aspect : aspects.getAspects()) {
-            AEEssentiaKey key = AEEssentiaKey.of(aspect);
-            if (key == null || !matchesFilter(context, key)) {
+        MEStorage containerStorage = EssentiaContainerStrategyUtil.createStorage(container, false, null);
+        KeyCounter availableStacks = containerStorage.getAvailableStacks();
+        MEStorage networkStorage = context.getInternalStorage().getInventory();
+        for (Object2LongMap.Entry<AEKey> entry : availableStacks) {
+            AEKey key = entry.getKey();
+            if (!matchesFilter(context, key)) {
                 continue;
             }
 
-            int available = container.containerContains(aspect);
+            long available = entry.getLongValue();
             if (available <= 0) {
                 continue;
             }
 
             long maxTransfer = (long) Math.max(1, context.getOperationsRemaining()) * key.getAmountPerOperation();
-            int requested = (int) Math.min(available, Math.min(Integer.MAX_VALUE, maxTransfer));
-            long accepted = storage.insert(key, requested, Actionable.SIMULATE, context.getActionSource());
+            long requested = Math.min(available, maxTransfer);
+            long accepted = networkStorage.insert(key, requested, Actionable.SIMULATE, context.getActionSource());
             if (accepted <= 0) {
                 continue;
             }
 
-            int toMove = (int) Math.min(requested, accepted);
-            if (!container.takeFromContainer(aspect, toMove)) {
+            long toMove = Math.min(requested, accepted);
+            long extracted = containerStorage.extract(key, toMove, Actionable.MODULATE, context.getActionSource());
+            if (extracted <= 0) {
                 continue;
             }
 
-            long inserted = storage.insert(key, toMove, Actionable.MODULATE, context.getActionSource());
-            if (inserted < toMove) {
-                int remaining = toMove - (int) inserted;
-                if (EssentiaContainerStrategyUtil.insert(container, aspect, remaining) < remaining) {
-                    ThELog.warn("Essentia import strategy could not roll back all {} essentia after a partial ME insert at {}", aspect.getTag(), this.fromPos);
+            long inserted = networkStorage.insert(key, extracted, Actionable.MODULATE, context.getActionSource());
+            if (inserted < extracted) {
+                long remaining = extracted - inserted;
+                long returned = containerStorage.insert(key, remaining, Actionable.MODULATE, context.getActionSource());
+                if (returned < remaining) {
+                    ThELog.warn(
+                            "Essentia import strategy could not roll back all {} essentia for {} after a partial ME insert at {}",
+                            remaining,
+                            key,
+                            this.fromPos);
                 }
             }
 

@@ -3,6 +3,7 @@ package thaumicenergistics.common.strategy;
 import ae2.api.behaviors.StackExportStrategy;
 import ae2.api.behaviors.StackTransferContext;
 import ae2.api.config.Actionable;
+import ae2.api.networking.security.IActionSource;
 import ae2.api.stacks.AEKey;
 import ae2.api.storage.MEStorage;
 import ae2.api.storage.StorageHelper;
@@ -10,7 +11,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
-import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.IAspectContainer;
 import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.me.key.AEEssentiaKeys;
@@ -76,17 +76,8 @@ public class EssentiaStackExportStrategy implements StackExportStrategy {
             return 0;
         }
 
-        Aspect aspect = essentiaKey.getAspect();
-        if (!EssentiaContainerStrategyUtil.canAttemptInsert(container, aspect)) {
-            return 0;
-        }
-
-        int requested = EssentiaContainerStrategyUtil.clampRequested(amount);
-        if (mode == Actionable.SIMULATE) {
-            return EssentiaContainerStrategyUtil.simulateInsert(container, aspect, requested);
-        }
-
-        return EssentiaContainerStrategyUtil.insert(container, aspect, requested);
+        MEStorage containerStorage = EssentiaContainerStrategyUtil.createStorage(container, false, null);
+        return containerStorage.insert(essentiaKey, amount, mode, IActionSource.empty());
     }
 
     protected IAspectContainer getContainer() {
