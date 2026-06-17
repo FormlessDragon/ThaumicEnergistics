@@ -28,9 +28,11 @@ dependencies {
 
     modImplementation 'curse.maven:hei-557549:8081514'
     modImplementation 'curse.maven:hwyla-253449:2568753'
-    modRuntimeOnly 'curse.maven:thaumic-jei-285492:5646810'
+    modImplementation 'curse.maven:thaumic-jei-285492:5646810'
 
-    compileOnly("io.github.formlessdragon:AppliedEnergistics2-Supergiant:${ae2_version}:dev")
+    compileOnly("io.github.formlessdragon:AppliedEnergistics2-Supergiant:${ae2_version}:dev") {
+        transitive = false
+    }
     modRuntimeOnly("io.github.formlessdragon:AppliedEnergistics2-Supergiant:${ae2_version}:dev") {
         transitive = false
     }

@@ -1,7 +1,6 @@
 package thaumicenergistics.integration.jei;
 
-import com.google.common.base.Strings;
-import mezz.jei.api.IJeiRuntime;
+import ae2.api.integrations.hei.IngredientConverters;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.IModRegistry;
 import mezz.jei.api.JEIPlugin;
@@ -10,10 +9,10 @@ import mezz.jei.api.recipe.transfer.IRecipeTransferHandler;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.fml.common.Loader;
 import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.core.definitions.ThEParts;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Optional;
 
 
@@ -22,22 +21,7 @@ import java.util.Optional;
  * @author Alex811
  */
 @JEIPlugin
-public class ThEJEI implements IModPlugin {
-    private static IJeiRuntime runtime;
-
-    @Override
-    @ParametersAreNonnullByDefault
-    public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
-        runtime = jeiRuntime;
-    }
-
-    public static String getSearchText() {
-        return Strings.nullToEmpty(runtime.getIngredientFilter().getFilterText());
-    }
-
-    public static void setSearchText(String searchText) {
-        runtime.getIngredientFilter().setFilterText(Strings.nullToEmpty(searchText));
-    }
+public class ThEHeiPlugin implements IModPlugin {
 
     @Override
     public void register(IModRegistry registry) {
@@ -50,6 +34,10 @@ public class ThEJEI implements IModPlugin {
                 .ifPresent(_ -> registry.addGhostIngredientHandler(
                         GuiArcaneInscriber.class,
                         new GhostInscriberHandler()));
+
+        if(Loader.isModLoaded("thaumicjei")) {
+            IngredientConverters.register(new TCJeiConverter());
+        }
     }
 
     public void registerWorkbenchCatalyst(IModRegistry registry, IRecipeTransferHandler<? extends Container> handler, ItemStack stack) {
