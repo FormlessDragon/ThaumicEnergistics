@@ -14,19 +14,14 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.opengl.GL11;
-import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.client.gui.component.GuiImgButton;
-import thaumicenergistics.client.gui.helpers.GenericStackSizeRenderer;
 import thaumicenergistics.client.gui.helpers.GuiScrollBar;
-import thaumicenergistics.client.gui.helpers.TerminalDisplayStack;
 import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.slot.ISlotOptional;
 import thaumicenergistics.container.slot.SlotGhostEssentia;
-import thaumicenergistics.container.slot.SlotME;
 import thaumicenergistics.container.slot.ThESlot;
 
 import java.awt.*;
@@ -41,7 +36,6 @@ import static thaumicenergistics.config.ThESettings.searchMode;
  * @author Alex811
  */
 public abstract class GuiBase extends GuiContainer {
-    private static final GenericStackSizeRenderer stackSizeRenderer = new GenericStackSizeRenderer();
     private int currMouseX = 0;
     private int currMouseY = 0;
 
@@ -59,7 +53,6 @@ public abstract class GuiBase extends GuiContainer {
         GlStateManager.color(1.0F, 1.0F, 1.0f, 1.0F);
         this.drawSlotBackgrounds();
         super.drawScreen(mouseX, mouseY, partialTicks);
-        this.drawSlotOverlays();
         this.renderHoveredToolTip(mouseX, mouseY);
     }
 
@@ -94,21 +87,6 @@ public abstract class GuiBase extends GuiContainer {
         }
     }
 
-    protected void drawSlotOverlays() {
-        for (Slot slot : this.inventorySlots.inventorySlots) {
-            this.drawSlotOverlay(slot);
-        }
-    }
-
-    protected void drawSlotOverlay(Slot slot) {
-        if (slot instanceof SlotME) {
-            TerminalDisplayStack stack = ((SlotME) slot).getDisplayStack();
-            if (stack != null) {
-                stackSizeRenderer.renderStackSize(this.fontRenderer, stack.stackSize(), stack.craftable(), slot.xPos, slot.yPos);
-            }
-        }
-    }
-
     @Override
     protected void renderHoveredToolTip(int mouseX, int mouseY) {
         Slot hovered = this.findSlotAtMouse(mouseX, mouseY);
@@ -116,14 +94,6 @@ public abstract class GuiBase extends GuiContainer {
             if (hovered instanceof SlotGhostEssentia && ((SlotGhostEssentia) hovered).getAspect() != null) {
                 this.drawHoveringText(((SlotGhostEssentia) hovered).getAspect().getName(), mouseX, mouseY);
                 return;
-            }
-            if (hovered instanceof SlotME && hovered.getHasStack()) {
-                TerminalDisplayStack stack = ((SlotME) hovered).getDisplayStack();
-                if (stack != null && stack.key() instanceof AEEssentiaKey) {
-                    AEEssentiaKey key = (AEEssentiaKey) stack.key();
-                    this.drawHoveringText(key.getAspect().getName(), mouseX, mouseY);
-                    return;
-                }
             }
         }
 
@@ -207,12 +177,6 @@ public abstract class GuiBase extends GuiContainer {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static Enum<?> getSetting(IConfigManager configManager, Setting<?> setting) {
         return configManager.getSetting((Setting) setting);
-    }
-
-    protected void addMESlot(SlotME slot) {
-        slot.slotNumber = this.inventorySlots.inventorySlots.size();
-        this.inventorySlots.inventorySlots.add(slot);
-        this.inventorySlots.inventoryItemStacks.add(ItemStack.EMPTY);
     }
 
     protected abstract ResourceLocation getGuiBackground();

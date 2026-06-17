@@ -1,9 +1,9 @@
 package thaumicenergistics.integration.jei;
 
+import ae2.api.stacks.AEItemKey;
 import mezz.jei.api.gui.IGhostIngredientHandler;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import thaumicenergistics.client.gui.helpers.TerminalDisplayStacks;
 import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.container.slot.SlotArcaneGhostMatrix;
 import thaumicenergistics.network.PacketHandler;
@@ -47,7 +47,7 @@ public class GhostInscriberHandler implements IGhostIngredientHandler<GuiArcaneI
                         ItemStack itemStack = (ItemStack) ingredient;
 
                         PacketHandler.sendToServer(new PacketUIAction(MOVE_GHOST_ITEM,
-                                TerminalDisplayStacks.item(itemStack, itemStack.getCount(), false),
+                                AEItemKey.of(itemStack), itemStack.getCount(), false,
                                 slot.slotNumber));
                     }
                 }).collect(toList());

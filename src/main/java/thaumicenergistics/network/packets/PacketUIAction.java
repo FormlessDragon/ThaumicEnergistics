@@ -9,10 +9,12 @@ import net.minecraft.util.IThreadListener;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import thaumicenergistics.client.gui.helpers.TerminalDisplayStack;
 import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
+import thaumicenergistics.util.ThELog;
+
+import java.util.Objects;
 
 /**
  * @author BrockWS
@@ -32,14 +34,14 @@ public class PacketUIAction implements IMessage {
         this.action = action;
     }
 
-    public PacketUIAction(ActionType action, TerminalDisplayStack stack) {
+    public PacketUIAction(ActionType action, AEKey requestedKey, long requestedAmount, boolean requestedCraftable) {
         this(action);
-        this.setRequestedStack(stack);
+        this.setRequestedStack(requestedKey, requestedAmount, requestedCraftable);
     }
 
-    public PacketUIAction(ActionType action, TerminalDisplayStack stack, int index) {
+    public PacketUIAction(ActionType action, AEKey requestedKey, long requestedAmount, boolean requestedCraftable, int index) {
         this(action);
-        this.setRequestedStack(stack);
+        this.setRequestedStack(requestedKey, requestedAmount, requestedCraftable);
         this.index = index;
     }
 
@@ -55,6 +57,7 @@ public class PacketUIAction implements IMessage {
             int actionIndex = packetBuffer.readVarInt();
             ActionType[] actions = ActionType.values();
             if (actionIndex < 0 || actionIndex >= actions.length) {
+                ThELog.warn("Invalid UI action index: {}", actionIndex);
                 return;
             }
             this.action = actions[actionIndex];
@@ -64,7 +67,8 @@ public class PacketUIAction implements IMessage {
                 this.requestedAmount = packetBuffer.readLong();
                 this.requestedCraftable = packetBuffer.readBoolean();
             }
-        } catch (RuntimeException ignored) {
+        } catch (RuntimeException e) {
+            ThELog.warn("Failed to decode UI action packet", e);
             this.action = null;
         }
     }
@@ -82,13 +86,13 @@ public class PacketUIAction implements IMessage {
         }
     }
 
-    private void setRequestedStack(TerminalDisplayStack stack) {
-        if (stack == null) {
-            return;
+    private void setRequestedStack(AEKey requestedKey, long requestedAmount, boolean requestedCraftable) {
+        if (requestedAmount < 0) {
+            throw new IllegalArgumentException("requestedAmount must not be negative");
         }
-        this.requestedKey = stack.key();
-        this.requestedAmount = stack.stackSize();
-        this.requestedCraftable = stack.craftable();
+        this.requestedKey = Objects.requireNonNull(requestedKey, "requestedKey");
+        this.requestedAmount = requestedAmount;
+        this.requestedCraftable = requestedCraftable;
     }
 
     public static class Handler implements IMessageHandler<PacketUIAction, IMessage> {
