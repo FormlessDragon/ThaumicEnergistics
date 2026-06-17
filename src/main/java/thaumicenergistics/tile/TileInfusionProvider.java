@@ -1,6 +1,7 @@
 package thaumicenergistics.tile;
 
 import ae2.api.config.Actionable;
+import ae2.api.networking.IGridNode;
 import ae2.api.stacks.AEKey;
 import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
@@ -11,8 +12,6 @@ import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectSource;
 import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
-import thaumicenergistics.integration.appeng.compat.GridAccessException;
-import thaumicenergistics.integration.appeng.grid.GridUtil;
 import thaumicenergistics.util.ForgeUtil;
 
 /**
@@ -28,13 +27,11 @@ public class TileInfusionProvider extends TileNetwork implements IAspectSource {
     }
 
     public KeyCounter getStoredAspects() {
-        try {
-            MEStorage storage = GridUtil.getStorageGrid(this).getInventory();
-            return SupergiantEssentiaUtil.getAvailableEssentia(storage);
-        } catch (GridAccessException e) {
-            // Ignore, return an empty list.
+        MEStorage storage = this.getNetworkStorage();
+        if (storage == null) {
             return new KeyCounter();
         }
+        return SupergiantEssentiaUtil.getAvailableEssentia(storage);
     }
 
     @Override
@@ -55,18 +52,24 @@ public class TileInfusionProvider extends TileNetwork implements IAspectSource {
 
     @Override
     public boolean takeFromContainer(Aspect aspect, int i) {
-        try {
-            MEStorage storage = GridUtil.getStorageGrid(this).getInventory();
-            long canExtract = SupergiantEssentiaUtil.extract(storage, aspect, i, Actionable.SIMULATE, this.src);
-            if (canExtract != i)
-                return false;
-            SupergiantEssentiaUtil.extract(storage, aspect, i, Actionable.MODULATE, this.src);
-            this.markDirty();
-        } catch (GridAccessException e) {
-            e.printStackTrace();
+        MEStorage storage = this.getNetworkStorage();
+        if (storage == null) {
             return false;
         }
+        long canExtract = SupergiantEssentiaUtil.extract(storage, aspect, i, Actionable.SIMULATE, this.src);
+        if (canExtract != i)
+            return false;
+        SupergiantEssentiaUtil.extract(storage, aspect, i, Actionable.MODULATE, this.src);
+        this.markDirty();
         return true;
+    }
+
+    private MEStorage getNetworkStorage() {
+        IGridNode node = this.getGridNode();
+        if (node == null || node.grid() == null || node.grid().getStorageService() == null) {
+            return null;
+        }
+        return node.grid().getStorageService().getInventory();
     }
 
     @Override

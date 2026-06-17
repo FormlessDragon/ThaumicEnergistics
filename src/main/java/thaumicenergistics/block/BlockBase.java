@@ -30,13 +30,9 @@ public abstract class BlockBase extends Block {
 
     public BlockBase(String id, Material material) {
         super(material);
-        this.setRegistryName(id);
         this.setTranslationKey(Reference.MOD_ID + "." + id);
         this.setCreativeTab(ModGlobals.CREATIVE_TAB);
         this.setHardness(1f);
-    }
-
-    public void registerTileEntity() {
     }
 
     private static double randCoordOffset(int coord) {

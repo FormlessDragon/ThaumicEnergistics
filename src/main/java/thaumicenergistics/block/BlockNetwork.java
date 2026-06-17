@@ -18,6 +18,7 @@ import thaumicenergistics.tile.TileNetwork;
  * @author BrockWS
  * @author Alex811
  */
+@Deprecated
 public abstract class BlockNetwork extends BlockBase implements ITileEntityProvider {
     public static final PropertyBool POWERED = PropertyBool.create("powered");
     public static final PropertyBool ACTIVE = PropertyBool.create("active");

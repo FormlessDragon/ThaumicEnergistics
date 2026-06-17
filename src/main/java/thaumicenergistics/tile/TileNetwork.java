@@ -1,15 +1,19 @@
 package thaumicenergistics.tile;
 
+import ae2.api.AECapabilities;
 import ae2.api.implementations.IPowerChannelState;
+import ae2.api.networking.IGrid;
 import ae2.api.networking.GridFlags;
 import ae2.api.networking.GridHelper;
 import ae2.api.networking.IGridNode;
+import ae2.api.networking.IInWorldGridNodeHost;
 import ae2.api.networking.IManagedGridNode;
 import ae2.api.networking.events.GridBootingStatusChange;
 import ae2.api.networking.events.GridPowerStatusChange;
 import ae2.api.networking.security.IActionHost;
-import ae2.api.stacks.AEItemKey;
 import ae2.api.util.AECableType;
+import ae2.api.util.DimensionalBlockPos;
+import ae2.block.IOwnerAwareTile;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -17,17 +21,13 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraftforge.common.capabilities.Capability;
 import thaumicenergistics.api.IThELangKey;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.integration.appeng.compat.DimensionalCoord;
-import thaumicenergistics.integration.appeng.compat.GridAccessException;
-import thaumicenergistics.integration.appeng.grid.GridUtil;
-import thaumicenergistics.integration.appeng.grid.IThEGridHost;
-import thaumicenergistics.integration.appeng.grid.ThEGridBlock;
 import thaumicenergistics.integration.appeng.util.ThEActionSource;
 import thaumicenergistics.util.ForgeUtil;
-import thaumicenergistics.util.IThEGridNodeBlock;
-import thaumicenergistics.util.IThEOwnable;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -38,9 +38,9 @@ import java.util.function.Function;
  * @author BrockWS
  * @author Alex811
  */
-public abstract class TileNetwork extends TileBase implements IThEGridHost, IActionHost, IPowerChannelState, IThEOwnable, IThEGridNodeBlock {
+@Deprecated
+public abstract class TileNetwork extends TileBase implements IInWorldGridNodeHost, IActionHost, IPowerChannelState, IOwnerAwareTile {
 
-    protected ThEGridBlock gridBlock;
     protected IManagedGridNode managedGridNode;
     protected IGridNode gridNode;
     protected ThEActionSource src;
@@ -49,15 +49,9 @@ public abstract class TileNetwork extends TileBase implements IThEGridHost, IAct
     protected boolean isActive = false;
 
     public TileNetwork() {
-        this.gridBlock = new ThEGridBlock(this, this, true);
         this.src = new ThEActionSource(this);
     }
 
-    public ThEGridBlock getGridBlock() {
-        return this.gridBlock;
-    }
-
-    @Override
     public IGridNode getGridNode() {
         return this.gridNode;
     }
@@ -79,6 +73,7 @@ public abstract class TileNetwork extends TileBase implements IThEGridHost, IAct
     }
 
     @Nullable
+    @Override
     public IGridNode getGridNode(@Nonnull EnumFacing side) {
         return this.getActionableNode();
     }
@@ -94,9 +89,9 @@ public abstract class TileNetwork extends TileBase implements IThEGridHost, IAct
         if (this.managedGridNode == null && ForgeUtil.isServer()) {
             this.managedGridNode = this.configureGridNode(GridHelper.createManagedNode(this, (owner, node) -> owner.gridChanged())
                     .setFlags(GridFlags.REQUIRE_CHANNEL)
-                    .setIdlePowerUsage(this.gridBlock.getIdlePowerUsage())
-                    .setInWorldNode(this.gridBlock.isWorldAccessible())
-                    .setVisualRepresentation(AEItemKey.of(this.gridBlock.getMachineRepresentation())));
+                    .setIdlePowerUsage(this.getIdlePowerUsage())
+                    .setInWorldNode(true)
+                    .setVisualRepresentation(this.getMachineRepresentation()));
             if (this.owner != null) {
                 this.managedGridNode.setOwningPlayer(this.owner);
             }
@@ -110,12 +105,25 @@ public abstract class TileNetwork extends TileBase implements IThEGridHost, IAct
         return node;
     }
 
-    @Override
-    public DimensionalCoord getLocation() {
-        return new DimensionalCoord(this);
+    protected double getIdlePowerUsage() {
+        return 1;
     }
 
-    @Override
+    @Nonnull
+    protected ItemStack getMachineRepresentation() {
+        World world = this.getWorld();
+        BlockPos pos = this.getPos();
+        if (world == null || pos == null) {
+            return ItemStack.EMPTY;
+        }
+        IBlockState state = world.getBlockState(pos);
+        return new ItemStack(state.getBlock());
+    }
+
+    public DimensionalBlockPos getLocation() {
+        return new DimensionalBlockPos(this);
+    }
+
     public void gridChanged() {
 
     }
@@ -125,7 +133,6 @@ public abstract class TileNetwork extends TileBase implements IThEGridHost, IAct
         this.owner = player;
     }
 
-    @Override
     public EntityPlayer getOwner() {
         return this.owner;
     }
@@ -160,13 +167,10 @@ public abstract class TileNetwork extends TileBase implements IThEGridHost, IAct
     }
 
     public void updatePowerStatus(GridPowerStatusChange event) {   // sync client
-        try {
-            this.isPowered = GridUtil.getEnergyGrid(this).isNetworkPowered();
-            this.markDirty();
-        } catch (GridAccessException e) {
-            // should ignore?
-            this.isPowered = false;
-        }
+        IGridNode node = this.getGridNode();
+        IGrid grid = node != null ? node.grid() : null;
+        this.isPowered = grid != null && grid.getEnergyService() != null && grid.getEnergyService().isNetworkPowered();
+        this.markDirty();
     }
 
     @Override
@@ -193,6 +197,23 @@ public abstract class TileNetwork extends TileBase implements IThEGridHost, IAct
     @Override
     public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity packet) { // sync, client-side, receives from getUpdatePacket()
         handleUpdateTag(packet.getNbtCompound());
+    }
+
+    @Override
+    public boolean hasCapability(Capability<?> capability, @Nullable EnumFacing facing) {
+        if (capability == AECapabilities.IN_WORLD_GRID_NODE_HOST) {
+            return true;
+        }
+        return super.hasCapability(capability, facing);
+    }
+
+    @Nullable
+    @Override
+    public <T> T getCapability(Capability<T> capability, @Nullable EnumFacing facing) {
+        if (capability == AECapabilities.IN_WORLD_GRID_NODE_HOST) {
+            return AECapabilities.IN_WORLD_GRID_NODE_HOST.cast(this);
+        }
+        return super.getCapability(capability, facing);
     }
 
     public void withPowerStateText(Consumer<String> consumer, Function<IThELangKey, String> localizationMapper) {

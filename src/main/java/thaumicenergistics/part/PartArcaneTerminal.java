@@ -22,7 +22,6 @@ import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.integration.appeng.ThEPartModel;
-import thaumicenergistics.integration.appeng.compat.ThEPartItemStack;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.util.AEUtil;
 import thaumicenergistics.util.ForgeUtil;
@@ -71,7 +70,7 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
                 PartArcaneTerminal.this.saveChanges();
             }
         };
-        this.upgradeInventory = new ThEUpgradeInventory("upgrades", 1, 1, this.getItemStack(ThEPartItemStack.NETWORK)) {
+        this.upgradeInventory = new ThEUpgradeInventory("upgrades", 1, 1, this.getPartItem().asItemStack()) {
             @Override
             public void markDirty() {
                 super.markDirty();
@@ -94,10 +93,6 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
             return new InvWrapper(this.upgradeInventory);
         }
         return null;
-    }
-
-    public ItemStack getItemStack(ThEPartItemStack type) {
-        return this.getPartItem().asItemStack();
     }
 
     @Override

@@ -14,7 +14,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraftforge.client.model.ModelLoader;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.client.render.IThEModel;
 import thaumicenergistics.tile.TileInfusionProvider;
@@ -29,12 +28,6 @@ public class BlockInfusionProvider extends BlockNetwork implements IThEModel {
 
     public BlockInfusionProvider(String id) {
         super(id);
-    }
-
-    @Override
-    public void registerTileEntity() {
-        super.registerTileEntity();
-        GameRegistry.registerTileEntity(TileInfusionProvider.class, Objects.requireNonNull(this.getRegistryName()));
     }
 
     @Override

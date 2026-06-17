@@ -14,7 +14,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.client.model.ModelLoader;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 import thaumicenergistics.client.render.IThEModel;
 import thaumicenergistics.tile.TileArcaneAssembler;
 
@@ -35,12 +34,6 @@ public class BlockArcaneAssembler extends BlockNetwork implements IThEModel {
         this.translucent = true;
         this.setHarvestLevel("pickaxe", 0);
         this.setHardness(2.2F);
-    }
-
-    @Override
-    public void registerTileEntity() {
-        super.registerTileEntity();
-        GameRegistry.registerTileEntity(TileArcaneAssembler.class, Objects.requireNonNull(getRegistryName()));
     }
 
     @Override

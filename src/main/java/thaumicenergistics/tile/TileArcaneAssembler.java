@@ -11,6 +11,7 @@ import ae2.api.networking.ticking.TickingRequest;
 import ae2.api.stacks.AEItemKey;
 import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
+import ae2.core.definitions.AEItems;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -27,6 +28,7 @@ import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.client.gui.IThEGuiTile;
 import thaumicenergistics.core.definitions.ThEItems;
+import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
 import thaumicenergistics.network.PacketHandler;
@@ -68,7 +70,7 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
 
     public TileArcaneAssembler() {
         super();
-        ItemStack assemblerItem = ThEApi.instance().blocks().arcaneAssembler().maybeStack(1).orElseThrow(RuntimeException::new);
+        ItemStack assemblerItem = ThEBlocks.ARCANE_ASSEMBLER.stack();
         this.coreInv = new ThEKnowledgeCoreInventory("cores", 1, 1, assemblerItem);
         this.upgradeInv = new ThEUpgradeInventory("upgrades", 5, 1, assemblerItem);
         this.craftingInv = new ThEInternalInventory("crafting", 1, 64);
@@ -379,8 +381,7 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
 
     protected int getStep() {
         AtomicInteger step = new AtomicInteger(BASE_STEP);
-        ThEApi.instance().upgrades().cardSpeed().getDefinition().maybeStack(1).ifPresent(cardSpeed ->
-                step.set((int) (BASE_STEP + Math.pow(3, this.upgradeInv.getUpgrades(cardSpeed)))));
+        step.set((int) (BASE_STEP + Math.pow(3, this.upgradeInv.getUpgrades(AEItems.SPEED_CARD.stack()))));
         return step.get();
     }
 
