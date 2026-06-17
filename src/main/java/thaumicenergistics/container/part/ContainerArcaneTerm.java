@@ -29,6 +29,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
+import net.minecraftforge.items.wrapper.PlayerArmorInvWrapper;
 import net.minecraftforge.items.wrapper.PlayerInvWrapper;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
@@ -36,6 +37,8 @@ import thaumcraft.api.aura.AuraHelper;
 import thaumcraft.api.crafting.IArcaneRecipe;
 import thaumicenergistics.container.DummyContainer;
 import thaumicenergistics.container.ICraftingContainer;
+import thaumicenergistics.container.ThESlotSemantics;
+import thaumicenergistics.container.slot.SlotArmor;
 import thaumicenergistics.container.slot.SlotArcaneMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.container.slot.SlotUpgrade;
@@ -75,9 +78,10 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
         this.addMatrixSlots(32, 36);
         this.addUpgradeSlots(177, 54);
+        this.addArmorSlots(ip.player, new PlayerArmorInvWrapper(ip), 8, 19);
         this.registerClientAction(ACTION_CLEAR_GRID, this::clearCraftingGrid);
         this.registerClientAction(ACTION_SET_CLEAR_ON_CLOSE, Boolean.class, this::setClearGridOnClose);
-        this.onMatrixChanged();
+        this.updateCraftingResult();
     }
 
     public IArcaneTerminalHost getArcaneHost() {
@@ -152,6 +156,15 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             return;
         }
 
+        this.updateCraftingResult();
+        this.detectAndSendChanges();
+    }
+
+    private void updateCraftingResult() {
+        if (this.isClientSide()) {
+            return;
+        }
+
         this.craftingResult.setInventorySlotContents(0, ItemStack.EMPTY);
 
         IItemHandler matrix = this.getInventory("crafting");
@@ -159,7 +172,6 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         if (this.recipe != null) {
             this.craftingResult.setInventorySlotContents(0,
                     TCCraftingManager.getCraftingResult(matrix, (IArcaneRecipe) this.recipe));
-            this.detectAndSendChanges();
             return;
         }
 
@@ -172,7 +184,6 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         if (this.recipe != null) {
             this.craftingResult.setInventorySlotContents(0, this.recipe.getCraftingResult(inventory));
         }
-        this.detectAndSendChanges();
     }
 
     @Override
@@ -635,13 +646,21 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 2; j++) {
                 this.addSlot(new SlotArcaneMatrix(this, 9 + (i * 2 + j), offsetX + (j * 18), offsetY + (i * 18)),
-                        SlotSemantics.CRAFTING_GRID);
+                        ThESlotSemantics.ARCANE_CRYSTAL);
             }
         }
 
         offsetX -= 104;
         this.addSlot(this.resultSlot = new SlotArcaneResult(this, this.getPlayer(), 0, offsetX + 84, offsetY + 18),
                 SlotSemantics.CRAFTING_RESULT);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    protected void addArmorSlots(EntityPlayer player, IItemHandler inventory, int offsetX, int offsetY) {
+        this.addSlot(new SlotArmor(player, inventory, 3, offsetX, offsetY), ThESlotSemantics.PLAYER_ARMOR);
+        this.addSlot(new SlotArmor(player, inventory, 2, offsetX, offsetY + 18), ThESlotSemantics.PLAYER_ARMOR);
+        this.addSlot(new SlotArmor(player, inventory, 1, offsetX, offsetY + 18 * 2), ThESlotSemantics.PLAYER_ARMOR);
+        this.addSlot(new SlotArmor(player, inventory, 0, offsetX, offsetY + 18 * 3), ThESlotSemantics.PLAYER_ARMOR);
     }
 
     @SuppressWarnings("SameParameterValue")

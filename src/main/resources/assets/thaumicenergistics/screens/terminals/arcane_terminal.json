@@ -3,13 +3,23 @@
 	"includes": ["terminal.json"],
 	"slots": {
 		"CRAFTING_GRID": {
-			"left": 26,
+			"left": 28,
 			"bottom": 158,
 			"grid": "BREAK_AFTER_3COLS"
 		},
 		"CRAFTING_RESULT": {
-			"left": 134,
+			"left": 107,
 			"bottom": 140
+		},
+		"THE_ARCANE_CRYSTAL": {
+			"left": 130,
+			"bottom": 158,
+			"grid": "BREAK_AFTER_2COLS"
+		},
+		"THE_PLAYER_ARMOR": {
+			"left": 8,
+			"bottom": 167,
+			"grid": "VERTICAL"
 		}
 	},
 	"text": {
@@ -34,23 +44,23 @@
 	},
 	"terminalStyle": {
 		"header": {
-			"texture": "guis/crafting.png",
+			"texture": "thaumicenergistics:textures/gui/arcane_crafting.png",
 			"srcRect": [0, 0, 195, 17]
 		},
 		"firstRow": {
-			"texture": "guis/crafting.png",
+			"texture": "thaumicenergistics:textures/gui/arcane_crafting.png",
 			"srcRect": [0, 17, 195, 18]
 		},
 		"row": {
-			"texture": "guis/crafting.png",
+			"texture": "thaumicenergistics:textures/gui/arcane_crafting.png",
 			"srcRect": [0, 35, 195, 18]
 		},
 		"lastRow": {
-			"texture": "guis/crafting.png",
+			"texture": "thaumicenergistics:textures/gui/arcane_crafting.png",
 			"srcRect": [0, 53, 195, 18]
 		},
 		"bottom": {
-			"texture": "guis/crafting.png",
+			"texture": "thaumicenergistics:textures/gui/arcane_crafting.png",
 			"srcRect": [0, 71, 195, 180]
 		}
 	},

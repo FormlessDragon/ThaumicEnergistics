@@ -15,6 +15,7 @@ import java.awt.*;
 /**
  * @author Alex811
  */
+@Deprecated
 public class GuiSearchField extends GuiTextField {
     private static final String ASPECT_SEARCH_PREFIX = ThEApi.instance().config().aspectSearchPrefix();
     private static final String MOD_SEARCH_PREFIX = ThEApi.instance().config().modSearchPrefix();

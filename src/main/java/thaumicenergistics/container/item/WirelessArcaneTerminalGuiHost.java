@@ -18,7 +18,6 @@ import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.integration.appeng.compat.ThEPartItemStack;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 

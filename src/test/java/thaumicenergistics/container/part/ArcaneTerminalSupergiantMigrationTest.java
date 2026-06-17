@@ -210,8 +210,7 @@ class ArcaneTerminalSupergiantMigrationTest {
     void wirelessArcaneTerminalAcceptsArcaneChargerUpgrade() throws IOException {
         assertSourceDoesNotContain("src/main/java/thaumicenergistics/ThaumicEnergistics.java",
                 "\n        upgrades.registerUpgrade(items.wirelessArcaneTerminal()");
-        assertSourceDoesNotContain("src/main/java/thaumicenergistics/upgrade/ThEUpgrades.java",
-                "\n        this.upgrades.add(this.arcaneCharger");
+        assertSourceMissing("src/main/java/thaumicenergistics/upgrade/ThEUpgrades.java");
         assertSourceContains("src/main/java/thaumicenergistics/items/ItemWirelessArcaneTerminal.java",
                 "extends WirelessTerminalItem");
     }
@@ -264,11 +263,11 @@ class ArcaneTerminalSupergiantMigrationTest {
         assertTrue(source.contains(
                 "public GuiArcaneInscriber(ContainerArcaneInscriber container, InventoryPlayer playerInventory)"));
         assertTrue(source.contains("new TextComponentTranslation(\"gui.thaumicenergistics.arcane_inscriber\")"));
-        assertTrue(source.contains("GuiStyleManager.loadStyleDoc(\"/screens/terminals/crafting_terminal.json\")"));
+        assertTrue(source.contains("ThEGuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH)"));
         assertTrue(source.contains(
                 "super(container, playerInventory,\n" +
                         "                new TextComponentTranslation(\"gui.thaumicenergistics.arcane_inscriber\"),\n" +
-                        "                GuiStyleManager.loadStyleDoc(\"/screens/terminals/crafting_terminal.json\"))"));
+                        "                ThEGuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH))"));
         assertTrue(source.contains("this.inscriberContainer = container"));
         assertTrue(source.contains("requestKnowledgeCoreAdd()"));
         assertTrue(source.contains("requestKnowledgeCoreDel()"));
@@ -294,6 +293,39 @@ class ArcaneTerminalSupergiantMigrationTest {
         assertFalse(source.contains("coreBtnRowY = this.guiTop + 90"));
         assertFalse(source.contains("this.guiTop + 90"));
         assertTrue(source.contains("protected void actionPerformed(GuiButton button) throws IOException"));
+    }
+
+    @Test
+    void arcaneTerminalGuiUsesThaumicArcaneCraftingTexture() throws IOException {
+        String source = normalizedSource("src/main/java/thaumicenergistics/client/gui/part/GuiArcaneTerm.java");
+        String thaumicStyle = normalizedSource(
+                "src/main/resources/assets/thaumicenergistics/screens/terminals/arcane_terminal.json");
+
+        assertTrue(Files.exists(Path.of(
+                "src/main/resources/assets/thaumicenergistics/textures/gui/arcane_crafting.png")));
+        assertTrue(source.contains("public static final String STYLE_PATH = \"/screens/terminals/arcane_terminal.json\""));
+        assertTrue(source.contains("ThEGuiStyleManager.loadStyleDoc(STYLE_PATH)"));
+        assertTrue(thaumicStyle.contains("\"texture\": \"thaumicenergistics:textures/gui/arcane_crafting.png\""));
+        assertFalse(thaumicStyle.contains("\"texture\": \"guis/crafting.png\""));
+        assertSourceMissing("src/main/resources/assets/ae2/screens/terminals/arcane_terminal.json");
+    }
+
+    @Test
+    void arcaneTerminalStyleLoadsFromThaumicEnergisticsNamespace() throws IOException {
+        Path styleManagerPath = Path.of("src/main/java/thaumicenergistics/client/gui/style/ThEGuiStyleManager.java");
+        String termSource = normalizedSource("src/main/java/thaumicenergistics/client/gui/part/GuiArcaneTerm.java");
+        String inscriberSource = normalizedSource("src/main/java/thaumicenergistics/client/gui/part/GuiArcaneInscriber.java");
+
+        assertTrue(Files.exists(styleManagerPath), styleManagerPath + " should exist");
+
+        String styleManagerSource = normalizedSource(styleManagerPath.toString());
+
+        assertTrue(termSource.contains("ThEGuiStyleManager.loadStyleDoc(STYLE_PATH)"));
+        assertFalse(termSource.contains("GuiStyleManager.loadStyleDoc(\"/screens/terminals/arcane_terminal.json\")"));
+        assertTrue(inscriberSource.contains("ThEGuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH)"));
+        assertFalse(inscriberSource.contains("GuiStyleManager.loadStyleDoc(\"/screens/terminals/arcane_terminal.json\")"));
+        assertTrue(styleManagerSource.contains("new ResourceLocation(Reference.MOD_ID, path.substring(1))"));
+        assertTrue(styleManagerSource.contains("new ResourceLocation(ModGlobals.MOD_ID_AE2, path.substring(1))"));
     }
 
     @Test
@@ -341,6 +373,32 @@ class ArcaneTerminalSupergiantMigrationTest {
 
         assertTrue(source.contains("public int tryCraft(int amount)"));
         assertTrue(source.contains("public int tryCraft(int amount) {\n        return 0;\n    }"));
+    }
+
+    @Test
+    void arcaneTerminalDoesNotConsumeInitialMeStorageSyncBeforeGuiIsReady() throws IOException {
+        String source = normalizedSource("src/main/java/thaumicenergistics/container/part/ContainerArcaneTerm.java");
+        String constructor = source.substring(
+                source.indexOf("protected ContainerArcaneTerm("),
+                source.indexOf("    public IArcaneTerminalHost getArcaneHost()"));
+        String updateCraftingResult = source.substring(
+                source.indexOf("private void updateCraftingResult()"),
+                source.indexOf("    @Override\n    public ItemStack slotClick("));
+        String onMatrixChanged = source.substring(
+                source.indexOf("public void onMatrixChanged()"),
+                source.indexOf("    private void updateCraftingResult()"));
+        String inscriberSource = normalizedSource(
+                "src/main/java/thaumicenergistics/container/part/ContainerArcaneInscriber.java");
+        String inscriberMatrixSlots = inscriberSource.substring(
+                inscriberSource.indexOf("protected void addMatrixSlots("),
+                inscriberSource.indexOf("    @Override\n    protected void addUpgradeSlots("));
+
+        assertTrue(constructor.contains("this.updateCraftingResult();"));
+        assertFalse(constructor.contains("this.onMatrixChanged();"));
+        assertTrue(onMatrixChanged.contains("this.updateCraftingResult();"));
+        assertTrue(onMatrixChanged.contains("this.detectAndSendChanges();"));
+        assertFalse(updateCraftingResult.contains("detectAndSendChanges"));
+        assertFalse(inscriberMatrixSlots.contains("this.onMatrixChanged();"));
     }
 
     @Test
@@ -478,12 +536,43 @@ class ArcaneTerminalSupergiantMigrationTest {
     }
 
     @Test
-    void arcaneCrystalSlotsUseCraftingGridSemantics() throws IOException {
+    void arcaneTerminalUsesDedicatedCrystalAndArmorSlotSemantics() throws IOException {
         String source = normalizedSource("src/main/java/thaumicenergistics/container/part/ContainerArcaneTerm.java");
+        String inscriberSource = normalizedSource(
+                "src/main/java/thaumicenergistics/container/part/ContainerArcaneInscriber.java");
+        String semanticsSource = normalizedSource("src/main/java/thaumicenergistics/container/ThESlotSemantics.java");
+        String thaumicStyle = normalizedSource(
+                "src/main/resources/assets/thaumicenergistics/screens/terminals/arcane_terminal.json");
+        String compactThaumicStyle = compactSource(
+                "src/main/resources/assets/thaumicenergistics/screens/terminals/arcane_terminal.json");
+        String thaumicSchema = normalizedSource("src/main/resources/assets/thaumicenergistics/screens/schema.json");
+
+        assertTrue(semanticsSource.contains("ARCANE_CRYSTAL = SlotSemantics.register(\"THE_ARCANE_CRYSTAL\", true)"));
+        assertTrue(semanticsSource.contains("PLAYER_ARMOR = SlotSemantics.register(\"THE_PLAYER_ARMOR\", true"));
+
+        assertTrue(source.contains("import net.minecraftforge.items.wrapper.PlayerArmorInvWrapper;"));
+        assertTrue(source.contains("import thaumicenergistics.container.ThESlotSemantics;"));
+        assertTrue(source.contains("import thaumicenergistics.container.slot.SlotArmor;"));
+        assertTrue(source.contains("this.addArmorSlots(ip.player, new PlayerArmorInvWrapper(ip), 8, 19);"));
+        assertTrue(source.contains("new SlotArmor(player, inventory, 3, offsetX, offsetY)"));
+        assertTrue(source.contains("new SlotArmor(player, inventory, 0, offsetX, offsetY + 18 * 3)"));
+        assertTrue(source.contains("ThESlotSemantics.PLAYER_ARMOR"));
 
         assertTrue(source.contains(
                 "new SlotArcaneMatrix(this, 9 + (i * 2 + j), offsetX + (j * 18), offsetY + (i * 18)),\n" +
-                        "                        SlotSemantics.CRAFTING_GRID)"));
+                        "                        ThESlotSemantics.ARCANE_CRYSTAL)"));
+        assertTrue(inscriberSource.contains(
+                "new SlotArcaneGhostMatrix(this, 9 + (i * 2 + j), offsetX + (j * 18), offsetY + (i * 18)),\n" +
+                        "                        ThESlotSemantics.ARCANE_CRYSTAL)"));
+
+        assertTrue(compactThaumicStyle.contains("\"CRAFTING_GRID\":{\"left\":28,\"bottom\":158,\"grid\":\"BREAK_AFTER_3COLS\""));
+        assertTrue(compactThaumicStyle.contains("\"CRAFTING_RESULT\":{\"left\":107,\"bottom\":140"));
+        assertTrue(compactThaumicStyle.contains("\"THE_ARCANE_CRYSTAL\":{\"left\":130,\"bottom\":158,\"grid\":\"BREAK_AFTER_2COLS\""));
+        assertTrue(compactThaumicStyle.contains("\"THE_PLAYER_ARMOR\":{\"left\":8,\"bottom\":167,\"grid\":\"VERTICAL\""));
+        assertTrue(thaumicStyle.contains("\"THE_ARCANE_CRYSTAL\": {"));
+        assertTrue(thaumicStyle.contains("\"THE_PLAYER_ARMOR\": {"));
+        assertTrue(thaumicSchema.contains("\"THE_ARCANE_CRYSTAL\""));
+        assertTrue(thaumicSchema.contains("\"THE_PLAYER_ARMOR\""));
     }
 
     @Test

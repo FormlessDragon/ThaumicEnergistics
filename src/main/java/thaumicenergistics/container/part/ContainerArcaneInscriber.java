@@ -19,6 +19,7 @@ import thaumcraft.api.crafting.IArcaneRecipe;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.container.ActionType;
+import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotArcaneGhostMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
@@ -277,13 +278,12 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
         for (int i = 0; i < 3; i++) { // Y
             for (int j = 0; j < 2; j++) { // X
                 this.addSlot(new SlotArcaneGhostMatrix(this, 9 + (i * 2 + j), offsetX + (j * 18), offsetY + (i * 18)),
-                        SlotSemantics.CRAFTING_GRID);
+                        ThESlotSemantics.ARCANE_CRYSTAL);
             }
         }
         offsetX -= 104;
         this.addSlot(this.resultSlot = new SlotArcaneResult(this, this.getPlayer(), 0, offsetX + 84, offsetY + 18),
                 SlotSemantics.CRAFTING_RESULT);
-        this.onMatrixChanged();
     }
 
     @Override
