@@ -73,6 +73,13 @@ class EssentiaStorageResourceTest {
     }
 
     @Test
+    void visibleTypeSelectionHasEssentiaTranslations() throws IOException {
+        assertResourceContains(RESOURCES.resolve("lang/en_us.lang"), "gui.the.Essentias=");
+        assertResourceContains(RESOURCES.resolve("lang/zh_cn.lang"), "gui.the.Essentias=");
+        assertResourceContains(RESOURCES.resolve("lang/ru_ru.lang"), "gui.the.Essentias=");
+    }
+
+    @Test
     void supergiantItemDefinitionsRegisterItemsCellsAndComponents() {
         assertEquals("creative_essentia_cell",
                 thaumicenergistics.core.definitions.ThEItems.CREATIVE_ESSENTIA_CELL.id().getPath());

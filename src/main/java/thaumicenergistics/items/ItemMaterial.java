@@ -1,17 +1,15 @@
 package thaumicenergistics.items;
 
+import ae2.api.upgrades.Upgrades;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import thaumicenergistics.thaumicenergistics.Reference;
-import thaumicenergistics.api.IThEUpgrade;
-import thaumicenergistics.api.ThEApi;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * @author BrockWS
@@ -29,11 +27,10 @@ public class ItemMaterial extends Item {
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
-        Optional<IThEUpgrade> optional = ThEApi.instance().upgrades().getUpgrade(stack);
-        optional.ifPresent(upgrade -> {
-            String supported = upgrade.getSupported().keySet().stream().map(ItemStack::getDisplayName).collect(Collectors.joining(", "));
-            if (!supported.isEmpty()) tooltip.add("Used in: " + supported);
-        });
+        List<ITextComponent> supported = Upgrades.getTooltipLinesForCard(stack.getItem());
+        if (!supported.isEmpty()) {
+            tooltip.add("Used in: " + String.join(", ", supported.stream().map(ITextComponent::getFormattedText).toList()));
+        }
 
         super.addInformation(stack, worldIn, tooltip, flagIn);
     }

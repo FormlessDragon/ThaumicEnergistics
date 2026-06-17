@@ -283,36 +283,34 @@ public class ThEThaumcraft implements IThEIntegration {
     }
 
     private void registerInfusionRecipes() {
-        ThEApi.instance().blocks().infusionProvider().maybeStack(1).ifPresent(stack ->
-                ThaumcraftApi.addInfusionCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "infusion_provider"), new InfusionRecipe(
-                        "INFUSIONPROVIDER@2",
-                        stack,
-                        2,
-                        new AspectList().add(Aspect.MECHANISM, 25).add(Aspect.MAGIC, 25).add(Aspect.EXCHANGE, 20),
-                        AEBlocks.INTERFACE.block(),
-                        Optional.of(ThEItems.COALESCENCE_CORE.stack(1)).orElse(ItemStack.EMPTY),
-                        ItemsTC.salisMundus,
-                        Optional.of(ThEItems.COALESCENCE_CORE.stack(1)).orElse(ItemStack.EMPTY),
-                        ItemsTC.salisMundus
-                )));
-        ThEApi.instance().blocks().arcaneAssembler().maybeStack(1).ifPresent(stack ->
-                ThaumcraftApi.addInfusionCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "arcane_assembler"), new InfusionRecipe(
-                        "ARCANEASSEMBLER@2",
-                        stack,
-                        6,
-                        new AspectList().add(Aspect.CRAFT, 64).add(Aspect.EXCHANGE, 32).add(Aspect.AURA, 16).add(Aspect.MAGIC, 16).add(Aspect.METAL, 8).add(Aspect.CRYSTAL, 8),
-                        AEBlocks.MOLECULAR_ASSEMBLER.block(),
-                        Optional.of(ThEItems.COALESCENCE_CORE.stack(1)).orElse(ItemStack.EMPTY),
-                        TCUtil.getCrystalWithAspect(Aspect.AIR),
-                        TCUtil.getCrystalWithAspect(Aspect.WATER),
-                        ItemsTC.salisMundus,
-                        TCUtil.getCrystalWithAspect(Aspect.ENTROPY),
-                        Optional.of(ThEItems.DIFFUSION_CORE.stack(1)).orElse(ItemStack.EMPTY),
-                        TCUtil.getCrystalWithAspect(Aspect.EARTH),
-                        TCUtil.getCrystalWithAspect(Aspect.FIRE),
-                        ItemsTC.salisMundus,
-                        TCUtil.getCrystalWithAspect(Aspect.ORDER)
-                )));
+        ThaumcraftApi.addInfusionCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "infusion_provider"), new InfusionRecipe(
+                "INFUSIONPROVIDER@2",
+                ThEApi.instance().blocks().infusionProvider().stack(),
+                2,
+                new AspectList().add(Aspect.MECHANISM, 25).add(Aspect.MAGIC, 25).add(Aspect.EXCHANGE, 20),
+                AEBlocks.INTERFACE.block(),
+                Optional.of(ThEItems.COALESCENCE_CORE.stack(1)).orElse(ItemStack.EMPTY),
+                ItemsTC.salisMundus,
+                Optional.of(ThEItems.COALESCENCE_CORE.stack(1)).orElse(ItemStack.EMPTY),
+                ItemsTC.salisMundus
+        ));
+        ThaumcraftApi.addInfusionCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "arcane_assembler"), new InfusionRecipe(
+                "ARCANEASSEMBLER@2",
+                ThEApi.instance().blocks().arcaneAssembler().stack(),
+                6,
+                new AspectList().add(Aspect.CRAFT, 64).add(Aspect.EXCHANGE, 32).add(Aspect.AURA, 16).add(Aspect.MAGIC, 16).add(Aspect.METAL, 8).add(Aspect.CRYSTAL, 8),
+                AEBlocks.MOLECULAR_ASSEMBLER.block(),
+                Optional.of(ThEItems.COALESCENCE_CORE.stack(1)).orElse(ItemStack.EMPTY),
+                TCUtil.getCrystalWithAspect(Aspect.AIR),
+                TCUtil.getCrystalWithAspect(Aspect.WATER),
+                ItemsTC.salisMundus,
+                TCUtil.getCrystalWithAspect(Aspect.ENTROPY),
+                Optional.of(ThEItems.DIFFUSION_CORE.stack(1)).orElse(ItemStack.EMPTY),
+                TCUtil.getCrystalWithAspect(Aspect.EARTH),
+                TCUtil.getCrystalWithAspect(Aspect.FIRE),
+                ItemsTC.salisMundus,
+                TCUtil.getCrystalWithAspect(Aspect.ORDER)
+        ));
     }
 
     private void addFakeCrafting(ResourceLocation resourceLocation) {
