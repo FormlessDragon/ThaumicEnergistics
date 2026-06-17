@@ -1,6 +1,8 @@
 package thaumicenergistics.api;
 
-import thaumicenergistics.api.definitions.IThETileDefinition;
+import ae2.core.definitions.BlockDefinition;
+import thaumicenergistics.block.BlockArcaneAssembler;
+import thaumicenergistics.block.BlockInfusionProvider;
 
 /**
  * Contains functions that return the Block/Tile Definitions for each block/tile in Thaumic Energistics
@@ -12,7 +14,7 @@ import thaumicenergistics.api.definitions.IThETileDefinition;
 @Deprecated
 public interface IThEBlocks {
 
-    IThETileDefinition infusionProvider();
+    BlockDefinition<BlockInfusionProvider> infusionProvider();
 
-    IThETileDefinition arcaneAssembler();
+    BlockDefinition<BlockArcaneAssembler> arcaneAssembler();
 }

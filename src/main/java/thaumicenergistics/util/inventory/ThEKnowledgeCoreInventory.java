@@ -19,6 +19,6 @@ public class ThEKnowledgeCoreInventory extends ThEUpgradeInventory {
 
     @Override
     public boolean isItemValidForSlot(int index, ItemStack stack) {
-        return super.isItemValidForSlot(index, stack) && (stack.getItem() instanceof ItemKnowledgeCore);
+        return stack.getItem() instanceof ItemKnowledgeCore;
     }
 }

@@ -1,28 +1,20 @@
 package thaumicenergistics.init;
 
+import ae2.core.definitions.BlockDefinition;
+import ae2.core.definitions.TileDefinition;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import thaumicenergistics.api.IThEBlocks;
-import thaumicenergistics.api.definitions.IThEBlockDefinition;
-import thaumicenergistics.api.definitions.IThETileDefinition;
+import thaumicenergistics.api.ids.ThEBlockIds;
 import thaumicenergistics.block.BlockArcaneAssembler;
-import thaumicenergistics.block.BlockBase;
 import thaumicenergistics.block.BlockInfusionProvider;
 import thaumicenergistics.client.render.IThEModel;
-import thaumicenergistics.core.definitions.ThEBlockDefinition;
-import thaumicenergistics.core.definitions.ThETileDefinition;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.tile.TileInfusionProvider;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 import static thaumicenergistics.ThaumicEnergistics.LOGGER;
 
@@ -33,57 +25,63 @@ import static thaumicenergistics.ThaumicEnergistics.LOGGER;
 @Mod.EventBusSubscriber
 public class ThEBlocks implements IThEBlocks {
 
-    public static List<BlockBase> BLOCKS = new ArrayList<>();
+    public static final BlockDefinition<BlockInfusionProvider> INFUSION_PROVIDER = new BlockDefinition<>(
+            ThEBlockIds.INFUSION_PROVIDER, new BlockInfusionProvider("infusion_provider"), ModGlobals.CREATIVE_TAB);
+    public static final BlockDefinition<BlockArcaneAssembler> ARCANE_ASSEMBLER = new BlockDefinition<>(
+            ThEBlockIds.ARCANE_ASSEMBLER, new BlockArcaneAssembler("arcane_assembler"), ModGlobals.CREATIVE_TAB);
 
-    private final IThETileDefinition infusionProvider;
-    private final IThETileDefinition arcaneAssembler;
+    private static final BlockDefinition<?>[] BLOCKS = {
+            INFUSION_PROVIDER,
+            ARCANE_ASSEMBLER
+    };
+
+    private static final TileDefinition<?>[] TILES = {
+            new TileDefinition<>(ThEBlockIds.INFUSION_PROVIDER, TileInfusionProvider.class),
+            new TileDefinition<>(ThEBlockIds.ARCANE_ASSEMBLER, TileArcaneAssembler.class)
+    };
 
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
         LOGGER.info("Registering Blocks");
 
-        event.getRegistry().registerAll(ThEBlocks.BLOCKS.toArray(new BlockBase[0]));
+        for (BlockDefinition<?> definition : BLOCKS) {
+            event.getRegistry().register(definition.block());
+        }
 
-        ThEBlocks.BLOCKS.forEach(BlockBase::registerTileEntity);
+        for (TileDefinition<?> definition : TILES) {
+            definition.register();
+        }
     }
 
     @SubscribeEvent
     public static void registerItemBlocks(RegistryEvent.Register<Item> event) {
         LOGGER.info("Registering ItemBlocks");
 
-        ThEBlocks.BLOCKS.forEach(block -> event.getRegistry().register(new ItemBlock(block).setRegistryName(Objects.requireNonNull(block.getRegistryName()))));
+        for (BlockDefinition<?> definition : BLOCKS) {
+            event.getRegistry().register(definition.item());
+        }
     }
 
     @SubscribeEvent
     public static void registerModels(ModelRegistryEvent event) {
-        ThEBlocks.BLOCKS.forEach(block -> {
-            if (block instanceof IThEModel)
-                ((IThEModel) block).initModel();
-        });
+        for (BlockDefinition<?> definition : BLOCKS) {
+            if (definition.block() instanceof IThEModel model) {
+                model.initModel();
+            }
+        }
     }
 
-    private static IThEBlockDefinition createBlock(BlockBase block) {
-        ThEBlocks.BLOCKS.add(block);
-        return new ThEBlockDefinition(block, new ItemBlock(block));
-    }
-
-    private static IThETileDefinition createTile(BlockBase block, Class<? extends TileEntity> tile) {
-        ThEBlocks.BLOCKS.add(block);
-        return new ThETileDefinition(tile, block, new ItemBlock(block));
-    }
-
-    public ThEBlocks() {
-        this.infusionProvider = ThEBlocks.createTile(new BlockInfusionProvider("infusion_provider"), TileInfusionProvider.class);
-        this.arcaneAssembler = ThEBlocks.createTile(new BlockArcaneAssembler("arcane_assembler"), TileArcaneAssembler.class);
+    public static BlockDefinition<?>[] all() {
+        return BLOCKS.clone();
     }
 
     @Override
-    public IThETileDefinition infusionProvider() {
-        return this.infusionProvider;
+    public BlockDefinition<BlockInfusionProvider> infusionProvider() {
+        return INFUSION_PROVIDER;
     }
 
     @Override
-    public IThETileDefinition arcaneAssembler() {
-        return this.arcaneAssembler;
+    public BlockDefinition<BlockArcaneAssembler> arcaneAssembler() {
+        return ARCANE_ASSEMBLER;
     }
 }

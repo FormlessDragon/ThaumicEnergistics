@@ -18,14 +18,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import thaumicenergistics.core.CommonProxy;
 import thaumicenergistics.thaumicenergistics.Reference;
-import thaumicenergistics.api.IThEBlocks;
-import thaumicenergistics.api.IThEUpgrades;
 import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.ThEItemColors;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.command.CommandAddVis;
 import thaumicenergistics.command.CommandDrainVis;
 import thaumicenergistics.init.ModGlobals;
+import thaumicenergistics.init.internal.InitUpgrades;
 import thaumicenergistics.integration.ThEIntegrationLoader;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.util.ForgeUtil;
@@ -90,16 +89,7 @@ public class ThaumicEnergistics {
             ThEItemColors.registerItemColors();
         }*/
 
-        IThEUpgrades upgrades = ThaumicEnergisticsApi.instance().upgrades();
-        IThEBlocks blocks = ThaumicEnergisticsApi.instance().blocks();
-
-        //upgrades.registerUpgrade(items.arcaneTerminal(), upgrades.arcaneCharger(), 1);
-        //upgrades.registerUpgrade(items.wirelessArcaneTerminal(), upgrades.arcaneCharger(), 1);
-        //upgrades.registerUpgrade(items.arcaneInscriber(), upgrades.blankKnowledgeCore(), 1);
-        //upgrades.registerUpgrade(items.arcaneInscriber(), upgrades.knowledgeCore(), 1);
-        //upgrades.registerUpgrade(blocks.arcaneAssembler(), upgrades.knowledgeCore(), 1);
-        //upgrades.registerUpgrade(blocks.arcaneAssembler(), upgrades.arcaneCharger(), 1);
-        upgrades.registerUpgrade(blocks.arcaneAssembler(), upgrades.cardSpeed(), 5);
+        InitUpgrades.init();
 
         proxy.init(event);
 

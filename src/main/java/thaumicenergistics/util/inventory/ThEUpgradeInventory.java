@@ -1,17 +1,12 @@
 package thaumicenergistics.util.inventory;
 
+import ae2.api.upgrades.Upgrades;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import thaumicenergistics.api.IThEUpgrade;
-import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.integration.appeng.compat.Upgrades;
 import thaumicenergistics.items.ItemKnowledgeCore;
-import thaumicenergistics.util.ForgeUtil;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 /**
  * @author BrockWS
@@ -19,7 +14,7 @@ import java.util.stream.Stream;
 public class ThEUpgradeInventory extends ThEInternalInventory {
 
     private boolean cached = false;
-    private final Map<Object, Integer> cachedUpgrades;
+    private final Map<Item, Integer> cachedUpgrades;
     private ItemStack upgradable;
 
     public ThEUpgradeInventory(String customName, int size, int stackLimit, ItemStack upgradable) {
@@ -40,10 +35,8 @@ public class ThEUpgradeInventory extends ThEInternalInventory {
     public boolean isItemValidForSlot(int index, ItemStack stack) {
         if (stack.getItem() instanceof ItemKnowledgeCore && !isKnowledgeCoreSlot())
             return false;
-        if (!Upgrades.fromStack(stack).isPresent() && !ThEApi.instance().upgrades().getUpgrade(stack).isPresent())
-            return false;
         if (this.upgradable == null) // If the item/block/part that this is attached to is null, then just allow without checking max allowed
-            return true;
+            return Upgrades.isUpgradeCardItem(stack);
         return this.getMaxUpgrades(stack) > 0 && this.getUpgrades(stack) < this.getMaxUpgrades(stack);
     }
 
@@ -59,40 +52,27 @@ public class ThEUpgradeInventory extends ThEInternalInventory {
 
         if (o instanceof ItemStack) {
             ItemStack stack = (ItemStack) o;
-            Optional<Upgrades> aeUpgrade = Upgrades.fromStack(stack);
-            if (aeUpgrade.isPresent()) {
-                o = aeUpgrade.get();
-            } else {
-                Optional<IThEUpgrade> upgrade = ThEApi.instance().upgrades().getUpgrade(stack);
-                if (upgrade.isPresent())
-                    o = upgrade.get();
-            }
+            o = stack.getItem();
         }
 
-        return this.cachedUpgrades.getOrDefault(o, 0);
+        return o instanceof Item ? this.cachedUpgrades.getOrDefault(o, 0) : 0;
     }
 
     private void calculateUpgrades() {
         this.cachedUpgrades.clear();
         this.iterator().forEachRemaining(stack -> {
-            // Check if its a ThEUpgrade, and if it is cache it
-            ThEApi.instance().upgrades().getUpgrade(stack).ifPresent(upgrade -> this.cachedUpgrades.put(upgrade, this.cachedUpgrades.getOrDefault(upgrade, 0) + stack.getCount()));
-
-            // Check if its a AE2 Upgrade, and if it is cache it
-            Upgrades.fromStack(stack).ifPresent(upgrade ->
-                    this.cachedUpgrades.put(upgrade, this.cachedUpgrades.getOrDefault(upgrade, 0) + stack.getCount()));
+            if (!stack.isEmpty()) {
+                Item upgrade = stack.getItem();
+                this.cachedUpgrades.put(upgrade, this.cachedUpgrades.getOrDefault(upgrade, 0) + stack.getCount());
+            }
         });
         this.cached = true;
     }
 
     private int getMaxUpgrades(ItemStack upgradeStack) {
-        AtomicInteger max = new AtomicInteger(0);
-        ThEApi.instance().upgrades().getUpgrade(upgradeStack).ifPresent(upgrade -> max.set(upgrade.getSupported(this.upgradable)));
-        Upgrades.fromStack(upgradeStack).ifPresent(upgrade -> {
-            Stream<ItemStack> stream = upgrade.getSupported().keySet().stream();
-            Optional<ItemStack> upgradable = stream.filter(o -> ForgeUtil.areItemStacksEqual(this.upgradable, o)).findFirst();
-            max.set(upgradable.map(upgrade.getSupported()::get).orElseGet(() -> upgrade.getSupported(this.upgradable)));
-        });
-        return max.get();
+        if (upgradeStack.isEmpty() || this.upgradable == null || this.upgradable.isEmpty()) {
+            return 0;
+        }
+        return Upgrades.getMaxInstallable(upgradeStack.getItem(), this.upgradable.getItem());
     }
 }

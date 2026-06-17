@@ -5,8 +5,13 @@ import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.ids.ThEItemIds;
 import thaumicenergistics.items.ItemBase;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ThEItemDefinitionNamingTest {
@@ -19,6 +24,13 @@ class ThEItemDefinitionNamingTest {
 
         assertDoesNotThrow(() -> new ItemDefinition<>(ThEItemIds.WIRELESS_ARCANE_TERMINAL, item, null));
         assertEquals(ThEItemIds.WIRELESS_ARCANE_TERMINAL, item.getRegistryName());
+    }
+
+    @Test
+    void blockBaseLeavesRegistryNameForSupergiantBlockDefinition() throws IOException {
+        String blockBase = Files.readString(Path.of("src/main/java/thaumicenergistics/block/BlockBase.java"));
+
+        assertFalse(blockBase.contains("setRegistryName"));
     }
 
     private static final class TestItem extends ItemBase {
