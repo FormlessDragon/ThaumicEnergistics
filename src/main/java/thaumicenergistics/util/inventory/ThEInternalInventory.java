@@ -1,5 +1,7 @@
 package thaumicenergistics.util.inventory;
 
+import ae2.api.inventories.BaseInternalInventory;
+import net.minecraft.nbt.NBTBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -10,15 +12,15 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.util.INBTSerializable;
 
-import java.util.Collections;
-import java.util.Iterator;
-
 /**
  * Manages an internal inventory
  *
  * @author BrockWS
  */
-public class ThEInternalInventory implements IInventory, INBTSerializable<NBTTagList>, Iterable<ItemStack> {
+public class ThEInternalInventory extends BaseInternalInventory
+        implements IInventory, INBTSerializable<NBTTagList>, Iterable<ItemStack> {
+
+    private static final String DEFAULT_NAME = "container.inventory";
 
     /**
      * Stack size limit.
@@ -42,15 +44,22 @@ public class ThEInternalInventory implements IInventory, INBTSerializable<NBTTag
     }
 
     @Override
-    public int getSizeInventory() {
+    public int size() {
         return this.slots.size();
     }
 
     @Override
+    public int getSizeInventory() {
+        return this.size();
+    }
+
+    @Override
     public boolean isEmpty() {
-        for (ItemStack stack : this.slots)
-            if (stack != null)
+        for (ItemStack stack : this.slots) {
+            if (!stack.isEmpty()) {
                 return false;
+            }
+        }
         return true;
     }
 
@@ -73,20 +82,27 @@ public class ThEInternalInventory implements IInventory, INBTSerializable<NBTTag
     public ItemStack removeStackFromSlot(int index) {
         ItemStack stack = this.getStackInSlot(index);
         this.setInventorySlotContents(index, ItemStack.EMPTY);
-        this.markDirty();
         return stack != null ? stack : ItemStack.EMPTY;
     }
 
     @Override
     public void setInventorySlotContents(int index, ItemStack stack) {
-        if (stack.isEmpty() && stack.getCount() > this.getInventoryStackLimit())
-            stack.setCount(this.getInventoryStackLimit());
-        this.slots.set(index, stack);
+        this.setItemDirect(index, stack);
+    }
+
+    @Override
+    public void setItemDirect(int slotIndex, ItemStack stack) {
+        this.slots.set(slotIndex, this.normalizeStack(stack));
         this.markDirty();
     }
 
     @Override
     public int getInventoryStackLimit() {
+        return this.stackLimit;
+    }
+
+    @Override
+    public int getSlotLimit(int slot) {
         return this.stackLimit;
     }
 
@@ -116,6 +132,11 @@ public class ThEInternalInventory implements IInventory, INBTSerializable<NBTTag
     }
 
     @Override
+    public boolean isItemValid(int slot, ItemStack stack) {
+        return this.isItemValidForSlot(slot, stack);
+    }
+
+    @Override
     public int getField(int id) {
         return 0; // ?
     }
@@ -132,12 +153,15 @@ public class ThEInternalInventory implements IInventory, INBTSerializable<NBTTag
 
     @Override
     public void clear() {
-        this.slots.clear();
+        for (int i = 0; i < this.slots.size(); i++) {
+            this.slots.set(i, ItemStack.EMPTY);
+        }
+        this.markDirty();
     }
 
     @Override
     public String getName() {
-        return this.customName;
+        return this.hasCustomName() ? this.customName : DEFAULT_NAME;
     }
 
     @Override
@@ -168,13 +192,44 @@ public class ThEInternalInventory implements IInventory, INBTSerializable<NBTTag
 
     @Override
     public void deserializeNBT(NBTTagList nbt) {
-        for (int i = 0; i < nbt.tagCount(); i++)
-            this.slots.set(i, new ItemStack((NBTTagCompound) nbt.get(i)));
+        NonNullList<ItemStack> deserializedSlots = this.readSlots(nbt);
+        for (int i = 0; i < this.slots.size(); i++) {
+            this.slots.set(i, deserializedSlots.get(i));
+        }
         this.markDirty();
     }
 
-    @Override
-    public Iterator<ItemStack> iterator() {
-        return Collections.unmodifiableCollection(this.slots).iterator();
+    private NonNullList<ItemStack> readSlots(NBTTagList nbt) {
+        if (nbt.tagCount() > this.slots.size()) {
+            throw new IllegalArgumentException("Inventory NBT list has " + nbt.tagCount()
+                    + " slot entries but inventory size is " + this.slots.size());
+        }
+
+        NonNullList<ItemStack> deserializedSlots = NonNullList.withSize(this.slots.size(), ItemStack.EMPTY);
+        for (int i = 0; i < nbt.tagCount(); i++) {
+            NBTBase slotTag = nbt.get(i);
+            if (!(slotTag instanceof NBTTagCompound)) {
+                throw new IllegalArgumentException("Inventory slot " + i
+                        + " must be a compound tag, got type " + slotTag.getId());
+            }
+            deserializedSlots.set(i, this.normalizeStack(new ItemStack((NBTTagCompound) slotTag)));
+        }
+        return deserializedSlots;
+    }
+
+    private ItemStack normalizeStack(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack copy = stack.copy();
+        int stackSizeLimit = Math.min(this.stackLimit, copy.getMaxStackSize());
+        if (stackSizeLimit <= 0) {
+            return ItemStack.EMPTY;
+        }
+        if (copy.getCount() > stackSizeLimit) {
+            copy.setCount(stackSizeLimit);
+        }
+        return copy.isEmpty() ? ItemStack.EMPTY : copy;
     }
 }
