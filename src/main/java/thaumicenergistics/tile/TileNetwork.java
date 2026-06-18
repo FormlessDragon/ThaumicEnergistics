@@ -11,6 +11,7 @@ import ae2.api.networking.IManagedGridNode;
 import ae2.api.networking.events.GridBootingStatusChange;
 import ae2.api.networking.events.GridPowerStatusChange;
 import ae2.api.networking.security.IActionHost;
+import ae2.api.networking.security.IActionSource;
 import ae2.api.util.AECableType;
 import ae2.api.util.DimensionalBlockPos;
 import ae2.block.IOwnerAwareTile;
@@ -26,7 +27,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import thaumicenergistics.api.IThELangKey;
 import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.integration.appeng.util.ThEActionSource;
 import thaumicenergistics.util.ForgeUtil;
 
 import javax.annotation.Nonnull;
@@ -43,13 +43,13 @@ public abstract class TileNetwork extends TileBase implements IInWorldGridNodeHo
 
     protected IManagedGridNode managedGridNode;
     protected IGridNode gridNode;
-    protected ThEActionSource src;
+    protected final IActionSource src;
     protected EntityPlayer owner;
     protected boolean isPowered = false;
     protected boolean isActive = false;
 
     public TileNetwork() {
-        this.src = new ThEActionSource(this);
+        this.src = IActionSource.ofMachine(this);
     }
 
     public IGridNode getGridNode() {

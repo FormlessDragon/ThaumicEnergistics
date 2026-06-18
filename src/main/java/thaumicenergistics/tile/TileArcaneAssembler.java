@@ -5,6 +5,7 @@ import ae2.api.crafting.IPatternDetails;
 import ae2.api.networking.IGridNode;
 import ae2.api.networking.IManagedGridNode;
 import ae2.api.networking.crafting.ICraftingProvider;
+import ae2.api.networking.security.IActionSource;
 import ae2.api.networking.ticking.IGridTickable;
 import ae2.api.networking.ticking.TickRateModulation;
 import ae2.api.networking.ticking.TickingRequest;
@@ -30,7 +31,7 @@ import thaumicenergistics.client.gui.IThEGuiTile;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
+import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketAssemblerGUIUpdate;
 import thaumicenergistics.util.*;
@@ -46,6 +47,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -186,6 +188,7 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
             this.aspectExists = prevAspectExists;
             return false;
         }
+        IActionSource source = Objects.requireNonNull(this.src, "source");
         Map<Aspect, Long> requiredAspects = new LinkedHashMap<>();
         this.missingAspect.set(false);
         recipe.getIngredientPart(true).forEach(aspect -> {
@@ -199,8 +202,10 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
                 long amount = (long) aspect.getCount() * pushMultiplier;
                 requiredAspects.merge(crystalAspect, amount, Long::sum);
                 long required = requiredAspects.get(crystalAspect);
-                long canExtractAmount = SupergiantEssentiaUtil.extract(inventory, crystalAspect,
-                        required, Actionable.SIMULATE, this.src);
+                AEEssentiaKey key = AEEssentiaKey.of(crystalAspect);
+                long canExtractAmount = key == null || required <= 0
+                        ? 0
+                        : inventory.extract(key, required, Actionable.SIMULATE, source);
                 this.aspectExists.put(aspectName, canExtractAmount >= required);
                 if (canExtractAmount < required) {
                     this.missingAspect.set(true);
@@ -219,14 +224,21 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
         // Craft
         Map<Aspect, Long> extractedAspects = new LinkedHashMap<>();
         for (Map.Entry<Aspect, Long> requirement : requiredAspects.entrySet()) {
-            long extracted = SupergiantEssentiaUtil.extract(inventory, requirement.getKey(), requirement.getValue(),
-                    Actionable.MODULATE, this.src);
-            if (extracted < requirement.getValue()) {
+            long required = requirement.getValue();
+            AEEssentiaKey key = AEEssentiaKey.of(requirement.getKey());
+            long extracted = key == null || required <= 0
+                    ? 0
+                    : inventory.extract(key, required, Actionable.MODULATE, source);
+            if (extracted < required) {
                 if (extracted > 0) {
                     extractedAspects.put(requirement.getKey(), extracted);
                 }
-                extractedAspects.forEach((aspect, amount) ->
-                        SupergiantEssentiaUtil.insert(inventory, aspect, amount, Actionable.MODULATE, this.src));
+                extractedAspects.forEach((aspect, amount) -> {
+                    AEEssentiaKey rollbackKey = AEEssentiaKey.of(aspect);
+                    if (rollbackKey != null && amount > 0) {
+                        inventory.insert(rollbackKey, amount, Actionable.MODULATE, source);
+                    }
+                });
                 this.missingAspect.set(prevMissingAspect);
                 this.aspectExists = prevAspectExists;
                 this.hasEnoughVis = prevHasEnoughVis;

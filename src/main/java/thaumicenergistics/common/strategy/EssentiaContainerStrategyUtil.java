@@ -9,9 +9,9 @@ import net.minecraft.util.text.ITextComponent;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
-import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
 import thaumicenergistics.util.ThELog;
 import thaumicenergistics.me.key.AEEssentiaKey;
+import thaumicenergistics.me.key.AEEssentiaKeys;
 
 import java.util.Objects;
 
@@ -179,7 +179,7 @@ final class EssentiaContainerStrategyUtil {
 
         @Override
         public ITextComponent getDescription() {
-            return SupergiantEssentiaUtil.description();
+            return AEEssentiaKeys.INSTANCE.getDescription();
         }
 
         private void notifyMutation() {

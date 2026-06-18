@@ -2,16 +2,17 @@ package thaumicenergistics.tile;
 
 import ae2.api.config.Actionable;
 import ae2.api.networking.IGridNode;
+import ae2.api.networking.security.IActionSource;
 import ae2.api.stacks.AEKey;
 import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import java.util.Objects;
 import net.minecraft.nbt.NBTTagCompound;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectSource;
 import thaumicenergistics.me.key.AEEssentiaKey;
-import thaumicenergistics.integration.appeng.SupergiantEssentiaUtil;
 import thaumicenergistics.util.ForgeUtil;
 
 /**
@@ -27,11 +28,17 @@ public class TileInfusionProvider extends TileNetwork implements IAspectSource {
     }
 
     public KeyCounter getStoredAspects() {
+        KeyCounter essentia = new KeyCounter();
         MEStorage storage = this.getNetworkStorage();
         if (storage == null) {
-            return new KeyCounter();
+            return essentia;
         }
-        return SupergiantEssentiaUtil.getAvailableEssentia(storage);
+        for (Object2LongMap.Entry<AEKey> entry : storage.getAvailableStacks()) {
+            if (entry.getKey() instanceof AEEssentiaKey && entry.getLongValue() > 0) {
+                essentia.add(entry.getKey(), entry.getLongValue());
+            }
+        }
+        return essentia;
     }
 
     @Override
@@ -53,13 +60,15 @@ public class TileInfusionProvider extends TileNetwork implements IAspectSource {
     @Override
     public boolean takeFromContainer(Aspect aspect, int i) {
         MEStorage storage = this.getNetworkStorage();
-        if (storage == null) {
+        AEEssentiaKey key = AEEssentiaKey.of(aspect);
+        if (storage == null || key == null || i <= 0) {
             return false;
         }
-        long canExtract = SupergiantEssentiaUtil.extract(storage, aspect, i, Actionable.SIMULATE, this.src);
+        IActionSource source = Objects.requireNonNull(this.src, "source");
+        long canExtract = storage.extract(key, i, Actionable.SIMULATE, source);
         if (canExtract != i)
             return false;
-        SupergiantEssentiaUtil.extract(storage, aspect, i, Actionable.MODULATE, this.src);
+        storage.extract(key, i, Actionable.MODULATE, source);
         this.markDirty();
         return true;
     }

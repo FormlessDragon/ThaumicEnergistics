@@ -3,12 +3,12 @@ package thaumicenergistics.part;
 import ae2.api.parts.IPartItem;
 import ae2.api.parts.IPartModel;
 import ae2.items.parts.PartModels;
+import ae2.parts.PartModel;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.init.ModGlobals;
-import thaumicenergistics.integration.appeng.ThEPartModel;
 import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
 
@@ -27,11 +27,11 @@ public class PartArcaneInscriber extends PartArcaneTerminal {
     @PartModels
     public static final ResourceLocation MODEL_OFF = new ResourceLocation(Reference.MOD_ID, "part/arcane_inscriber/off");
 
-    private static final IPartModel MODELS_ON = new ThEPartModel(MODEL_BASE, MODEL_ON,
+    private static final IPartModel MODELS_ON = new PartModel(MODEL_BASE, MODEL_ON,
             new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_on"));
-    private static final IPartModel MODELS_OFF = new ThEPartModel(MODEL_BASE, MODEL_OFF,
+    private static final IPartModel MODELS_OFF = new PartModel(MODEL_BASE, MODEL_OFF,
             new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_off"));
-    private static final IPartModel MODELS_HAS_CHANNEL = new ThEPartModel(MODEL_BASE, MODEL_ON,
+    private static final IPartModel MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, MODEL_ON,
             new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_has_channel"));
 
     public PartArcaneInscriber(IPartItem<?> item) {

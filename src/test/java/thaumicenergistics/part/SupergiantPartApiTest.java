@@ -3,22 +3,29 @@ package thaumicenergistics.part;
 import ae2.api.implementations.IPowerChannelState;
 import ae2.api.networking.IInWorldGridNodeHost;
 import ae2.api.networking.security.IActionHost;
+import ae2.api.networking.security.IActionSource;
+import ae2.api.parts.IPartModel;
 import ae2.api.upgrades.Upgrades;
 import ae2.block.IOwnerAwareTile;
 import ae2.items.parts.PartItem;
+import ae2.parts.PartModel;
 import ae2.parts.reporting.AbstractTerminalPart;
 import net.minecraft.init.Bootstrap;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.items.IItemHandler;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.core.definitions.ThEParts;
+import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.tile.TileInfusionProvider;
 import thaumicenergistics.tile.TileNetwork;
 import thaumicenergistics.util.inventory.ThEUpgradeInventory;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,12 +46,21 @@ class SupergiantPartApiTest {
 
     @Test
     void thaumicPartsUseSupergiantPartApiDirectly() {
+        PartArcaneTerminal terminal = ThEParts.ARCANE_TERMINAL.item().createPart();
+        PartArcaneInscriber inscriber = ThEParts.ARCANE_INSCRIBER.item().createPart();
+
         assertAll(
                 () -> assertTrue(AbstractTerminalPart.class.isAssignableFrom(PartArcaneTerminal.class)),
                 () -> assertTrue(IArcaneTerminalHost.class.isAssignableFrom(PartArcaneTerminal.class)),
                 () -> assertTrue(PartArcaneTerminal.class.isAssignableFrom(PartArcaneInscriber.class)),
                 () -> assertPartItem(ThEParts.ARCANE_TERMINAL.item(), PartArcaneTerminal.class),
-                () -> assertPartItem(ThEParts.ARCANE_INSCRIBER.item(), PartArcaneInscriber.class));
+                () -> assertPartItem(ThEParts.ARCANE_INSCRIBER.item(), PartArcaneInscriber.class),
+                () -> assertSupergiantPartModel(terminal.getStaticModels(), PartArcaneTerminal.MODEL_BASE,
+                        PartArcaneTerminal.MODEL_OFF, new ResourceLocation(ModGlobals.MOD_ID_AE2,
+                                "part/display_status_off")),
+                () -> assertSupergiantPartModel(inscriber.getStaticModels(), PartArcaneInscriber.MODEL_BASE,
+                        PartArcaneInscriber.MODEL_OFF, new ResourceLocation(ModGlobals.MOD_ID_AE2,
+                                "part/display_status_off")));
     }
 
     @Test
@@ -93,7 +109,8 @@ class SupergiantPartApiTest {
 
     @Test
     void networkTilesUseSupergiantGridApiDirectly() {
-        TileInfusionProvider infusionProvider = new TileInfusionProvider();
+        InspectableInfusionProvider infusionProvider = new InspectableInfusionProvider();
+        IActionSource actionSource = infusionProvider.actionSource();
 
         assertAll(
                 () -> assertTrue(IInWorldGridNodeHost.class.isAssignableFrom(TileNetwork.class)),
@@ -103,7 +120,17 @@ class SupergiantPartApiTest {
                 () -> assertInstanceOf(IInWorldGridNodeHost.class, infusionProvider),
                 () -> assertInstanceOf(IActionHost.class, infusionProvider),
                 () -> assertInstanceOf(IPowerChannelState.class, infusionProvider),
-                () -> assertInstanceOf(IOwnerAwareTile.class, infusionProvider));
+                () -> assertInstanceOf(IOwnerAwareTile.class, infusionProvider),
+                () -> assertSame(infusionProvider, actionSource.machine().orElseThrow()),
+                () -> assertFalse(actionSource.player().isPresent()),
+                () -> assertFalse(actionSource.context(Object.class).isPresent()));
+    }
+
+    private static void assertSupergiantPartModel(IPartModel model, ResourceLocation... expectedModels) {
+        assertAll(
+                () -> assertInstanceOf(PartModel.class, model),
+                () -> assertTrue(model.requireCableConnection()),
+                () -> assertEquals(List.of(expectedModels), model.getModels()));
     }
 
     private static <T extends ae2.api.parts.IPart> void assertPartItem(PartItem<T> item, Class<T> partClass) {
@@ -122,6 +149,12 @@ class SupergiantPartApiTest {
                 () -> assertTrue(upgrades.isItemValid(0, arcaneUpgrade)),
                 () -> assertTrue(upgrades.insertItem(0, arcaneUpgrade.copy(), true).isEmpty()),
                 () -> assertEquals(0, upgrades.getStackInSlot(0).getCount()));
+    }
+
+    private static final class InspectableInfusionProvider extends TileInfusionProvider {
+        private IActionSource actionSource() {
+            return this.src;
+        }
     }
 
 }
