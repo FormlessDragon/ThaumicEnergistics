@@ -5,6 +5,7 @@ import ae2.api.networking.IInWorldGridNodeHost;
 import ae2.api.networking.security.IActionHost;
 import ae2.api.networking.security.IActionSource;
 import ae2.api.parts.IPartModel;
+import ae2.api.upgrades.IUpgradeInventory;
 import ae2.api.upgrades.Upgrades;
 import ae2.block.IOwnerAwareTile;
 import ae2.items.parts.PartItem;
@@ -14,6 +15,7 @@ import net.minecraft.init.Bootstrap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.wrapper.InvWrapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
@@ -23,6 +25,7 @@ import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.tile.TileInfusionProvider;
 import thaumicenergistics.tile.TileNetwork;
+import thaumicenergistics.util.inventory.ThEInternalInventory;
 import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
 import java.util.List;
@@ -102,8 +105,10 @@ class SupergiantPartApiTest {
         inventory.setInventorySlotContents(0, arcaneUpgrade);
 
         assertAll(
-                () -> assertEquals(1, inventory.getUpgrades(ThEItems.UPGRADE_ARCANE.item())),
-                () -> assertEquals(1, inventory.getUpgrades(arcaneUpgrade)),
+                () -> assertInstanceOf(IUpgradeInventory.class, inventory),
+                () -> assertEquals(ThEBlocks.ARCANE_ASSEMBLER.item(), inventory.getUpgradableItem()),
+                () -> assertEquals(1, inventory.getMaxInstalled(ThEItems.UPGRADE_ARCANE.item())),
+                () -> assertEquals(1, inventory.getInstalledUpgrades(ThEItems.UPGRADE_ARCANE.item())),
                 () -> assertFalse(inventory.isItemValidForSlot(0, arcaneUpgrade)));
     }
 
@@ -146,6 +151,10 @@ class SupergiantPartApiTest {
 
         assertAll(
                 () -> assertEquals(1, upgrades.getSlots()),
+                () -> assertInstanceOf(InvWrapper.class, upgrades),
+                () -> assertInstanceOf(ThEUpgradeInventory.class, ((InvWrapper) upgrades).getInv()),
+                () -> assertInstanceOf(ThEInternalInventory.class, ((InvWrapper) upgrades).getInv()),
+                () -> assertInstanceOf(IUpgradeInventory.class, ((InvWrapper) upgrades).getInv()),
                 () -> assertTrue(upgrades.isItemValid(0, arcaneUpgrade)),
                 () -> assertTrue(upgrades.insertItem(0, arcaneUpgrade.copy(), true).isEmpty()),
                 () -> assertEquals(0, upgrades.getStackInSlot(0).getCount()));

@@ -250,7 +250,7 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
             // TODO
             //final ItemStack visRangeUpgrade = ThEApi.instance().items().upgradeArcane().maybeStack(1).orElseThrow(RuntimeException::new);
             final ItemStack visRangeUpgrade = ThEItems.UPGRADE_ARCANE.stack(1);
-            TCUtil.drainVis(this.getWorld(), this.getPos(), recipe.visCost() * pushMultiplier, this.upgradeInv.getUpgrades(visRangeUpgrade));
+            TCUtil.drainVis(this.getWorld(), this.getPos(), recipe.visCost() * pushMultiplier, this.upgradeInv.getInstalledUpgrades(visRangeUpgrade.getItem()));
         }
         this.noPushFlag = false;
         this.hasJob = true;
@@ -393,7 +393,7 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
 
     protected int getStep() {
         AtomicInteger step = new AtomicInteger(BASE_STEP);
-        step.set((int) (BASE_STEP + Math.pow(3, this.upgradeInv.getUpgrades(AEItems.SPEED_CARD.stack()))));
+        step.set((int) (BASE_STEP + Math.pow(3, this.upgradeInv.getInstalledUpgrades(AEItems.SPEED_CARD.item()))));
         return step.get();
     }
 
@@ -408,7 +408,7 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
     protected float getWorldVis() {
         return Optional.of(ThEItems.UPGRADE_ARCANE.stack(1)).map(visRangeUpgrade -> {
             float vis = AuraHelper.getVis(this.getWorld(), this.getPos());
-            if (this.upgradeInv.getUpgrades(visRangeUpgrade) > 0) {
+            if (this.upgradeInv.getInstalledUpgrades(visRangeUpgrade.getItem()) > 0) {
                 vis += AuraHelper.getVis(this.getWorld(), this.getPos().add(-16, 0, -16));
                 vis += AuraHelper.getVis(this.getWorld(), this.getPos().add(-16, 0, 0));
                 vis += AuraHelper.getVis(this.getWorld(), this.getPos().add(-16, 0, 16));
