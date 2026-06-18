@@ -1,12 +1,12 @@
 package thaumicenergistics.container;
 
 import ae2.api.config.Setting;
+import ae2.api.util.IConfigManager;
 import ae2.api.util.IConfigurableObject;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IContainerListener;
 import thaumicenergistics.config.AESettings;
-import thaumicenergistics.integration.appeng.util.ThEConfigManager;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketSettingChange;
 import thaumicenergistics.util.ForgeUtil;
@@ -18,13 +18,13 @@ import thaumicenergistics.util.ForgeUtil;
  * @author Alex811
  */
 public abstract class ContainerBaseConfigurable extends ContainerBase implements IConfigurableObject {
-    protected ThEConfigManager serverConfigManager;
-    protected ThEConfigManager clientConfigManager;
+    protected IConfigManager serverConfigManager;
+    protected IConfigManager clientConfigManager;
 
-    public ContainerBaseConfigurable(EntityPlayer player, ThEConfigManager serverConfigManager) {
+    public ContainerBaseConfigurable(EntityPlayer player, IConfigManager serverConfigManager) {
         super(player);
-        this.clientConfigManager = new ThEConfigManager();
-        this.clientConfigManager.registerSettings(this.getAESettingSubject());
+        this.clientConfigManager = AESettings.createConfigManager(this.getAESettingSubject(), () -> {
+        });
         if (ForgeUtil.isServer())
             this.serverConfigManager = serverConfigManager;
     }
@@ -54,21 +54,24 @@ public abstract class ContainerBaseConfigurable extends ContainerBase implements
     }
 
     @Override
-    public ThEConfigManager getConfigManager() {
+    public IConfigManager getConfigManager() {
         return ForgeUtil.isClient() ? this.clientConfigManager : this.serverConfigManager;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Enum<?> getSetting(ThEConfigManager configManager, Setting<?> setting) {
+    private static Enum<?> getSetting(IConfigManager configManager, Setting<?> setting) {
         return configManager.getSetting((Setting) setting);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static void putSetting(ThEConfigManager configManager, Setting<?> setting, Enum<?> value) {
+    private static void putSetting(IConfigManager configManager, Setting<?> setting, Enum<?> value) {
         putSettingUnchecked(configManager, (Setting) setting, value);
     }
 
-    private static <T extends Enum<T>> void putSettingUnchecked(ThEConfigManager configManager, Setting<T> setting, Enum<?> value) {
+    private static <T extends Enum<T>> void putSettingUnchecked(IConfigManager configManager, Setting<T> setting, Enum<?> value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Cannot set config setting " + setting.getName() + " to null");
+        }
         configManager.putSetting(setting, setting.getEnumClass().cast(value));
     }
 }

@@ -20,6 +20,7 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.client.gui.GuiHandler;
+import thaumicenergistics.config.LegacyAESettingKeys;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.thaumicenergistics.Reference;
@@ -109,6 +110,7 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
     @Override
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
+        LegacyAESettingKeys.importFrom(tag, this.getConfigManager());
         if (tag.hasKey("crafting")) {
             this.craftingInventory.deserializeNBT(tag.getTagList("crafting", 10));
         }

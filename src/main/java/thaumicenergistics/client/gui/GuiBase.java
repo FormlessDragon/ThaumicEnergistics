@@ -161,8 +161,8 @@ public abstract class GuiBase extends GuiContainer {
     }
 
     public boolean hasConfigSetting(Setting<?> setting) {
-        return !(this.inventorySlots instanceof IConfigurableObject)
-                || ((IConfigurableObject) this.inventorySlots).getConfigManager().getSettings().contains(setting);
+        return this.inventorySlots instanceof IConfigurableObject
+                && ((IConfigurableObject) this.inventorySlots).getConfigManager().getSettings().contains(setting);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -171,6 +171,9 @@ public abstract class GuiBase extends GuiContainer {
     }
 
     private static <T extends Enum<T>> void putSettingUnchecked(IConfigManager configManager, Setting<T> setting, Enum<?> value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Cannot set config setting " + setting.getName() + " to null");
+        }
         configManager.putSetting(setting, setting.getEnumClass().cast(value));
     }
 

@@ -9,7 +9,7 @@ import ae2.api.config.SortOrder;
 import ae2.api.config.StorageFilter;
 import ae2.api.config.ViewItems;
 import ae2.api.util.IConfigManager;
-import thaumicenergistics.integration.appeng.util.ThEConfigManager;
+import ae2.api.util.IConfigManagerBuilder;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -53,17 +53,29 @@ public final class AESettings {
         SETTINGS.get(settingSubject).put(setting, def);
     }
 
-    public static void registerSettings(@Nullable SUBJECT settingSubject, @Nonnull IConfigManager configManager) {
-        if (settingSubject != null && configManager instanceof ThEConfigManager)
-            SETTINGS.get(settingSubject).forEach((setting, value) -> registerSetting((ThEConfigManager) configManager, setting, value));
+    public static void registerSettings(@Nullable SUBJECT settingSubject, @Nonnull IConfigManagerBuilder builder) {
+        if (settingSubject == null) {
+            return;
+        }
+        HashMap<Setting<?>, Enum<?>> settings = SETTINGS.get(settingSubject);
+        if (settings == null) {
+            throw new IllegalArgumentException("Unknown AE setting subject: " + settingSubject);
+        }
+        settings.forEach((setting, value) -> registerSetting(builder, setting, value));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static void registerSetting(ThEConfigManager configManager, Setting<?> setting, Enum<?> value) {
-        registerSettingUnchecked(configManager, (Setting) setting, value);
+    private static void registerSetting(IConfigManagerBuilder builder, Setting<?> setting, Enum<?> value) {
+        registerSettingUnchecked(builder, (Setting) setting, value);
     }
 
-    private static <T extends Enum<T>> void registerSettingUnchecked(ThEConfigManager configManager, Setting<T> setting, Enum<?> value) {
-        configManager.registerSetting(setting, setting.getEnumClass().cast(value));
+    private static <T extends Enum<T>> void registerSettingUnchecked(IConfigManagerBuilder builder, Setting<T> setting, Enum<?> value) {
+        builder.registerSetting(setting, setting.getEnumClass().cast(value));
+    }
+
+    public static IConfigManager createConfigManager(@Nullable SUBJECT settingSubject, @Nonnull Runnable changeListener) {
+        IConfigManagerBuilder builder = IConfigManager.builder(changeListener);
+        registerSettings(settingSubject, builder);
+        return builder.build();
     }
 }

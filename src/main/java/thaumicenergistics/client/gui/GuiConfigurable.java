@@ -1,10 +1,10 @@
 package thaumicenergistics.client.gui;
 
+import ae2.api.util.IConfigManager;
 import net.minecraft.client.gui.GuiButton;
 import thaumicenergistics.client.gui.component.GuiImgButton;
 import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.ContainerBaseConfigurable;
-import thaumicenergistics.integration.appeng.util.ThEConfigManager;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketSettingChange;
 
@@ -52,7 +52,7 @@ public abstract class GuiConfigurable extends GuiBase {
         return false;
     }
 
-    public ThEConfigManager getConfigManager() {
+    public IConfigManager getConfigManager() {
         return ((ContainerBaseConfigurable) this.inventorySlots).getConfigManager();
     }
 }
