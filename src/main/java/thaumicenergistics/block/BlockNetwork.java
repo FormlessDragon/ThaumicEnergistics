@@ -1,5 +1,7 @@
 package thaumicenergistics.block;
 
+import ae2.api.implementations.IPowerChannelState;
+import ae2.me.helpers.IGridConnectedTile;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.PropertyBool;
@@ -12,7 +14,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import thaumicenergistics.tile.TileNetwork;
 
 /**
  * @author BrockWS
@@ -41,10 +42,10 @@ public abstract class BlockNetwork extends BlockBase implements ITileEntityProvi
         if (world.isRemote)
             return;
         TileEntity te = world.getTileEntity(pos);
-        if (te instanceof TileNetwork && placer instanceof EntityPlayer) {
-            TileNetwork tn = (TileNetwork) te;
-            tn.setOwner((EntityPlayer) placer);
-            tn.getActionableNode(); // Force GridNode creation
+        if (te instanceof IGridConnectedTile && placer instanceof EntityPlayer) {
+            IGridConnectedTile tile = (IGridConnectedTile) te;
+            tile.setOwner((EntityPlayer) placer);
+            tile.getActionableNode();
         }
     }
 
@@ -58,10 +59,10 @@ public abstract class BlockNetwork extends BlockBase implements ITileEntityProvi
         boolean powered = false;
         boolean active = false;
         TileEntity te = worldIn.getTileEntity(pos);
-        if (te instanceof TileNetwork) {
-            TileNetwork tn = (TileNetwork) te;
-            powered = tn.isPowered();
-            active = tn.isActive();
+        if (te instanceof IPowerChannelState) {
+            IPowerChannelState powerState = (IPowerChannelState) te;
+            powered = powerState.isPowered();
+            active = powerState.isActive();
         }
         return super.getActualState(state, worldIn, pos)
                 .withProperty(POWERED, powered)

@@ -3,7 +3,7 @@ package thaumicenergistics.tile;
 import ae2.api.config.Actionable;
 import ae2.api.crafting.IPatternDetails;
 import ae2.api.networking.IGridNode;
-import ae2.api.networking.IManagedGridNode;
+import ae2.api.networking.GridFlags;
 import ae2.api.networking.crafting.ICraftingProvider;
 import ae2.api.networking.security.IActionSource;
 import ae2.api.networking.ticking.IGridTickable;
@@ -13,13 +13,12 @@ import ae2.api.stacks.AEItemKey;
 import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
 import ae2.core.definitions.AEItems;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumcraft.api.aspects.Aspect;
@@ -57,7 +56,7 @@ import java.util.function.Function;
 /**
  * @author Alex811
  */
-public class TileArcaneAssembler extends TileNetwork implements IThESubscribable, IThEInvTile, IThEGuiTile, ICraftingProvider, IGridTickable {
+public class TileArcaneAssembler extends ThENetworkTile implements IThESubscribable, IThEInvTile, IThEGuiTile, ICraftingProvider, IGridTickable {
     protected static final int BASE_STEP = 5;               // step to increase progress by / tick (not counting upgrades)
     protected ThEInternalInventory coreInv;                 // contains Knowledge Core
     protected ThEUpgradeInventory upgradeInv;
@@ -72,6 +71,11 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
 
     public TileArcaneAssembler() {
         super();
+        this.getMainNode()
+                .setIdlePowerUsage(1.0)
+                .setFlags(GridFlags.REQUIRE_CHANNEL)
+                .addService(ICraftingProvider.class, this)
+                .addService(IGridTickable.class, this);
         ItemStack assemblerItem = ThEBlocks.ARCANE_ASSEMBLER.stack();
         this.coreInv = new ThEKnowledgeCoreInventory("cores", 1, 1, assemblerItem);
         this.upgradeInv = new ThEUpgradeInventory("upgrades", 5, 1, assemblerItem);
@@ -79,39 +83,54 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
     }
 
     @Override
-    public NBTTagCompound getUpdateTag() {  // sync, server-side, returns what to send to the client when the TileEntity's chunk gets loaded by it
-        NBTTagCompound nbtTagCompound = super.getUpdateTag();
-        nbtTagCompound.setBoolean("missingAspect", this.missingAspect.get());
-        nbtTagCompound.setBoolean("hasEnoughVis", this.hasEnoughVis);
-        nbtTagCompound.setBoolean("hasJob", this.hasJob);
-        nbtTagCompound.setBoolean("isCrafting", this.isCrafting);
-        nbtTagCompound.setInteger("progress", this.getProgress());
-        return this.writeToNBT(nbtTagCompound);
+    public ItemStack getItemFromTile() {
+        return ThEBlocks.ARCANE_ASSEMBLER.stack();
     }
 
     @Override
-    public void handleUpdateTag(NBTTagCompound tag) {   // sync, client-side, receives from getUpdateTag()
-        super.handleUpdateTag(tag);
-        this.missingAspect.set(tag.getBoolean("missingAspect"));
-        this.hasEnoughVis = tag.getBoolean("hasEnoughVis");
-        this.hasJob = tag.getBoolean("hasJob");
-        this.isCrafting = tag.getBoolean("isCrafting");
-        this.progress = tag.getInteger("progress");
+    protected void writeToStream(ByteBuf data) {
+        super.writeToStream(data);
+        data.writeBoolean(this.missingAspect.get());
+        data.writeBoolean(this.hasEnoughVis);
+        data.writeBoolean(this.hasJob);
+        data.writeBoolean(this.isCrafting);
+        data.writeInt(this.getProgress());
     }
 
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound tag) {
+    protected boolean readFromStream(ByteBuf data) {
+        boolean changed = super.readFromStream(data);
+        boolean nextMissingAspect = data.readBoolean();
+        boolean nextHasEnoughVis = data.readBoolean();
+        boolean nextHasJob = data.readBoolean();
+        boolean nextIsCrafting = data.readBoolean();
+        int nextProgress = data.readInt();
+        changed = changed
+                || nextMissingAspect != this.missingAspect.get()
+                || nextHasEnoughVis != this.hasEnoughVis
+                || nextHasJob != this.hasJob
+                || nextIsCrafting != this.isCrafting
+                || nextProgress != this.progress;
+        this.missingAspect.set(nextMissingAspect);
+        this.hasEnoughVis = nextHasEnoughVis;
+        this.hasJob = nextHasJob;
+        this.isCrafting = nextIsCrafting;
+        this.progress = nextProgress;
+        return changed;
+    }
+
+    @Override
+    public void saveAdditional(NBTTagCompound tag) {
+        super.saveAdditional(tag);
         tag.setTag("cores", this.coreInv.serializeNBT());
         tag.setTag("upgrades", this.upgradeInv.serializeNBT());
         tag.setTag("crafting", this.craftingInv.serializeNBT());
-        super.writeToNBT(tag);
-        return tag;
     }
 
     @Override
     @ParametersAreNonnullByDefault
-    public void readFromNBT(NBTTagCompound tag) {
-        super.readFromNBT(tag);
+    public void loadTag(NBTTagCompound tag) {
+        super.loadTag(tag);
         if (tag.hasKey("cores")) {
             this.coreInv.deserializeNBT(tag.getTagList("cores", 10));
         }
@@ -121,6 +140,26 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
         if (tag.hasKey("crafting")) {
             this.craftingInv.deserializeNBT(tag.getTagList("crafting", 10));
         }
+    }
+
+    @Override
+    protected void saveVisualState(NBTTagCompound data) {
+        super.saveVisualState(data);
+        data.setBoolean("missingAspect", this.missingAspect.get());
+        data.setBoolean("hasEnoughVis", this.hasEnoughVis);
+        data.setBoolean("hasJob", this.hasJob);
+        data.setBoolean("isCrafting", this.isCrafting);
+        data.setInteger("progress", this.getProgress());
+    }
+
+    @Override
+    protected void loadVisualState(NBTTagCompound data) {
+        super.loadVisualState(data);
+        this.missingAspect.set(data.hasKey("missingAspect") && data.getBoolean("missingAspect"));
+        this.hasEnoughVis = !data.hasKey("hasEnoughVis") || data.getBoolean("hasEnoughVis");
+        this.hasJob = data.hasKey("hasJob") && data.getBoolean("hasJob");
+        this.isCrafting = data.hasKey("isCrafting") && data.getBoolean("isCrafting");
+        this.progress = data.hasKey("progress") ? data.getInteger("progress") : 0;
     }
 
     @Override
@@ -140,13 +179,6 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
             case "upgrades" -> new InvWrapper(this.upgradeInv);
             default -> null;
         };
-    }
-
-    @Override
-    protected IManagedGridNode configureGridNode(IManagedGridNode node) {
-        return super.configureGridNode(node)
-                .addService(ICraftingProvider.class, this)
-                .addService(IGridTickable.class, this);
     }
 
     @Override
@@ -215,8 +247,9 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
         boolean canCraft = this.hasEnoughVis && !this.missingAspect.get();
         if (canCraft)
             this.aspectExists = new HashMap<>(); // we have what we need, clear this, since we're not trying to find the aspects anymore
-        if (prevHasEnoughVis != this.hasEnoughVis || prevMissingAspect != this.missingAspect.get())  // update client if needed
-            this.markDirty();
+        if (prevHasEnoughVis != this.hasEnoughVis || prevMissingAspect != this.missingAspect.get()) { // update client if needed
+            this.saveVisualChange();
+        }
         if (prevHasEnoughVis != this.hasEnoughVis || !prevAspectExists.equals(this.aspectExists))    // update client if needed
             this.notifySubs();
         if (!canCraft)
@@ -257,6 +290,7 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
         this.isCrafting = false;
         this.progress = 0;
         this.craftingInv.setInventorySlotContents(0, result);
+        this.saveVisualChange();
         return true;
     }
 
@@ -276,13 +310,10 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
     }
 
     public void init() {
-        this.markDirty();
+        this.saveVisualChange();
         if (ForgeUtil.isServer()) {
-            IGridNode node = this.getActionableNode();
-            ICraftingProvider.requestUpdate(this.managedGridNode);
-            if (node != null && node.grid() != null) {
-                node.grid().getTickManager().wakeDevice(node);
-            }
+            ICraftingProvider.requestUpdate(this.getMainNode());
+            this.getMainNode().ifPresent((grid, node) -> grid.getTickManager().wakeDevice(node));
         }
     }
 
@@ -309,7 +340,7 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
                     this.missingAspect.set(false);
                     this.aspectExists = new HashMap<>();
                     this.hasEnoughVis = true;
-                    this.markDirty();
+                    this.saveVisualChange();
                     this.notifySubs();
                 } else
                     this.noPushFlag = true;
@@ -340,9 +371,14 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
                 if (this.craftingInv.getStackInSlot(0).isEmpty())    // done crafting everything
                     this.hasJob = false;
             }
-            this.markDirty();
+            this.saveVisualChange();
             return TickRateModulation.URGENT;
         }
+    }
+
+    private void saveVisualChange() {
+        this.saveChanges();
+        this.markForUpdate();
     }
 
     protected void notifySubs() { // update client side, to show details in the GUI
@@ -397,14 +433,6 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
         return step.get();
     }
 
-    protected MEStorage getNetworkStorage() {
-        IGridNode node = this.getGridNode();
-        if (node == null || node.grid() == null || node.grid().getStorageService() == null) {
-            return null;
-        }
-        return node.grid().getStorageService().getInventory();
-    }
-
     protected float getWorldVis() {
         return Optional.of(ThEItems.UPGRADE_ARCANE.stack(1)).map(visRangeUpgrade -> {
             float vis = AuraHelper.getVis(this.getWorld(), this.getPos());
@@ -429,9 +457,17 @@ public class TileArcaneAssembler extends TileNetwork implements IThESubscribable
     }
 
     @Override
-    public void getDrops(World world, BlockPos blockPos, List<ItemStack> list) {
-        super.getDrops(world, blockPos, list);
-        this.coreInv.iterator().forEachRemaining(list::add);
-        this.upgradeInv.iterator().forEachRemaining(list::add);
+    public void addAdditionalDrops(List<ItemStack> drops) {
+        super.addAdditionalDrops(drops);
+        this.coreInv.iterator().forEachRemaining(stack -> {
+            if (!stack.isEmpty()) {
+                drops.add(stack.copy());
+            }
+        });
+        this.upgradeInv.iterator().forEachRemaining(stack -> {
+            if (!stack.isEmpty()) {
+                drops.add(stack.copy());
+            }
+        });
     }
 }

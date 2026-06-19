@@ -9,8 +9,10 @@ import ae2.api.upgrades.IUpgradeInventory;
 import ae2.api.upgrades.Upgrades;
 import ae2.block.IOwnerAwareTile;
 import ae2.items.parts.PartItem;
+import ae2.me.helpers.IGridConnectedTile;
 import ae2.parts.PartModel;
 import ae2.parts.reporting.AbstractTerminalPart;
+import ae2.tile.grid.AENetworkedTile;
 import net.minecraft.init.Bootstrap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -24,7 +26,6 @@ import thaumicenergistics.core.definitions.ThEParts;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.tile.TileInfusionProvider;
-import thaumicenergistics.tile.TileNetwork;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
@@ -51,11 +52,14 @@ class SupergiantPartApiTest {
     void thaumicPartsUseSupergiantPartApiDirectly() {
         PartArcaneTerminal terminal = ThEParts.ARCANE_TERMINAL.item().createPart();
         PartArcaneInscriber inscriber = ThEParts.ARCANE_INSCRIBER.item().createPart();
+        AbstractTerminalPart terminalBase = terminal;
+        IArcaneTerminalHost terminalHost = terminal;
+        PartArcaneTerminal inscriberTerminal = inscriber;
 
         assertAll(
-                () -> assertTrue(AbstractTerminalPart.class.isAssignableFrom(PartArcaneTerminal.class)),
-                () -> assertTrue(IArcaneTerminalHost.class.isAssignableFrom(PartArcaneTerminal.class)),
-                () -> assertTrue(PartArcaneTerminal.class.isAssignableFrom(PartArcaneInscriber.class)),
+                () -> assertSame(terminal, terminalBase),
+                () -> assertSame(terminal, terminalHost),
+                () -> assertSame(inscriber, inscriberTerminal),
                 () -> assertPartItem(ThEParts.ARCANE_TERMINAL.item(), PartArcaneTerminal.class),
                 () -> assertPartItem(ThEParts.ARCANE_INSCRIBER.item(), PartArcaneInscriber.class),
                 () -> assertSupergiantPartModel(terminal.getStaticModels(), PartArcaneTerminal.MODEL_BASE,
@@ -115,13 +119,21 @@ class SupergiantPartApiTest {
     @Test
     void networkTilesUseSupergiantGridApiDirectly() {
         InspectableInfusionProvider infusionProvider = new InspectableInfusionProvider();
+        AENetworkedTile networkedTile = infusionProvider;
+        IGridConnectedTile gridConnectedTile = infusionProvider;
+        IInWorldGridNodeHost nodeHost = infusionProvider;
+        IActionHost actionHost = infusionProvider;
+        IPowerChannelState powerState = infusionProvider;
+        IOwnerAwareTile ownerAware = infusionProvider;
         IActionSource actionSource = infusionProvider.actionSource();
 
         assertAll(
-                () -> assertTrue(IInWorldGridNodeHost.class.isAssignableFrom(TileNetwork.class)),
-                () -> assertTrue(IActionHost.class.isAssignableFrom(TileNetwork.class)),
-                () -> assertTrue(IPowerChannelState.class.isAssignableFrom(TileNetwork.class)),
-                () -> assertTrue(IOwnerAwareTile.class.isAssignableFrom(TileNetwork.class)),
+                () -> assertSame(infusionProvider, networkedTile),
+                () -> assertSame(infusionProvider, gridConnectedTile),
+                () -> assertSame(infusionProvider, nodeHost),
+                () -> assertSame(infusionProvider, actionHost),
+                () -> assertSame(infusionProvider, powerState),
+                () -> assertSame(infusionProvider, ownerAware),
                 () -> assertInstanceOf(IInWorldGridNodeHost.class, infusionProvider),
                 () -> assertInstanceOf(IActionHost.class, infusionProvider),
                 () -> assertInstanceOf(IPowerChannelState.class, infusionProvider),
@@ -161,7 +173,7 @@ class SupergiantPartApiTest {
     }
 
     private static final class InspectableInfusionProvider extends TileInfusionProvider {
-        private IActionSource actionSource() {
+        IActionSource actionSource() {
             return this.src;
         }
     }

@@ -1,30 +1,43 @@
 package thaumicenergistics.tile;
 
 import ae2.api.config.Actionable;
-import ae2.api.networking.IGridNode;
+import ae2.api.networking.GridFlags;
 import ae2.api.networking.security.IActionSource;
 import ae2.api.stacks.AEKey;
 import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
+import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import java.util.Objects;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectSource;
+import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.util.ForgeUtil;
 
 /**
  * @author BrockWS
  */
-public class TileInfusionProvider extends TileNetwork implements IAspectSource {
+public class TileInfusionProvider extends ThENetworkTile implements IAspectSource {
+    private static final String TAG_STORED_ASPECTS = "storedAspects";
 
     // Client side only, for rendering aspect icons with goggles
     private AspectList clientAspects = new AspectList();
 
     public TileInfusionProvider() {
         super();
+        this.getMainNode()
+                .setIdlePowerUsage(1.0)
+                .setFlags(GridFlags.REQUIRE_CHANNEL);
+    }
+
+    @Override
+    public ItemStack getItemFromTile() {
+        return ThEBlocks.INFUSION_PROVIDER.stack();
     }
 
     public KeyCounter getStoredAspects() {
@@ -43,8 +56,12 @@ public class TileInfusionProvider extends TileNetwork implements IAspectSource {
 
     @Override
     public AspectList getAspects() {
-        if (ForgeUtil.isClient())
+        if (this.isClientTile())
             return this.clientAspects;
+        return this.getStoredAspectSnapshot();
+    }
+
+    protected AspectList getStoredAspectSnapshot() {
         AspectList list = new AspectList();
         KeyCounter stored = this.getStoredAspects();
         for (Object2LongMap.Entry<AEKey> entry : stored) {
@@ -55,6 +72,30 @@ public class TileInfusionProvider extends TileNetwork implements IAspectSource {
             }
         }
         return list;
+    }
+
+    @Override
+    protected void writeToStream(ByteBuf data) {
+        super.writeToStream(data);
+        NBTTagCompound tag = new NBTTagCompound();
+        this.getStoredAspectSnapshot().writeToNBT(tag, TAG_STORED_ASPECTS);
+        ByteBufUtils.writeTag(data, tag);
+    }
+
+    @Override
+    protected boolean readFromStream(ByteBuf data) {
+        boolean changed = super.readFromStream(data);
+        NBTTagCompound tag = Objects.requireNonNull(ByteBufUtils.readTag(data), TAG_STORED_ASPECTS);
+        AspectList nextClientAspects = new AspectList();
+        nextClientAspects.readFromNBT(tag, TAG_STORED_ASPECTS);
+        changed = changed || !aspectListsEqual(this.clientAspects, nextClientAspects);
+        this.clientAspects = nextClientAspects;
+        return changed;
+    }
+
+    public void refreshVisualState() {
+        this.saveChanges();
+        this.markForUpdate();
     }
 
     @Override
@@ -69,39 +110,41 @@ public class TileInfusionProvider extends TileNetwork implements IAspectSource {
         if (canExtract != i)
             return false;
         storage.extract(key, i, Actionable.MODULATE, source);
-        this.markDirty();
+        this.refreshVisualState();
         return true;
     }
 
-    private MEStorage getNetworkStorage() {
-        IGridNode node = this.getGridNode();
-        if (node == null || node.grid() == null || node.grid().getStorageService() == null) {
-            return null;
-        }
-        return node.grid().getStorageService().getInventory();
+    @Override
+    protected void saveVisualState(NBTTagCompound tag) {
+        super.saveVisualState(tag);
+        if (this.isClientTile())
+            return;
+        this.getStoredAspectSnapshot().writeToNBT(tag, TAG_STORED_ASPECTS);
     }
 
     @Override
-    public NBTTagCompound getUpdateTag() {
-        return this.writeToNBT(super.getUpdateTag());
-    }
-
-    @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound tag) {
-        if (ForgeUtil.isClient())
-            return super.writeToNBT(tag);
-        super.writeToNBT(tag);
-        this.getAspects().writeToNBT(tag, "storedAspects");
-        return tag;
-    }
-
-    @Override
-    public void readFromNBT(NBTTagCompound tag) {
-        super.readFromNBT(tag);
-        if (tag.hasKey("storedAspects")) {
+    protected void loadVisualState(NBTTagCompound tag) {
+        super.loadVisualState(tag);
+        if (tag.hasKey(TAG_STORED_ASPECTS)) {
             this.clientAspects = new AspectList();
-            this.clientAspects.readFromNBT(tag, "storedAspects");
+            this.clientAspects.readFromNBT(tag, TAG_STORED_ASPECTS);
         }
+    }
+
+    private static boolean aspectListsEqual(AspectList first, AspectList second) {
+        if (first.size() != second.size()) {
+            return false;
+        }
+        for (Aspect aspect : first.getAspects()) {
+            if (first.getAmount(aspect) != second.getAmount(aspect)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isClientTile() {
+        return this.world == null ? ForgeUtil.isClient() : this.world.isRemote;
     }
 
     @Override

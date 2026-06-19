@@ -51,8 +51,7 @@ public class BlockInfusionProvider extends BlockNetwork implements IThEModel {
                     player.sendMessage(new TextComponentString("No aspects found"));
                 }
             }
-            // FIXME: Make sure it updates itself, can be removed if TileInfusionProvider monitors the me network for changes
-            te.markDirty();
+            inf.refreshVisualState();
             return true;
         }
         return false;

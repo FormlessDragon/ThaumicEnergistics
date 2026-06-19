@@ -1,5 +1,6 @@
 package thaumicenergistics.block;
 
+import ae2.tile.AEBaseTile;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -49,11 +50,16 @@ public abstract class BlockBase extends Block {
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
         TileEntity te = worldIn.getTileEntity(pos);
-        if (!(te instanceof TileBase)) return;
-        TileBase tb = (TileBase) te;
         ArrayList<ItemStack> drops = new ArrayList<>();
-        tb.getDrops(worldIn, pos, drops);
-        spawnDrops(worldIn, pos, drops);
+        if (te instanceof TileBase) {
+            ((TileBase) te).getDrops(worldIn, pos, drops);
+        }
+        if (te instanceof AEBaseTile) {
+            ((AEBaseTile) te).addAdditionalDrops(drops);
+        }
+        if (!drops.isEmpty()) {
+            spawnDrops(worldIn, pos, drops);
+        }
         super.breakBlock(worldIn, pos, state);
     }
 
