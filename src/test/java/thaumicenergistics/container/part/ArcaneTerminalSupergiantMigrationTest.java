@@ -1,16 +1,27 @@
 package thaumicenergistics.container.part;
 
 import ae2.api.stacks.AEItemKey;
+import ae2.api.storage.ILinkStatus;
 import ae2.api.networking.ticking.IGridTickable;
+import ae2.api.networking.IGridNode;
 import ae2.api.parts.IPart;
+import ae2.api.parts.IPartCollisionHelper;
+import ae2.api.parts.IPartHost;
+import ae2.api.parts.IPartItem;
+import ae2.api.storage.ISubGuiHost;
 import ae2.api.storage.ITerminalHost;
+import ae2.api.storage.MEStorage;
+import ae2.api.util.AECableType;
+import ae2.api.util.IConfigManager;
 import ae2.client.gui.me.common.GuiMEStorage;
+import ae2.container.ISubGui;
 import ae2.container.SlotSemantic;
 import ae2.container.SlotSemantics;
 import ae2.container.implementations.ContainerCraftAmount;
 import ae2.container.implementations.ContainerCraftConfirm;
 import ae2.container.implementations.ContainerCraftingStatus;
 import ae2.container.me.common.ContainerMEStorage;
+import ae2.core.gui.locator.ItemGuiHostLocator;
 import ae2.core.definitions.ItemDefinition;
 import ae2.items.parts.PartItem;
 import ae2.items.tools.powered.WirelessTerminalItem;
@@ -22,11 +33,18 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Bootstrap;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.items.IItemHandler;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.ThaumicEnergisticsApi;
@@ -38,13 +56,11 @@ import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.client.gui.part.GuiArcaneTerm;
 import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.ThESlotSemantics;
-import thaumicenergistics.container.crafting.ContainerCraftAmountBridge;
-import thaumicenergistics.container.crafting.ContainerCraftConfirmBridge;
-import thaumicenergistics.container.crafting.ContainerCraftingStatusBridge;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
 import thaumicenergistics.core.definitions.ThEApiItems;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.core.definitions.ThEParts;
+import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.integration.jei.ACIRecipeTransferHandler;
 import thaumicenergistics.integration.jei.ACTRecipeTransferHandler;
 import thaumicenergistics.items.ItemWirelessArcaneTerminal;
@@ -52,6 +68,7 @@ import thaumicenergistics.network.packets.PacketUIAction;
 import thaumicenergistics.network.packets.PacketVisUpdate;
 import thaumicenergistics.part.ArcaneP2PTunnelPart;
 import thaumicenergistics.part.PartArcaneTerminal;
+import thaumicenergistics.test.FakeMinecraft;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -61,6 +78,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -85,21 +103,37 @@ class ArcaneTerminalSupergiantMigrationTest {
 
     @Test
     void arcaneTerminalUsesSupergiantMeStorageBaseClasses() {
-        assertTrue(ContainerMEStorage.class.isAssignableFrom(ContainerArcaneTerm.class));
-        assertTrue(GuiMEStorage.class.isAssignableFrom(GuiArcaneTerm.class));
+        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerMEStorage> terminalFactory =
+                ContainerArcaneTerm::new;
+        BiFunction<ContainerArcaneTerm, InventoryPlayer, GuiMEStorage<ContainerArcaneTerm>> guiFactory =
+                GuiArcaneTerm::new;
+
+        assertAll(
+                () -> assertNotNull(terminalFactory),
+                () -> assertNotNull(guiFactory));
     }
 
     @Test
     void arcaneInscriberUsesMigratedArcaneTermBaseClasses() {
-        assertTrue(ContainerArcaneTerm.class.isAssignableFrom(ContainerArcaneInscriber.class));
-        assertTrue(GuiArcaneTerm.class.isAssignableFrom(GuiArcaneInscriber.class));
+        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerArcaneTerm> inscriberFactory =
+                ContainerArcaneInscriber::new;
+        BiFunction<ContainerArcaneInscriber, InventoryPlayer, GuiArcaneTerm> guiFactory =
+                GuiArcaneInscriber::new;
+
+        assertAll(
+                () -> assertNotNull(inscriberFactory),
+                () -> assertNotNull(guiFactory));
     }
 
     @Test
     void arcaneTerminalPartUsesSupergiantPartItemAndHostContracts() {
+        PartArcaneTerminal terminal = ThEParts.ARCANE_TERMINAL.item().createPart();
+        AbstractTerminalPart terminalPart = terminal;
+        IArcaneTerminalHost terminalHost = terminal;
+
         assertAll(
-                () -> assertTrue(AbstractTerminalPart.class.isAssignableFrom(PartArcaneTerminal.class)),
-                () -> assertTrue(IArcaneTerminalHost.class.isAssignableFrom(PartArcaneTerminal.class)),
+                () -> assertSame(terminal, terminalPart),
+                () -> assertSame(terminal, terminalHost),
                 () -> assertPartItem(ThEParts.ARCANE_TERMINAL, ThEPartIds.ARCANE_TERMINAL,
                         PartArcaneTerminal.class));
     }
@@ -115,22 +149,36 @@ class ArcaneTerminalSupergiantMigrationTest {
     }
 
     @Test
-    void arcaneContainerAndCraftingBridgesUseArcaneTerminalHost() {
+    void arcaneContainerAndStandardCraftingSubGuisUseArcaneTerminalHostContracts() {
         BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerArcaneTerm> terminalFactory =
                 ContainerArcaneTerm::new;
-        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftAmountBridge> amountFactory =
-                ContainerCraftAmountBridge::new;
-        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftConfirmBridge> confirmFactory =
-                ContainerCraftConfirmBridge::new;
-        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftingStatusBridge> statusFactory =
-                ContainerCraftingStatusBridge::new;
+        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftAmount> amountFactory =
+                ContainerCraftAmount::new;
+        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftConfirm> confirmFactory =
+                ContainerCraftConfirm::new;
+        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftingStatus> statusFactory =
+                ContainerCraftingStatus::new;
+        TestArcaneTerminalHost host = new TestArcaneTerminalHost();
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.clientWorld());
+
+        ContainerCraftAmount amount = amountFactory.apply(player.inventory, host);
+        ContainerCraftConfirm confirm = confirmFactory.apply(player.inventory, host);
+        ContainerCraftingStatus status = statusFactory.apply(player.inventory, host);
+        ITerminalHost terminalHost = host;
+        ISubGuiHost subGuiHost = host;
+        ISubGui amountSubGui = amount;
+        ISubGui confirmSubGui = confirm;
+        ISubGui statusSubGui = status;
 
         assertAll(
-                () -> assertTrue(ITerminalHost.class.isAssignableFrom(IArcaneTerminalHost.class)),
-                () -> assertTrue(ContainerMEStorage.class.isAssignableFrom(ContainerArcaneTerm.class)),
-                () -> assertTrue(ContainerCraftAmount.class.isAssignableFrom(ContainerCraftAmountBridge.class)),
-                () -> assertTrue(ContainerCraftConfirm.class.isAssignableFrom(ContainerCraftConfirmBridge.class)),
-                () -> assertTrue(ContainerCraftingStatus.class.isAssignableFrom(ContainerCraftingStatusBridge.class)),
+                () -> assertSame(host, terminalHost),
+                () -> assertSame(host, subGuiHost),
+                () -> assertSame(amount, amountSubGui),
+                () -> assertSame(confirm, confirmSubGui),
+                () -> assertSame(status, statusSubGui),
+                () -> assertSame(host, amount.getHost()),
+                () -> assertSame(host, confirm.getHost()),
+                () -> assertSame(host, status.getHost()),
                 () -> assertNotNull(terminalFactory),
                 () -> assertNotNull(amountFactory),
                 () -> assertNotNull(confirmFactory),
@@ -139,42 +187,55 @@ class ArcaneTerminalSupergiantMigrationTest {
 
     @Test
     void wirelessArcaneTerminalUsesSupergiantWirelessFramework() {
+        ItemWirelessArcaneTerminal terminal =
+                assertInstanceOf(ItemWirelessArcaneTerminal.class, ThEItems.WIRELESS_ARCANE_TERMINAL.item());
+        WirelessTerminalItem wirelessTerminal = terminal;
+        WirelessArcaneTerminalGuiHostFactory hostFactory = WirelessArcaneTerminalGuiHost::new;
+
         assertAll(
-                () -> assertTrue(WirelessTerminalItem.class.isAssignableFrom(ItemWirelessArcaneTerminal.class)),
-                () -> assertTrue(ae2.helpers.WirelessTerminalGuiHost.class.isAssignableFrom(
-                        WirelessArcaneTerminalGuiHost.class)),
-                () -> assertTrue(IArcaneTerminalHost.class.isAssignableFrom(WirelessArcaneTerminalGuiHost.class)));
+                () -> assertSame(terminal, wirelessTerminal),
+                () -> assertNotNull(hostFactory));
     }
 
     @Test
     void thaumicEnergisticsItemsExposeWirelessArcaneTerminal() {
+        ItemWirelessArcaneTerminal wirelessArcaneTerminal =
+                assertInstanceOf(ItemWirelessArcaneTerminal.class, ThEItems.WIRELESS_ARCANE_TERMINAL.item());
+        WirelessTerminalItem wirelessTerminal = wirelessArcaneTerminal;
+
         assertAll(
                 () -> assertEquals(ThEItemIds.WIRELESS_ARCANE_TERMINAL, ThEItems.WIRELESS_ARCANE_TERMINAL.id()),
                 () -> assertEquals("wireless_arcane_terminal", ThEItems.WIRELESS_ARCANE_TERMINAL.id().getPath()),
-                () -> assertInstanceOf(ItemWirelessArcaneTerminal.class, ThEItems.WIRELESS_ARCANE_TERMINAL.item()),
-                () -> assertTrue(WirelessTerminalItem.class.isAssignableFrom(
-                        ThEItems.WIRELESS_ARCANE_TERMINAL.item().getClass())),
+                () -> assertSame(ThEItems.WIRELESS_ARCANE_TERMINAL.item(), wirelessArcaneTerminal),
+                () -> assertSame(wirelessArcaneTerminal, wirelessTerminal),
                 () -> assertInstanceOf(IThEItems.class, ThaumicEnergisticsApi.instance().items()),
                 () -> assertInstanceOf(ThEApiItems.class, ThaumicEnergisticsApi.instance().items()));
     }
 
     @Test
-    void craftConfirmBridgeUsesSupergiantCraftingReturnFlow() {
-        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftConfirmBridge> confirmFactory =
-                ContainerCraftConfirmBridge::new;
+    void standardCraftConfirmUsesSupergiantCraftingReturnFlow() {
+        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftConfirm> confirmFactory =
+                ContainerCraftConfirm::new;
+        TestArcaneTerminalHost host = new TestArcaneTerminalHost();
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.clientWorld());
+        ContainerCraftConfirm confirm = confirmFactory.apply(player.inventory, host);
+        ISubGui confirmSubGui = confirm;
 
         assertAll(
-                () -> assertTrue(ContainerCraftConfirm.class.isAssignableFrom(ContainerCraftConfirmBridge.class)),
+                () -> assertSame(confirm, confirmSubGui),
+                () -> assertSame(host, confirm.getHost()),
                 () -> assertNotNull(confirmFactory));
     }
 
     @Test
     void arcaneP2PTunnelUsesSupergiantP2PFramework() {
         ArcaneP2PTunnelPart tunnel = ThEParts.ARCANE_P2P_TUNNEL.item().createPart();
+        P2PTunnelPart<?> p2pTunnel = tunnel;
+        IGridTickable tickable = tunnel;
 
         assertAll(
-                () -> assertTrue(P2PTunnelPart.class.isAssignableFrom(ArcaneP2PTunnelPart.class)),
-                () -> assertTrue(IGridTickable.class.isAssignableFrom(ArcaneP2PTunnelPart.class)),
+                () -> assertSame(tunnel, p2pTunnel),
+                () -> assertSame(tunnel, tickable),
                 () -> assertPartItem(ThEParts.ARCANE_P2P_TUNNEL, ThEPartIds.ARCANE_P2P_TUNNEL,
                         ArcaneP2PTunnelPart.class),
                 () -> assertInstanceOf(P2PTunnelPart.class, tunnel),
@@ -457,7 +518,7 @@ class ArcaneTerminalSupergiantMigrationTest {
     }
 
     private static <T extends IPart> void assertPartItem(ItemDefinition<PartItem<T>> definition, ResourceLocation id,
-                                                         Class<T> partClass) {
+                                                          Class<T> partClass) {
         PartItem<T> item = definition.item();
 
         assertAll(
@@ -465,5 +526,105 @@ class ArcaneTerminalSupergiantMigrationTest {
                 () -> assertEquals(PartItem.class, item.getClass()),
                 () -> assertEquals(partClass, item.getPartClass()),
                 () -> assertInstanceOf(partClass, item.createPart()));
+    }
+
+    private interface WirelessArcaneTerminalGuiHostFactory {
+
+        WirelessArcaneTerminalGuiHost create(WirelessTerminalItem stackItem,
+                                             WirelessTerminalItem terminalItem,
+                                             EntityPlayer player,
+                                             ItemGuiHostLocator locator,
+                                             BiConsumer<EntityPlayer, ISubGui> returnToMainContainer);
+    }
+
+    private static final class TestArcaneTerminalHost implements IArcaneTerminalHost, IPart {
+
+        @Override
+        public IPartItem<?> getPartItem() {
+            return null;
+        }
+
+        @Override
+        public IGridNode getGridNode() {
+            return null;
+        }
+
+        @Override
+        public void setPartHostInfo(EnumFacing side, IPartHost host, TileEntity blockEntity) {
+        }
+
+        @Override
+        public void getBoxes(IPartCollisionHelper bch) {
+        }
+
+        @Override
+        public float getCableConnectionLength(AECableType cable) {
+            return 0;
+        }
+
+        @Override
+        public ModGUIs getGui() {
+            return ModGUIs.ARCANE_TERMINAL;
+        }
+
+        @Override
+        public IItemHandler getInventoryByName(String name) {
+            return null;
+        }
+
+        @Override
+        public boolean hasVisSource() {
+            return false;
+        }
+
+        @Override
+        public net.minecraft.world.World getVisWorld() {
+            return null;
+        }
+
+        @Override
+        public BlockPos getVisPos() {
+            return BlockPos.ORIGIN;
+        }
+
+        @Override
+        public BlockPos getReturnPos() {
+            return BlockPos.ORIGIN;
+        }
+
+        @Override
+        public EnumFacing getReturnSide() {
+            return EnumFacing.UP;
+        }
+
+        @Override
+        public void returnToMainContainer(EntityPlayer player, ISubGui subGui) {
+        }
+
+        @Override
+        public ItemStack getMainContainerIcon() {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public MEStorage getInventory() {
+            return new MEStorage() {
+                @Override
+                public ITextComponent getDescription() {
+                    return new TextComponentString("arcane terminal migration test storage");
+                }
+            };
+        }
+
+        @Override
+        public ILinkStatus getLinkStatus() {
+            return ILinkStatus.ofConnected();
+        }
+
+        @Override
+        public IConfigManager getConfigManager() {
+            return IConfigManager.builder(() -> {
+            }).build();
+        }
     }
 }

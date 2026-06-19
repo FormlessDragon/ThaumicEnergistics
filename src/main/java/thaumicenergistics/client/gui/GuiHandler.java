@@ -15,15 +15,9 @@ import net.minecraftforge.fml.common.network.IGuiHandler;
 import thaumicenergistics.ThaumicEnergistics;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.client.gui.block.GuiArcaneAssembler;
-import thaumicenergistics.client.gui.crafting.GuiCraftAmountBridge;
-import thaumicenergistics.client.gui.crafting.GuiCraftConfirmBridge;
-import thaumicenergistics.client.gui.crafting.GuiCraftingStatusBridge;
 import thaumicenergistics.client.gui.item.GuiKnowledgeCore;
 import thaumicenergistics.client.gui.part.*;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
-import thaumicenergistics.container.crafting.ContainerCraftAmountBridge;
-import thaumicenergistics.container.crafting.ContainerCraftConfirmBridge;
-import thaumicenergistics.container.crafting.ContainerCraftingStatusBridge;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
 import thaumicenergistics.container.part.*;
@@ -136,20 +130,9 @@ public class GuiHandler implements IGuiHandler {
                 }
                 return this.initContainer(new ContainerArcaneInscriber(player.inventory, arcaneHost), arcaneLocator);
             case AE2_CRAFT_AMOUNT:
-                if (arcaneHost == null) {
-                    return null;
-                }
-                return this.initContainer(new ContainerCraftAmountBridge(player.inventory, arcaneHost), arcaneLocator);
             case AE2_CRAFT_CONFIRM:
-                if (arcaneHost == null) {
-                    return null;
-                }
-                return this.initContainer(new ContainerCraftConfirmBridge(player.inventory, arcaneHost), arcaneLocator);
             case AE2_CRAFT_STATUS:
-                if (arcaneHost == null) {
-                    return null;
-                }
-                return this.initContainer(new ContainerCraftingStatusBridge(player.inventory, arcaneHost), arcaneLocator);
+                return null;
             case KNOWLEDGE_CORE_ADD:
             case KNOWLEDGE_CORE_DEL:
             case KNOWLEDGE_CORE_VIEW:
@@ -199,26 +182,9 @@ public class GuiHandler implements IGuiHandler {
                         this.initContainer(new ContainerArcaneInscriber(player.inventory, arcaneHost), arcaneLocator),
                         player.inventory);
             case AE2_CRAFT_AMOUNT:
-                if (arcaneHost == null) {
-                    return null;
-                }
-                return new GuiCraftAmountBridge(
-                        this.initContainer(new ContainerCraftAmountBridge(player.inventory, arcaneHost), arcaneLocator),
-                        player.inventory, arcaneHost);
             case AE2_CRAFT_CONFIRM:
-                if (arcaneHost == null) {
-                    return null;
-                }
-                return new GuiCraftConfirmBridge(
-                        this.initContainer(new ContainerCraftConfirmBridge(player.inventory, arcaneHost), arcaneLocator),
-                        player.inventory, arcaneHost);
             case AE2_CRAFT_STATUS:
-                if (arcaneHost == null) {
-                    return null;
-                }
-                return new GuiCraftingStatusBridge(
-                        this.initContainer(new ContainerCraftingStatusBridge(player.inventory, arcaneHost), arcaneLocator),
-                        player.inventory, arcaneHost);
+                return null;
             case KNOWLEDGE_CORE_ADD:
             case KNOWLEDGE_CORE_DEL:
             case KNOWLEDGE_CORE_VIEW:
