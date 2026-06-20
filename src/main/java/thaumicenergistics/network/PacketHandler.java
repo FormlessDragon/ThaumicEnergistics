@@ -7,8 +7,8 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
-import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.network.packets.*;
+import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.util.ThELog;
 
 /**
@@ -42,14 +42,10 @@ public class PacketHandler {
         PacketHandler.INSTANCE.registerMessage(PacketOpenGUI.Handler.class, PacketOpenGUI.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketSubscribe.Handler.class, PacketSubscribe.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketAssemblerGUIUpdateRequest.Handler.class, PacketAssemblerGUIUpdateRequest.class, PacketHandler.nextID(), Side.SERVER);
+        PacketHandler.INSTANCE.registerMessage(PacketOpenLocatorGUI.Handler.class, PacketOpenLocatorGUI.class, PacketHandler.nextID(), Side.CLIENT);
     }
 
     public static void sendToPlayer(EntityPlayerMP player, IMessage message) {
-        if (!(message instanceof PacketVisUpdate)) {
-//            ByteBuf buf = Unpooled.buffer();
-//            message.toBytes(buf);
-//            ThELog.info("sendToPlayer readableBytes {} | read {} | write {} | message {}", buf.readableBytes(), buf.readerIndex(), buf.writerIndex(), message.getClass().getSimpleName());
-        }
         PacketHandler.INSTANCE.sendTo(message, player);
     }
 

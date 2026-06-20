@@ -3,10 +3,11 @@ package thaumicenergistics.items;
 import ae2.api.features.HotkeyAction;
 import ae2.api.implementations.items.AddWirelessTerminalEvent;
 import ae2.container.GuiIds;
+import ae2.core.gui.locator.ItemGuiHostLocator;
 import ae2.items.tools.powered.WirelessTerminalItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import thaumicenergistics.client.gui.GuiHandler;
+import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
 import thaumicenergistics.init.ModGUIs;
 
@@ -19,7 +20,7 @@ public class ItemWirelessArcaneTerminal extends WirelessTerminalItem {
                 WirelessArcaneTerminalGuiHost::new, HotkeyAction.WIRELESS_TERMINAL, 3, false);
         AddWirelessTerminalEvent.register(event -> event.builder(id, this,
                 (definition, player, locator, terminalStack, returningFromSubmenu) ->
-                        !terminalStack.isEmpty() && openArcaneGui(player, locator.getPlayerInventorySlot()),
+                        !terminalStack.isEmpty() && openArcaneGui(player, locator, returningFromSubmenu),
                 WirelessArcaneTerminalGuiHost::new,
                 ItemStack::new)
                 .hotkeyName("wireless_arcane_terminal")
@@ -27,17 +28,14 @@ public class ItemWirelessArcaneTerminal extends WirelessTerminalItem {
                 .addTerminal());
     }
 
-    private static boolean openArcaneGui(EntityPlayer player, Integer slot) {
-        if (slot == null) {
-            return false;
-        }
-        GuiHandler.openGUI(ModGUIs.WIRELESS_ARCANE_TERMINAL, player, slot);
+    private static boolean openArcaneGui(EntityPlayer player, ItemGuiHostLocator locator, boolean returningFromSubmenu) {
+        ThEGuiOpener.openLocatorGui(player, ModGUIs.WIRELESS_ARCANE_TERMINAL, locator, returningFromSubmenu);
         return true;
     }
 
     @Override
-    protected boolean openFromInventory(EntityPlayer player, ae2.core.gui.locator.ItemGuiHostLocator locator, boolean returningFromSubmenu) {
-        return openArcaneGui(player, locator.getPlayerInventorySlot());
+    protected boolean openFromInventory(EntityPlayer player, ItemGuiHostLocator locator, boolean returningFromSubmenu) {
+        return openArcaneGui(player, locator, returningFromSubmenu);
     }
 
     @Override

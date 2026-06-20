@@ -1,12 +1,11 @@
 package thaumicenergistics.client.gui;
 
-import ae2.api.parts.IPart;
-import ae2.api.parts.IPartHost;
 import ae2.core.gui.locator.GuiHostLocator;
 import ae2.core.gui.locator.GuiHostLocators;
 import ae2.core.gui.locator.PartLocator;
 import ae2.container.AEBaseContainer;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.Container;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -19,7 +18,6 @@ import thaumicenergistics.client.gui.item.GuiKnowledgeCore;
 import thaumicenergistics.client.gui.part.*;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
-import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
 import thaumicenergistics.container.part.*;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.part.*;
@@ -45,6 +43,9 @@ public class GuiHandler implements IGuiHandler {
             throw new IllegalArgumentException("gui cannot be null!");
         else if (player == null)
             throw new IllegalArgumentException("player cannot be null!");
+        if (gui == ModGUIs.WIRELESS_ARCANE_TERMINAL) {
+            throw rejectWirelessLegacyRoute(gui, "slot-only helper", player);
+        }
 
         player.openGui(ThaumicEnergistics.INSTANCE, GuiHandler.calculateOrdinal(gui, EnumFacing.UP),
                 player.getEntityWorld(), slot, 0, 0);
@@ -55,6 +56,9 @@ public class GuiHandler implements IGuiHandler {
             throw new IllegalArgumentException("gui cannot be null!");
         else if (player == null)
             throw new IllegalArgumentException("player cannot be null!");
+        if (gui == ModGUIs.WIRELESS_ARCANE_TERMINAL) {
+            throw rejectWirelessLegacyRoute(gui, "generic helper", player);
+        }
 
         if (pos != null)
             player.openGui(ThaumicEnergistics.INSTANCE, GuiHandler.calculateOrdinal(gui, side), player.getEntityWorld(), pos.getX(), pos.getY(), pos.getZ());
@@ -76,59 +80,132 @@ public class GuiHandler implements IGuiHandler {
         return EnumFacing.values()[ordinal & 7];
     }
 
-    public static IPart getPartFromWorld(World world, BlockPos pos, EnumFacing side) {
-        TileEntity te = world.getTileEntity(pos);
-        if (te instanceof IPartHost) {
-            return ((IPartHost) te).getPart(side);
-        }
-        return null;
-    }
-
-    private GuiHostLocator getArcaneLocator(IPart part, BlockPos pos, EnumFacing side, int inventorySlot) {
-        if (part != null) {
-            return new PartLocator(pos, side);
-        }
-        return GuiHostLocators.forInventorySlot(inventorySlot);
-    }
-
     private <T extends AEBaseContainer> T initContainer(T container, GuiHostLocator locator) {
         container.setLocator(locator);
         return container;
     }
 
+    private static IllegalArgumentException rejectWirelessLegacyRoute(ModGUIs gui, String route, EntityPlayer player) {
+        return new IllegalArgumentException(gui.name()
+                + " requires a locator-aware opener; legacy Forge route " + route
+                + " cannot preserve locator context for player " + player);
+    }
+
+    private IArcaneTerminalHost locateArcanePartHost(ModGUIs guiID, EntityPlayer player, World world,
+                                                     BlockPos pos, EnumFacing side, GuiHostLocator locator) {
+        IArcaneTerminalHost host = locator.locate(player, IArcaneTerminalHost.class);
+        if (host == null) {
+            throw this.missingHost(guiID, pos, side, IArcaneTerminalHost.class, world.getTileEntity(pos));
+        }
+        return host;
+    }
+
+    private GuiHostLocator getArcanePartLocator(BlockPos pos, EnumFacing side) {
+        return new PartLocator(pos, side);
+    }
+
+    private TileArcaneAssembler locateArcaneAssembler(ModGUIs guiID, EntityPlayer player, World world,
+                                                      BlockPos pos, EnumFacing side) {
+        TileEntity tile = world.getTileEntity(pos);
+        if (tile == null) {
+            throw this.missingHost(guiID, pos, side, TileArcaneAssembler.class, null);
+        }
+
+        GuiHostLocator locator = GuiHostLocators.forTile(tile);
+        TileArcaneAssembler host = locator.locate(player, TileArcaneAssembler.class);
+        if (host == null) {
+            throw this.missingHost(guiID, pos, side, TileArcaneAssembler.class, tile);
+        }
+        return host;
+    }
+
+    private ContainerKnowledgeCore createKnowledgeCoreContainer(ModGUIs guiID, EntityPlayer player, World world,
+                                                               BlockPos pos, EnumFacing side) {
+        ContainerArcaneInscriber parent = this.getKnowledgeCoreParent(guiID, player);
+        GuiHostLocator parentLocator = parent.getLocator();
+        if (parentLocator == null) {
+            throw new IllegalStateException("Cannot open Knowledge Core gui " + guiID.name()
+                    + " without parent locator for player " + player
+                    + "; parent " + parent);
+        }
+
+        IArcaneTerminalHost parentHost = parent.getHost();
+        if (parentHost == null) {
+            throw new IllegalStateException("Cannot open Knowledge Core gui " + guiID.name()
+                    + " without parent host for player " + player
+                    + "; locator " + parentLocator
+                    + "; parent " + parent);
+        }
+
+        IArcaneTerminalHost parentLocatedHost = parentLocator.locate(player, IArcaneTerminalHost.class);
+        if (parentLocatedHost != parentHost) {
+            throw new IllegalStateException("Knowledge Core parent locator mismatch for gui " + guiID.name()
+                    + " player " + player
+                    + " locator " + parentLocator
+                    + " parent " + parent
+                    + " parentHost " + parentHost
+                    + " locatedHost " + parentLocatedHost);
+        }
+
+        GuiHostLocator routeLocator = this.getArcanePartLocator(pos, side);
+        IArcaneTerminalHost routeHost = this.locateArcanePartHost(guiID, player, world, pos, side, routeLocator);
+        if (routeHost != parentHost) {
+            throw new IllegalStateException("Knowledge Core route host mismatch for gui " + guiID.name()
+                    + " at " + pos
+                    + " side " + side.name()
+                    + " player " + player
+                    + "; parent " + parent
+                    + "; parent locator " + parentLocator
+                    + "; route locator " + routeLocator
+                    + "; parent host " + parentHost
+                    + "; route host " + routeHost);
+        }
+
+        return new ContainerKnowledgeCore(player, guiID, parent, parentLocator);
+    }
+
+    private ContainerArcaneInscriber getKnowledgeCoreParent(ModGUIs guiID, EntityPlayer player) {
+        Container openContainer = player.openContainer;
+        if (!(openContainer instanceof ContainerArcaneInscriber parent)) {
+            throw new IllegalStateException("Cannot open Knowledge Core gui " + guiID.name()
+                    + " without parent " + ContainerArcaneInscriber.class.getName()
+                    + "; player " + player
+                    + "; openContainer " + openContainer);
+        }
+        return parent;
+    }
+
+    private IllegalStateException missingHost(ModGUIs guiID, BlockPos pos, EnumFacing side,
+                                              Class<?> hostType, @Nullable Object actualHost) {
+        return new IllegalStateException("Cannot locate host for " + guiID.name()
+                + " at " + pos
+                + " side " + side.name()
+                + "; expected " + hostType.getName()
+                + "; actual " + actualHost);
+    }
+
     @Nullable
     @Override
     public Object getServerGuiElement(int ordinal, EntityPlayer player, World world, int x, int y, int z) {
-        TileEntity te = null;
         ModGUIs guiID = GuiHandler.getGUIFromOrdinal(ordinal);
         EnumFacing side = GuiHandler.getSideFromOrdinal(ordinal);
         BlockPos pos = new BlockPos(x, y, z);
-        IPart part = GuiHandler.getPartFromWorld(world, pos, side);
-        if (part == null) te = world.getTileEntity(pos);
-        IArcaneTerminalHost arcaneHost = part instanceof IArcaneTerminalHost ? (IArcaneTerminalHost) part : null;
-        GuiHostLocator arcaneLocator = this.getArcaneLocator(part, pos, side, x);
 
         switch (guiID) {
             case ARCANE_ASSEMBLER:
-                return new ContainerArcaneAssembler(player, (TileArcaneAssembler) te);
-            case ARCANE_TERMINAL:
-                if (arcaneHost == null) {
-                    return null;
-                }
+                return new ContainerArcaneAssembler(player, this.locateArcaneAssembler(guiID, player, world, pos, side));
+            case ARCANE_TERMINAL: {
+                GuiHostLocator arcaneLocator = this.getArcanePartLocator(pos, side);
+                IArcaneTerminalHost arcaneHost = this.locateArcanePartHost(guiID, player, world, pos, side, arcaneLocator);
                 return this.initContainer(new ContainerArcaneTerm(player.inventory, arcaneHost), arcaneLocator);
-            case WIRELESS_ARCANE_TERMINAL: {
-                arcaneLocator = GuiHostLocators.forInventorySlot(x);
-                IArcaneTerminalHost wirelessHost = arcaneLocator.locate(player, WirelessArcaneTerminalGuiHost.class);
-                if (wirelessHost == null) {
-                    return null;
-                }
-                return this.initContainer(new ContainerArcaneTerm(player.inventory, wirelessHost), arcaneLocator);
             }
-            case ARCANE_INSCRIBER:
-                if (arcaneHost == null) {
-                    return null;
-                }
+            case WIRELESS_ARCANE_TERMINAL:
+                throw rejectWirelessLegacyRoute(guiID, "server IGuiHandler", player);
+            case ARCANE_INSCRIBER: {
+                GuiHostLocator arcaneLocator = this.getArcanePartLocator(pos, side);
+                IArcaneTerminalHost arcaneHost = this.locateArcanePartHost(guiID, player, world, pos, side, arcaneLocator);
                 return this.initContainer(new ContainerArcaneInscriber(player.inventory, arcaneHost), arcaneLocator);
+            }
             case AE2_CRAFT_AMOUNT:
             case AE2_CRAFT_CONFIRM:
             case AE2_CRAFT_STATUS:
@@ -136,7 +213,7 @@ public class GuiHandler implements IGuiHandler {
             case KNOWLEDGE_CORE_ADD:
             case KNOWLEDGE_CORE_DEL:
             case KNOWLEDGE_CORE_VIEW:
-                return new ContainerKnowledgeCore(player, guiID, player.openContainer);
+                return this.createKnowledgeCoreContainer(guiID, player, world, pos, side);
             default:
                 return null;
         }
@@ -145,42 +222,30 @@ public class GuiHandler implements IGuiHandler {
     @Nullable
     @Override
     public Object getClientGuiElement(int ordinal, EntityPlayer player, World world, int x, int y, int z) {
-        TileEntity te = null;
         ModGUIs guiID = GuiHandler.getGUIFromOrdinal(ordinal);
         EnumFacing side = GuiHandler.getSideFromOrdinal(ordinal);
         BlockPos pos = new BlockPos(x, y, z);
-        IPart part = GuiHandler.getPartFromWorld(world, pos, side);
-        if (part == null) te = world.getTileEntity(pos);
-        IArcaneTerminalHost arcaneHost = part instanceof IArcaneTerminalHost ? (IArcaneTerminalHost) part : null;
-        GuiHostLocator arcaneLocator = this.getArcaneLocator(part, pos, side, x);
 
         switch (guiID) {
             case ARCANE_ASSEMBLER:
-                return new GuiArcaneAssembler(new ContainerArcaneAssembler(player, (TileArcaneAssembler) te));
-            case ARCANE_TERMINAL:
-                if (arcaneHost == null) {
-                    return null;
-                }
+                return new GuiArcaneAssembler(new ContainerArcaneAssembler(
+                        player, this.locateArcaneAssembler(guiID, player, world, pos, side)));
+            case ARCANE_TERMINAL: {
+                GuiHostLocator arcaneLocator = this.getArcanePartLocator(pos, side);
+                IArcaneTerminalHost arcaneHost = this.locateArcanePartHost(guiID, player, world, pos, side, arcaneLocator);
                 return new GuiArcaneTerm(
                         this.initContainer(new ContainerArcaneTerm(player.inventory, arcaneHost), arcaneLocator),
                         player.inventory);
-            case WIRELESS_ARCANE_TERMINAL: {
-                arcaneLocator = GuiHostLocators.forInventorySlot(x);
-                IArcaneTerminalHost wirelessHost = arcaneLocator.locate(player, WirelessArcaneTerminalGuiHost.class);
-                if (wirelessHost == null) {
-                    return null;
-                }
-                return new GuiArcaneTerm(
-                        this.initContainer(new ContainerArcaneTerm(player.inventory, wirelessHost), arcaneLocator),
-                        player.inventory);
             }
-            case ARCANE_INSCRIBER:
-                if (arcaneHost == null) {
-                    return null;
-                }
+            case WIRELESS_ARCANE_TERMINAL:
+                throw rejectWirelessLegacyRoute(guiID, "client IGuiHandler", player);
+            case ARCANE_INSCRIBER: {
+                GuiHostLocator arcaneLocator = this.getArcanePartLocator(pos, side);
+                IArcaneTerminalHost arcaneHost = this.locateArcanePartHost(guiID, player, world, pos, side, arcaneLocator);
                 return new GuiArcaneInscriber(
                         this.initContainer(new ContainerArcaneInscriber(player.inventory, arcaneHost), arcaneLocator),
                         player.inventory);
+            }
             case AE2_CRAFT_AMOUNT:
             case AE2_CRAFT_CONFIRM:
             case AE2_CRAFT_STATUS:
@@ -188,7 +253,7 @@ public class GuiHandler implements IGuiHandler {
             case KNOWLEDGE_CORE_ADD:
             case KNOWLEDGE_CORE_DEL:
             case KNOWLEDGE_CORE_VIEW:
-                return new GuiKnowledgeCore(new ContainerKnowledgeCore(player, guiID, player.openContainer));
+                return new GuiKnowledgeCore(this.createKnowledgeCoreContainer(guiID, player, world, pos, side));
             default:
                 return null;
         }

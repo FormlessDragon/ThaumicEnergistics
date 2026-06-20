@@ -16,7 +16,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
-import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 import thaumicenergistics.util.inventory.ThEUpgradeInventory;
@@ -119,8 +118,7 @@ public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<Wirel
 
     @Override
     public BlockPos getReturnPos() {
-        Integer slot = this.getPlayerInventorySlot();
-        return new BlockPos(slot == null ? 0 : slot, 0, 0);
+        return this.getPlayer().getPosition();
     }
 
     @Override
@@ -130,10 +128,7 @@ public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<Wirel
 
     @Override
     public void returnToMainContainer(EntityPlayer player, ISubGui subGui) {
-        Integer slot = this.getPlayerInventorySlot();
-        if (slot != null) {
-            GuiHandler.openGUI(ModGUIs.WIRELESS_ARCANE_TERMINAL, player, slot);
-        }
+        super.returnToMainContainer(player, subGui);
     }
 
     @Override
