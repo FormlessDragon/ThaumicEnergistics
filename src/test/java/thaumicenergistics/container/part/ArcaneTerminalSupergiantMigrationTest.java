@@ -284,7 +284,7 @@ class ArcaneTerminalSupergiantMigrationTest {
     void arcaneTerminalGuiUsesThaumicArcaneCraftingTexture() throws IOException {
         Path texture = Path.of("src/main/resources/assets/thaumicenergistics/textures/gui/arcane_crafting.png");
         JsonObject style = readJsonObject(
-                Path.of("src/main/resources/assets/thaumicenergistics/screens/terminals/arcane_terminal.json"));
+                Path.of("src/main/resources/assets/ae2/screens/terminals/thaumicenergistics_arcane_terminal.json"));
         JsonObject terminalStyle = objectAt(style, "terminalStyle");
         JsonObject slots = objectAt(style, "slots");
 
@@ -353,8 +353,7 @@ class ArcaneTerminalSupergiantMigrationTest {
         SlotSemantic arcaneCrystal = ThESlotSemantics.ARCANE_CRYSTAL;
         SlotSemantic playerArmor = ThESlotSemantics.PLAYER_ARMOR;
         JsonObject style = readJsonObject(
-                Path.of("src/main/resources/assets/thaumicenergistics/screens/terminals/arcane_terminal.json"));
-        JsonObject schema = readJsonObject(Path.of("src/main/resources/assets/thaumicenergistics/screens/schema.json"));
+                Path.of("src/main/resources/assets/ae2/screens/terminals/thaumicenergistics_arcane_terminal.json"));
         JsonObject slots = objectAt(style, "slots");
 
         assertAll(
@@ -367,11 +366,7 @@ class ArcaneTerminalSupergiantMigrationTest {
                 () -> assertEquals(2500, playerArmor.quickMovePriority()),
                 () -> assertSame(playerArmor, SlotSemantics.getOrThrow("THE_PLAYER_ARMOR")),
                 () -> assertSlot(slots, "THE_ARCANE_CRYSTAL", 130, 158, "BREAK_AFTER_2COLS"),
-                () -> assertSlot(slots, "THE_PLAYER_ARMOR", 8, 167, "VERTICAL"),
-                () -> assertJsonArrayContains(arrayAt(schema, "properties", "slots", "propertyNames", "enum"),
-                        "THE_ARCANE_CRYSTAL"),
-                () -> assertJsonArrayContains(arrayAt(schema, "properties", "slots", "propertyNames", "enum"),
-                        "THE_PLAYER_ARMOR"));
+                () -> assertSlot(slots, "THE_PLAYER_ARMOR", 8, 167, "VERTICAL"));
     }
 
     private static JsonObject readJsonObject(Path path) throws IOException {

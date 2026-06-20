@@ -3,17 +3,17 @@ package thaumicenergistics.client.gui.part;
 import ae2.api.config.ActionItems;
 import ae2.client.gui.me.common.GuiMEStorage;
 import ae2.client.gui.style.GuiStyle;
+import ae2.client.gui.style.GuiStyleManager;
 import ae2.client.gui.widgets.ActionButton;
 import ae2.core.AEConfig;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentTranslation;
-import thaumicenergistics.client.gui.style.ThEGuiStyleManager;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.core.ThEFeatures;
 
 public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
-    public static final String STYLE_PATH = "/screens/terminals/arcane_terminal.json";
+    public static final String STYLE_PATH = "/screens/terminals/thaumicenergistics_arcane_terminal.json";
 
     private float visAvailable = -1;
     protected float visRequired = -1;
@@ -21,7 +21,7 @@ public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
 
     public GuiArcaneTerm(ContainerArcaneTerm container, InventoryPlayer playerInventory) {
         this(container, playerInventory, getDefaultTerminalTitle(),
-                ThEGuiStyleManager.loadStyleDoc(STYLE_PATH));
+                GuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH));
     }
 
     public GuiArcaneTerm(ContainerArcaneTerm container, InventoryPlayer playerInventory, ITextComponent title, GuiStyle style) {

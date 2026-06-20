@@ -1,12 +1,12 @@
 package thaumicenergistics.client.gui.part;
 
+import ae2.client.gui.style.GuiStyleManager;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
 import thaumicenergistics.client.gui.component.GuiImageButton;
-import thaumicenergistics.client.gui.style.ThEGuiStyleManager;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.init.ModGlobals;
@@ -29,7 +29,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     public GuiArcaneInscriber(ContainerArcaneInscriber container, InventoryPlayer playerInventory) {
         super(container, playerInventory,
                 new TextComponentTranslation("gui.thaumicenergistics.arcane_inscriber"),
-                ThEGuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH));
+                GuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH));
         this.inscriberContainer = container;
     }
 

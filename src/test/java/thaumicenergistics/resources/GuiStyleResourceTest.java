@@ -1,65 +1,70 @@
 package thaumicenergistics.resources;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import ae2.client.gui.layout.SlotGridLayout;
+import ae2.client.gui.style.GuiStyle;
+import ae2.client.gui.style.GuiStyleManager;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import thaumicenergistics.container.ThESlotSemantics;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GuiStyleResourceTest {
 
-    private static final Path SCHEMA_PATH = Path.of(
-            "src/main/resources/assets/thaumicenergistics/screens/schema.json");
+    private static final String ARCANE_TERMINAL_STYLE =
+            "/screens/terminals/thaumicenergistics_arcane_terminal.json";
+
+    @BeforeEach
+    void initializeSupergiantStyleLoader() {
+        GuiStyleManager.initialize(TestResourceManager.builder()
+                .addNamespaceRoot("ae2", Path.of("src/main/resources"))
+                .addClasspathFallback("ae2")
+                .build());
+    }
 
     @Test
-    void screenSchemaAllowsKnowledgeCoreSlotSemantic() throws IOException {
-        Set<String> allowedSlotSemantics = allowedSlotSemantics(readJsonObject(SCHEMA_PATH));
+    void supergiantLoaderParsesArcaneTerminalStyle() {
+        GuiStyle style = GuiStyleManager.loadStyleDoc(ARCANE_TERMINAL_STYLE);
 
-        assertTrue(allowedSlotSemantics.contains(ThESlotSemantics.KNOWLEDGE_CORE.id()),
-                SCHEMA_PATH + " should allow " + ThESlotSemantics.KNOWLEDGE_CORE.id());
+        assertAll(
+                () -> style.validate(),
+                () -> assertSlot(style, "THE_ARCANE_CRYSTAL", 130, 158, SlotGridLayout.BREAK_AFTER_2COLS),
+                () -> assertSlot(style, "THE_PLAYER_ARMOR", 8, 167, SlotGridLayout.VERTICAL),
+                () -> assertSlot(style, "CRAFTING_GRID", 28, 158, SlotGridLayout.BREAK_AFTER_3COLS),
+                () -> assertSlot(style, "CRAFTING_RESULT", 107, 140, null),
+                () -> assertWidget(style, "clearCraftingGrid", 81, 159),
+                () -> assertTrue(style.getText().containsKey("dialog_title"),
+                        "Arcane terminal style should define dialog_title"),
+                () -> assertTrue(style.getText().containsKey("crafting_grid_title"),
+                        "Arcane terminal style should define crafting_grid_title"),
+                () -> assertNotNull(style.getTerminalStyle(),
+                        "Arcane terminal style should include terminalStyle"));
     }
 
-    private static Set<String> allowedSlotSemantics(JsonObject schema) {
-        JsonArray enumValues = arrayAt(schema,
-                "properties", "slots", "propertyNames", "enum");
-        Set<String> values = new LinkedHashSet<>();
-        for (JsonElement value : enumValues) {
-            assertTrue(value.isJsonPrimitive(), "Expected slot semantic enum value to be a JSON primitive");
-            assertTrue(value.getAsJsonPrimitive().isString(),
-                    "Expected slot semantic enum value to be a string");
-            values.add(value.getAsString());
-        }
-        return values;
+    @Test
+    void supergiantLoaderFailsFastForMissingStylePath() {
+        assertThrows(RuntimeException.class,
+                () -> GuiStyleManager.loadStyleDoc("/screens/terminals/missing_thaumicenergistics_style.json"));
     }
 
-    private static JsonObject readJsonObject(Path path) throws IOException {
-        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            JsonElement json = JsonParser.parseReader(reader);
-            assertTrue(json.isJsonObject(), path + " should contain a JSON object");
-            return json.getAsJsonObject();
-        }
+    private static void assertSlot(GuiStyle style, String id, int left, int bottom, SlotGridLayout grid) {
+        var slot = style.getSlots().get(id);
+
+        assertNotNull(slot, "Arcane terminal style should define slot " + id);
+        assertEquals(left, slot.getLeft(), id + " left");
+        assertEquals(bottom, slot.getBottom(), id + " bottom");
+        assertEquals(grid, slot.getGrid(), id + " grid");
     }
 
-    private static JsonArray arrayAt(JsonObject json, String... path) {
-        JsonElement current = json;
-        for (String member : path) {
-            assertTrue(current.isJsonObject(), "Expected JSON object before member " + member);
-            JsonObject object = current.getAsJsonObject();
-            assertTrue(object.has(member), "Expected JSON member " + member);
-            current = object.get(member);
-        }
-        assertTrue(current.isJsonArray(), "Expected JSON array at " + String.join(".", path));
-        return current.getAsJsonArray();
+    private static void assertWidget(GuiStyle style, String id, int left, int bottom) {
+        var widget = style.getWidget(id);
+
+        assertEquals(left, widget.getLeft(), id + " left");
+        assertEquals(bottom, widget.getBottom(), id + " bottom");
     }
 }
