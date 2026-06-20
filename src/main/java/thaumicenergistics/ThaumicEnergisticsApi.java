@@ -1,12 +1,14 @@
 package thaumicenergistics;
 
-import thaumicenergistics.api.*;
-import thaumicenergistics.config.ThEConfig;
-import thaumicenergistics.core.definitions.ThEApiItems;
-import thaumicenergistics.init.ThEBlocks;
-import thaumicenergistics.init.ThESounds;
-import thaumicenergistics.init.ThETextures;
-import thaumicenergistics.lang.ThELang;
+import thaumicenergistics.api.IThEApi;
+import thaumicenergistics.api.IThEBlocks;
+import thaumicenergistics.api.IThEConfig;
+import thaumicenergistics.api.IThEItems;
+import thaumicenergistics.api.IThELang;
+import thaumicenergistics.api.IThESounds;
+import thaumicenergistics.api.IThETextures;
+import thaumicenergistics.core.ThEFeatureAccess;
+import thaumicenergistics.core.ThEFeatures;
 
 /**
  * @author BrockWS
@@ -15,20 +17,10 @@ import thaumicenergistics.lang.ThELang;
 public class ThaumicEnergisticsApi implements IThEApi {
 
     private static IThEApi INSTANCE;
-    private final IThESounds sounds;
-    private final IThEItems items;
-    private final IThEBlocks blocks;
-    private final IThEConfig config;
-    private final IThELang lang;
-    private final IThETextures textures;
+    private final ThEFeatureAccess features;
 
     private ThaumicEnergisticsApi() {
-        this.sounds = new ThESounds();
-        this.items = new ThEApiItems();
-        this.blocks = new ThEBlocks();
-        this.config = new ThEConfig();
-        this.lang = new ThELang();
-        this.textures = new ThETextures();
+        this.features = ThEFeatures.instance();
     }
 
     public static IThEApi instance() {
@@ -39,31 +31,31 @@ public class ThaumicEnergisticsApi implements IThEApi {
 
     @Override
     public IThEItems items() {
-        return this.items;
+        return this.features.items();
     }
 
     @Override
     public IThEBlocks blocks() {
-        return this.blocks;
+        return this.features.blocks();
     }
 
     @Override
     public IThEConfig config() {
-        return this.config;
+        return this.features.config();
     }
 
     @Override
     public IThELang lang() {
-        return this.lang;
+        return this.features.lang();
     }
 
     @Override
     public IThETextures textures() {
-        return this.textures;
+        return this.features.textures();
     }
 
     @Override
     public IThESounds sounds() {
-        return this.sounds;
+        return this.features.sounds();
     }
 }

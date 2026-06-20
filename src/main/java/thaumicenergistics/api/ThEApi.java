@@ -9,6 +9,7 @@ import thaumicenergistics.ThaumicEnergisticsApi;
  * @version 1.0.0
  * @since 1.0.0
  */
+@SuppressWarnings("deprecation")
 public class ThEApi {
 
     private static IThEApi API;
@@ -24,5 +25,4 @@ public class ThEApi {
         }
         return ThEApi.API;
     }
-
 }

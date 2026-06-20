@@ -17,9 +17,9 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import thaumicenergistics.core.CommonProxy;
+import thaumicenergistics.core.ThEFeatureAccess;
+import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.thaumicenergistics.Reference;
-import thaumicenergistics.api.ThEApi;
-import thaumicenergistics.client.ThEItemColors;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.command.CommandAddVis;
 import thaumicenergistics.command.CommandDrainVis;
@@ -27,7 +27,6 @@ import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.init.internal.InitUpgrades;
 import thaumicenergistics.integration.ThEIntegrationLoader;
 import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.util.ForgeUtil;
 
 /**
  * <strong>Thaumic Energistics</strong>
@@ -68,13 +67,17 @@ public class ThaumicEnergistics {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER.info("{} preInit", Reference.MOD_NAME);
-        ThEApi.instance(); // Make sure to init the api
+        LOGGER.debug("Initialized feature access through {}", bootstrapFeatures().getClass().getName());
         MinecraftForge.EVENT_BUS.register(this);
         PacketHandler.register();
 
         proxy.preInit(event);
 
         ThEIntegrationLoader.preInit();
+    }
+
+    static ThEFeatureAccess bootstrapFeatures() {
+        return ThEFeatures.bootstrap();
     }
 
     /**
