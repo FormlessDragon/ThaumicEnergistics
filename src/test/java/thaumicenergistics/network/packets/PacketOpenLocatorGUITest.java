@@ -3,7 +3,8 @@ package thaumicenergistics.network.packets;
 import ae2.core.gui.locator.BaublesItemLocator;
 import ae2.core.gui.locator.GuiHostLocators;
 import ae2.core.gui.locator.InventoryItemLocator;
-import ae2.core.gui.locator.ItemGuiHostLocator;
+import ae2.core.gui.locator.PartLocator;
+import ae2.core.gui.locator.TileLocator;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.PacketBuffer;
@@ -103,15 +104,100 @@ class PacketOpenLocatorGUITest {
     }
 
     @Test
+    void roundTripsPartLocatorForArcaneTerminalOrInscriber() {
+        for (ModGUIs gui : new ModGUIs[] { ModGUIs.ARCANE_TERMINAL, ModGUIs.ARCANE_INSCRIBER }) {
+            PacketOpenLocatorGUI decoded = roundTrip(new PacketOpenLocatorGUI(
+                    gui,
+                    new PartLocator(new BlockPos(12, 34, 56), EnumFacing.NORTH),
+                    true,
+                    101));
+
+            assertAll(
+                    () -> assertSame(gui, decoded.gui()),
+                    () -> assertInstanceOf(PartLocator.class, decoded.locator()),
+                    () -> assertTrue(decoded.returnedFromSubScreen()),
+                    () -> assertEquals(101, decoded.windowId()));
+        }
+    }
+
+    @Test
+    void roundTripsTileLocatorForArcaneAssembler() {
+        PacketOpenLocatorGUI decoded = roundTrip(new PacketOpenLocatorGUI(
+                ModGUIs.ARCANE_ASSEMBLER,
+                new TileLocator(new BlockPos(90, 91, 92)),
+                false,
+                102));
+
+        assertAll(
+                () -> assertSame(ModGUIs.ARCANE_ASSEMBLER, decoded.gui()),
+                () -> assertInstanceOf(TileLocator.class, decoded.locator()),
+                () -> assertEquals(102, decoded.windowId()));
+    }
+
+    @Test
+    void roundTripsKnowledgeCoreGuiWithPartLocator() {
+        for (ModGUIs gui : new ModGUIs[] {
+                ModGUIs.KNOWLEDGE_CORE_ADD,
+                ModGUIs.KNOWLEDGE_CORE_DEL,
+                ModGUIs.KNOWLEDGE_CORE_VIEW }) {
+            PacketOpenLocatorGUI decoded = roundTrip(new PacketOpenLocatorGUI(
+                    gui,
+                    new PartLocator(new BlockPos(21, 43, 65), EnumFacing.UP),
+                    false,
+                    103));
+
+            assertAll(
+                    () -> assertSame(gui, decoded.gui()),
+                    () -> assertInstanceOf(PartLocator.class, decoded.locator()),
+                    () -> assertEquals(103, decoded.windowId()));
+        }
+    }
+
+    @Test
+    void rejectsUnreachableGuiAtCreateTime() {
+        for (ModGUIs gui : unsupportedGuis()) {
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> new PacketOpenLocatorGUI(
+                            gui,
+                            GuiHostLocators.forInventorySlot(0),
+                            false,
+                            1));
+
+            assertAll(
+                    () -> assertTrue(exception.getMessage().contains(gui.name())),
+                    () -> assertTrue(exception.getMessage().contains("PacketOpenLocatorGUI")));
+        }
+    }
+
+    @Test
+    void rejectsUnsupportedGuiFromPayload() {
+        for (ModGUIs gui : unsupportedGuis()) {
+            ByteBuf buffer = Unpooled.buffer();
+            PacketBuffer packetBuffer = new PacketBuffer(buffer);
+            packetBuffer.writeByte(gui.ordinal());
+            GuiHostLocators.writeToPacket(packetBuffer, GuiHostLocators.forInventorySlot(0));
+            packetBuffer.writeBoolean(false);
+            packetBuffer.writeVarInt(1);
+
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> new PacketOpenLocatorGUI().fromBytes(buffer));
+
+            assertAll(
+                    () -> assertTrue(exception.getMessage().contains(gui.name())),
+                    () -> assertTrue(exception.getMessage().contains("PacketOpenLocatorGUI")));
+        }
+    }
+
+    @Test
     void rejectsUnsupportedGuiAtCreateTime() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new PacketOpenLocatorGUI(
-                ModGUIs.ARCANE_TERMINAL,
+                ModGUIs.ESSENTIA_IMPORT_BUS,
                 GuiHostLocators.forInventorySlot(0),
                 false,
                 1));
 
         assertAll(
-                () -> assertTrue(exception.getMessage().contains(ModGUIs.ARCANE_TERMINAL.name())),
+                () -> assertTrue(exception.getMessage().contains(ModGUIs.ESSENTIA_IMPORT_BUS.name())),
                 () -> assertTrue(exception.getMessage().contains("PacketOpenLocatorGUI")));
     }
 
@@ -215,8 +301,19 @@ class PacketOpenLocatorGUITest {
         decoded.fromBytes(buffer);
 
         assertEquals(0, buffer.readableBytes(), "PacketOpenLocatorGUI should consume its payload");
-        assertInstanceOf(ItemGuiHostLocator.class, decoded.locator());
         return decoded;
+    }
+
+    private static ModGUIs[] unsupportedGuis() {
+        return new ModGUIs[] {
+                ModGUIs.ESSENTIA_IMPORT_BUS,
+                ModGUIs.ESSENTIA_EXPORT_BUS,
+                ModGUIs.ESSENTIA_STORAGE_BUS,
+                ModGUIs.ESSENTIA_TERMINAL,
+                ModGUIs.AE2_CRAFT_AMOUNT,
+                ModGUIs.AE2_CRAFT_CONFIRM,
+                ModGUIs.AE2_CRAFT_STATUS,
+                ModGUIs.AE2_PRIORITY };
     }
 
     private static void assertBlockHitEquals(RayTraceResult expected, RayTraceResult actual) {

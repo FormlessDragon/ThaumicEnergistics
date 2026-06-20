@@ -3,6 +3,7 @@ package thaumicenergistics.part;
 import ae2.api.parts.IPartItem;
 import ae2.api.parts.IPartModel;
 import ae2.container.ISubGui;
+import ae2.core.gui.locator.GuiHostLocators;
 import ae2.items.parts.PartModels;
 import ae2.parts.PartModel;
 import ae2.parts.reporting.AbstractTerminalPart;
@@ -19,7 +20,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
-import thaumicenergistics.client.gui.GuiHandler;
+import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.config.LegacyAESettingKeys;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.init.ModGlobals;
@@ -164,7 +165,7 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
 
     @Override
     public void returnToMainContainer(EntityPlayer player, ISubGui subGui) {
-        GuiHandler.openGUI(this.getGui(), player, this.getReturnPos(), this.getReturnSide());
+        ThEGuiOpener.openLocatorGui(player, this.getGui(), GuiHostLocators.forPart(this), true);
     }
 
     @Override
@@ -190,7 +191,7 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
 
     private boolean openTerminalGui(EntityPlayer player) {
         if (ForgeUtil.isServer()) {
-            GuiHandler.openGUI(this.getGui(), player, this.getReturnPos(), this.getReturnSide());
+            ThEGuiOpener.openLocatorGui(player, this.getGui(), GuiHostLocators.forPart(this), false);
         }
         this.getHost().markForUpdate();
         return true;

@@ -323,10 +323,12 @@ class GuiHandlerRoutingTest {
         BlockPos pos = new BlockPos(13, 14, 15);
         FakeMinecraft.FakeWorld serverWorld = FakeMinecraft.serverWorld();
         FakeMinecraft.FakePlayer serverPlayer = FakeMinecraft.player(serverWorld);
-        serverWorld.setTileEntity(pos, new PartPathRejectingArcaneAssembler());
+        PartPathRejectingArcaneAssembler serverTile = new PartPathRejectingArcaneAssembler();
+        serverWorld.setTileEntity(pos, serverTile);
         FakeMinecraft.FakeWorld clientWorld = FakeMinecraft.clientWorld();
         FakeMinecraft.FakePlayer clientPlayer = FakeMinecraft.player(clientWorld);
-        clientWorld.setTileEntity(pos, new PartPathRejectingArcaneAssembler());
+        PartPathRejectingArcaneAssembler clientTile = new PartPathRejectingArcaneAssembler();
+        clientWorld.setTileEntity(pos, clientTile);
 
         Object serverElement = handler.getServerGuiElement(
                 GuiHandler.calculateOrdinal(ModGUIs.ARCANE_ASSEMBLER, EnumFacing.NORTH),
@@ -335,9 +337,17 @@ class GuiHandlerRoutingTest {
                 GuiHandler.calculateOrdinal(ModGUIs.ARCANE_ASSEMBLER, EnumFacing.NORTH),
                 clientPlayer, clientWorld, pos.getX(), pos.getY(), pos.getZ());
 
+        ContainerArcaneAssembler serverContainer = assertInstanceOf(ContainerArcaneAssembler.class, serverElement);
+        GuiArcaneAssembler clientGui = assertInstanceOf(GuiArcaneAssembler.class, clientElement);
+        ContainerArcaneAssembler clientContainer = assertInstanceOf(ContainerArcaneAssembler.class,
+                clientGui.inventorySlots);
         assertAll(
-                () -> assertInstanceOf(ContainerArcaneAssembler.class, serverElement),
-                () -> assertInstanceOf(GuiArcaneAssembler.class, clientElement));
+                () -> assertSame(serverTile, serverContainer.getTE()),
+                () -> assertSame(serverTile, serverContainer.getLocator().locate(serverPlayer,
+                        TileArcaneAssembler.class)),
+                () -> assertSame(clientTile, clientContainer.getTE()),
+                () -> assertSame(clientTile, clientContainer.getLocator().locate(clientPlayer,
+                        TileArcaneAssembler.class)));
     }
 
     @Test

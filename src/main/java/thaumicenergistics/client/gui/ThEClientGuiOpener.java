@@ -4,14 +4,23 @@ import ae2.core.gui.locator.GuiHostLocator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.network.play.client.CPacketCloseWindow;
+import thaumicenergistics.api.storage.IArcaneTerminalHost;
+import thaumicenergistics.client.gui.block.GuiArcaneAssembler;
+import thaumicenergistics.client.gui.item.GuiKnowledgeCore;
+import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.client.gui.part.GuiArcaneTerm;
 import thaumicenergistics.common.gui.ThEGuiOpener;
+import thaumicenergistics.container.block.ContainerArcaneAssembler;
+import thaumicenergistics.container.item.ContainerKnowledgeCore;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
+import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.network.packets.PacketOpenLocatorGUI;
+import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.ThELog;
 
 /**
@@ -98,6 +107,190 @@ public final class ThEClientGuiOpener {
         WirelessArcaneTerminalGuiHost host = ThEGuiOpener.locateWirelessArcaneHost(player, gui, locator);
         return ThEGuiOpener.createWirelessArcaneContainer(
                 player.inventory, host, locator, message.returnedFromSubScreen(), message.windowId());
+    }
+
+    static Container createClientContainer(EntityPlayer player, Container openContainer, PacketOpenLocatorGUI message) {
+        if (player == null) {
+            throw new IllegalArgumentException("Cannot create locator-aware client container without player");
+        }
+        ModGUIs gui = message.gui();
+        GuiHostLocator locator = message.locator();
+        return switch (gui) {
+            case ARCANE_TERMINAL -> createArcaneTerminalContainer(player, gui, locator,
+                    message.returnedFromSubScreen(), message.windowId());
+            case ARCANE_INSCRIBER -> createArcaneInscriberContainer(player, gui, locator,
+                    message.returnedFromSubScreen(), message.windowId());
+            case ARCANE_ASSEMBLER -> createArcaneAssemblerContainer(player, gui, locator, message.windowId());
+            case KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW ->
+                    createKnowledgeCoreContainer(player, openContainer, gui, locator, message.windowId());
+            case WIRELESS_ARCANE_TERMINAL -> ThEGuiOpener.createWirelessArcaneContainer(
+                    player.inventory, locateWirelessArcaneHost(player, gui, locator), locator,
+                    message.returnedFromSubScreen(), message.windowId());
+            default -> throw new IllegalArgumentException("Unsupported locator-aware client gui " + gui
+                    + " with locator " + locatorDescription(locator)
+                    + " for player " + playerDescription(player));
+        };
+    }
+
+    static GuiScreen createClientScreen(EntityPlayer player, Container container, PacketOpenLocatorGUI message) {
+        if (player == null) {
+            throw new IllegalArgumentException("Cannot create locator-aware client screen without player");
+        }
+        if (container == null) {
+            throw new IllegalArgumentException("Cannot create locator-aware client screen without container for gui "
+                    + message.gui());
+        }
+        return switch (message.gui()) {
+            case ARCANE_TERMINAL, WIRELESS_ARCANE_TERMINAL ->
+                    new GuiArcaneTerm((ContainerArcaneTerm) container, player.inventory);
+            case ARCANE_INSCRIBER ->
+                    new GuiArcaneInscriber((ContainerArcaneInscriber) container, player.inventory);
+            case ARCANE_ASSEMBLER -> new GuiArcaneAssembler((ContainerArcaneAssembler) container);
+            case KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW ->
+                    new GuiKnowledgeCore((ContainerKnowledgeCore) container);
+            default -> throw new IllegalArgumentException("Unsupported locator-aware client gui " + message.gui()
+                    + " with locator " + locatorDescription(message.locator())
+                    + " for player " + playerDescription(player));
+        };
+    }
+
+    private static ContainerArcaneTerm createArcaneTerminalContainer(EntityPlayer player, ModGUIs gui,
+                                                                     GuiHostLocator locator,
+                                                                     boolean returnedFromSubScreen,
+                                                                     int windowId) {
+        ContainerArcaneTerm container = new ContainerArcaneTerm(player.inventory,
+                locateArcaneTerminalHost(player, gui, locator));
+        container.setLocator(locator);
+        container.setReturnedFromSubScreen(returnedFromSubScreen);
+        container.windowId = windowId;
+        return container;
+    }
+
+    private static ContainerArcaneInscriber createArcaneInscriberContainer(EntityPlayer player, ModGUIs gui,
+                                                                           GuiHostLocator locator,
+                                                                           boolean returnedFromSubScreen,
+                                                                           int windowId) {
+        ContainerArcaneInscriber container = new ContainerArcaneInscriber(player.inventory,
+                locateArcaneTerminalHost(player, gui, locator));
+        container.setLocator(locator);
+        container.setReturnedFromSubScreen(returnedFromSubScreen);
+        container.windowId = windowId;
+        return container;
+    }
+
+    private static ContainerArcaneAssembler createArcaneAssemblerContainer(EntityPlayer player, ModGUIs gui,
+                                                                          GuiHostLocator locator, int windowId) {
+        ContainerArcaneAssembler container = new ContainerArcaneAssembler(player,
+                locateArcaneAssembler(player, gui, locator));
+        container.setLocator(locator);
+        container.windowId = windowId;
+        return container;
+    }
+
+    private static ContainerKnowledgeCore createKnowledgeCoreContainer(EntityPlayer player, Container openContainer,
+                                                                       ModGUIs gui, GuiHostLocator packetLocator,
+                                                                       int windowId) {
+        ContainerArcaneInscriber parent = getKnowledgeCoreParent(player, gui, openContainer);
+        GuiHostLocator parentLocator = getKnowledgeCoreParentLocator(player, gui, parent);
+        IArcaneTerminalHost parentHost = parent.getHost();
+        IArcaneTerminalHost packetLocatedHost = locateArcaneTerminalHost(player, gui, packetLocator);
+        if (packetLocatedHost != parentHost) {
+            throw new IllegalStateException("Knowledge Core packet locator mismatch for gui " + gui.name()
+                    + " player " + playerDescription(player)
+                    + " packet locator " + locatorDescription(packetLocator)
+                    + " parent locator " + locatorDescription(parentLocator)
+                    + " parent " + parent
+                    + " parentHost " + parentHost
+                    + " packetLocatedHost " + packetLocatedHost);
+        }
+
+        ContainerKnowledgeCore container = new ContainerKnowledgeCore(player, gui, parent, parentLocator);
+        container.windowId = windowId;
+        return container;
+    }
+
+    private static ContainerArcaneInscriber getKnowledgeCoreParent(EntityPlayer player, ModGUIs gui,
+                                                                   Container openContainer) {
+        if (!(openContainer instanceof ContainerArcaneInscriber parent)) {
+            throw new IllegalStateException("Cannot open Knowledge Core gui " + gui.name()
+                    + " without parent " + ContainerArcaneInscriber.class.getName()
+                    + "; player " + playerDescription(player)
+                    + "; openContainer " + openContainer);
+        }
+        return parent;
+    }
+
+    private static GuiHostLocator getKnowledgeCoreParentLocator(EntityPlayer player, ModGUIs gui,
+                                                                ContainerArcaneInscriber parent) {
+        GuiHostLocator parentLocator = parent.getLocator();
+        if (parentLocator == null) {
+            throw new IllegalStateException("Cannot open Knowledge Core gui " + gui.name()
+                    + " without parent locator for player " + playerDescription(player)
+                    + "; parent " + parent);
+        }
+
+        IArcaneTerminalHost parentHost = parent.getHost();
+        if (parentHost == null) {
+            throw new IllegalStateException("Cannot open Knowledge Core gui " + gui.name()
+                    + " without parent host for player " + playerDescription(player)
+                    + "; locator " + locatorDescription(parentLocator)
+                    + "; parent " + parent);
+        }
+
+        IArcaneTerminalHost locatedHost = parentLocator.locate(player, IArcaneTerminalHost.class);
+        if (locatedHost != parentHost) {
+            throw new IllegalStateException("Knowledge Core parent locator mismatch for gui " + gui.name()
+                    + " player " + playerDescription(player)
+                    + " locator " + locatorDescription(parentLocator)
+                    + " parent " + parent
+                    + " parentHost " + parentHost
+                    + " locatedHost " + locatedHost);
+        }
+        return parentLocator;
+    }
+
+    private static WirelessArcaneTerminalGuiHost locateWirelessArcaneHost(EntityPlayer player, ModGUIs gui,
+                                                                          GuiHostLocator locator) {
+        WirelessArcaneTerminalGuiHost host = locator.locate(player, WirelessArcaneTerminalGuiHost.class);
+        if (host == null) {
+            throw new IllegalStateException("Cannot locate host for locator-aware client gui " + gui
+                    + " with locator " + locatorDescription(locator)
+                    + "; expected " + WirelessArcaneTerminalGuiHost.class.getName());
+        }
+        return host;
+    }
+
+    private static IArcaneTerminalHost locateArcaneTerminalHost(EntityPlayer player, ModGUIs gui,
+                                                               GuiHostLocator locator) {
+        IArcaneTerminalHost host = locator.locate(player, IArcaneTerminalHost.class);
+        if (host == null) {
+            throw new IllegalStateException("Cannot locate host for locator-aware client gui " + gui
+                    + " with locator " + locatorDescription(locator)
+                    + "; expected " + IArcaneTerminalHost.class.getName());
+        }
+        return host;
+    }
+
+    private static TileArcaneAssembler locateArcaneAssembler(EntityPlayer player, ModGUIs gui,
+                                                            GuiHostLocator locator) {
+        TileArcaneAssembler host = locator.locate(player, TileArcaneAssembler.class);
+        if (host == null) {
+            throw new IllegalStateException("Cannot locate host for locator-aware client gui " + gui
+                    + " with locator " + locatorDescription(locator)
+                    + "; expected " + TileArcaneAssembler.class.getName());
+        }
+        return host;
+    }
+
+    private static String locatorDescription(GuiHostLocator locator) {
+        if (locator == null) {
+            return "null";
+        }
+        return locator.getClass().getName() + " " + locator;
+    }
+
+    private static String playerDescription(EntityPlayer player) {
+        return player == null ? "null" : player.getClass().getName();
     }
 
     private static OpenResult failAndClose(ClientOpenContext client, PacketOpenLocatorGUI message, OpenStage stage,
@@ -332,12 +525,12 @@ public final class ThEClientGuiOpener {
 
         @Override
         public Container createContainer(PacketOpenLocatorGUI message) {
-            return createWirelessArcaneContainer(this.player, message);
+            return createClientContainer(this.player, this.player.openContainer, message);
         }
 
         @Override
         public GuiScreen createScreen(Container container, PacketOpenLocatorGUI message) {
-            return new GuiArcaneTerm((ContainerArcaneTerm) container, this.player.inventory);
+            return createClientScreen(this.player, container, message);
         }
 
         @Override

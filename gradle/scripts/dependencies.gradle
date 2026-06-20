@@ -23,6 +23,7 @@ dependencies {
     compileOnly "com.cleanroommc:sponge-mixin:0.20.13+mixin.0.8.7"
     if (propertyBool('enable_lwjglx')) {
         compileOnly "com.cleanroommc:lwjglx:1.0.0"
+        testRuntimeOnly "com.cleanroommc:lwjglx:1.0.0"
     }
     modImplementation 'curse.maven:scalar-legacy-1235372:6842491'
 

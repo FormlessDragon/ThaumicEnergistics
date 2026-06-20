@@ -13,6 +13,7 @@ import ae2.api.stacks.AEItemKey;
 import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
 import ae2.core.definitions.AEItems;
+import ae2.core.gui.locator.GuiHostLocators;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -24,8 +25,8 @@ import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aura.AuraHelper;
 import thaumicenergistics.api.IThELangKey;
-import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.client.gui.IThEGuiTile;
+import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ThEBlocks;
@@ -164,7 +165,7 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThESubscriba
 
     @Override
     public void openGUI(EntityPlayer player) {
-        GuiHandler.openGUI(this.getGUI(), player, this.getPos());
+        ThEGuiOpener.openLocatorGui(player, this.getGUI(), GuiHostLocators.forTile(this), false);
     }
 
     @Override

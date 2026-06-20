@@ -17,7 +17,7 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumcraft.api.crafting.IArcaneRecipe;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
-import thaumicenergistics.client.gui.GuiHandler;
+import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotArcaneGhostMatrix;
@@ -105,20 +105,20 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
             return;
         }
 
-        GuiHandler.openGUI(ModGUIs.KNOWLEDGE_CORE_ADD, this.getPlayer(), this.getPartPos(), this.getPartSide());
+        ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_ADD, this.getLocator(), false);
     }
 
     private void openKnowledgeCoreDel() {
         ItemStack knowledgeCore = this.getInventory("upgrades").getStackInSlot(0);
         if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
-            GuiHandler.openGUI(ModGUIs.KNOWLEDGE_CORE_DEL, this.getPlayer(), this.getPartPos(), this.getPartSide());
+            ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_DEL, this.getLocator(), false);
         }
     }
 
     private void openKnowledgeCoreView() {
         ItemStack knowledgeCore = this.getInventory("upgrades").getStackInSlot(0);
         if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
-            GuiHandler.openGUI(ModGUIs.KNOWLEDGE_CORE_VIEW, this.getPlayer(), this.getPartPos(), this.getPartSide());
+            ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_VIEW, this.getLocator(), false);
         }
     }
 

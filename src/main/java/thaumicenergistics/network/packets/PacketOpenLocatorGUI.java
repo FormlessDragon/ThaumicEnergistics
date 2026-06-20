@@ -98,10 +98,18 @@ public class PacketOpenLocatorGUI implements IMessage {
         if (gui == null) {
             throw new IllegalArgumentException("PacketOpenLocatorGUI gui cannot be null");
         }
-        if (gui != ModGUIs.WIRELESS_ARCANE_TERMINAL) {
-            throw new IllegalArgumentException("Unsupported PacketOpenLocatorGUI gui: " + gui);
+        switch (gui) {
+            case ARCANE_TERMINAL:
+            case ARCANE_INSCRIBER:
+            case ARCANE_ASSEMBLER:
+            case KNOWLEDGE_CORE_ADD:
+            case KNOWLEDGE_CORE_DEL:
+            case KNOWLEDGE_CORE_VIEW:
+            case WIRELESS_ARCANE_TERMINAL:
+                return gui;
+            default:
+                throw new IllegalArgumentException("Unsupported PacketOpenLocatorGUI gui: " + gui);
         }
-        return gui;
     }
 
     static int validateWindowId(int windowId) {

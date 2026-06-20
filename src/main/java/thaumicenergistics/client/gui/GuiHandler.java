@@ -13,13 +13,12 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.IGuiHandler;
 import thaumicenergistics.ThaumicEnergistics;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
-import thaumicenergistics.client.gui.block.GuiArcaneAssembler;
 import thaumicenergistics.client.gui.item.GuiKnowledgeCore;
-import thaumicenergistics.client.gui.part.*;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
 import thaumicenergistics.container.part.*;
 import thaumicenergistics.init.ModGUIs;
+import thaumicenergistics.network.packets.PacketOpenLocatorGUI;
 import thaumicenergistics.part.*;
 import thaumicenergistics.tile.TileArcaneAssembler;
 
@@ -104,8 +103,8 @@ public class GuiHandler implements IGuiHandler {
         return new PartLocator(pos, side);
     }
 
-    private TileArcaneAssembler locateArcaneAssembler(ModGUIs guiID, EntityPlayer player, World world,
-                                                      BlockPos pos, EnumFacing side) {
+    private ArcaneAssemblerRoute locateArcaneAssembler(ModGUIs guiID, EntityPlayer player, World world,
+                                                       BlockPos pos, EnumFacing side) {
         TileEntity tile = world.getTileEntity(pos);
         if (tile == null) {
             throw this.missingHost(guiID, pos, side, TileArcaneAssembler.class, null);
@@ -116,7 +115,13 @@ public class GuiHandler implements IGuiHandler {
         if (host == null) {
             throw this.missingHost(guiID, pos, side, TileArcaneAssembler.class, tile);
         }
-        return host;
+        return new ArcaneAssemblerRoute(host, locator);
+    }
+
+    private Object createClientGuiElement(ModGUIs guiID, EntityPlayer player, GuiHostLocator locator) {
+        PacketOpenLocatorGUI message = new PacketOpenLocatorGUI(guiID, locator, false, 0);
+        Container container = ThEClientGuiOpener.createClientContainer(player, player.openContainer, message);
+        return ThEClientGuiOpener.createClientScreen(player, container, message);
     }
 
     private ContainerKnowledgeCore createKnowledgeCoreContainer(ModGUIs guiID, EntityPlayer player, World world,
@@ -176,12 +181,15 @@ public class GuiHandler implements IGuiHandler {
     }
 
     private IllegalStateException missingHost(ModGUIs guiID, BlockPos pos, EnumFacing side,
-                                              Class<?> hostType, @Nullable Object actualHost) {
+                                               Class<?> hostType, @Nullable Object actualHost) {
         return new IllegalStateException("Cannot locate host for " + guiID.name()
                 + " at " + pos
                 + " side " + side.name()
                 + "; expected " + hostType.getName()
                 + "; actual " + actualHost);
+    }
+
+    private record ArcaneAssemblerRoute(TileArcaneAssembler host, GuiHostLocator locator) {
     }
 
     @Nullable
@@ -192,8 +200,10 @@ public class GuiHandler implements IGuiHandler {
         BlockPos pos = new BlockPos(x, y, z);
 
         switch (guiID) {
-            case ARCANE_ASSEMBLER:
-                return new ContainerArcaneAssembler(player, this.locateArcaneAssembler(guiID, player, world, pos, side));
+            case ARCANE_ASSEMBLER: {
+                ArcaneAssemblerRoute route = this.locateArcaneAssembler(guiID, player, world, pos, side);
+                return this.initContainer(new ContainerArcaneAssembler(player, route.host()), route.locator());
+            }
             case ARCANE_TERMINAL: {
                 GuiHostLocator arcaneLocator = this.getArcanePartLocator(pos, side);
                 IArcaneTerminalHost arcaneHost = this.locateArcanePartHost(guiID, player, world, pos, side, arcaneLocator);
@@ -227,24 +237,21 @@ public class GuiHandler implements IGuiHandler {
         BlockPos pos = new BlockPos(x, y, z);
 
         switch (guiID) {
-            case ARCANE_ASSEMBLER:
-                return new GuiArcaneAssembler(new ContainerArcaneAssembler(
-                        player, this.locateArcaneAssembler(guiID, player, world, pos, side)));
+            case ARCANE_ASSEMBLER: {
+                ArcaneAssemblerRoute route = this.locateArcaneAssembler(guiID, player, world, pos, side);
+                return this.createClientGuiElement(guiID, player, route.locator());
+            }
             case ARCANE_TERMINAL: {
                 GuiHostLocator arcaneLocator = this.getArcanePartLocator(pos, side);
-                IArcaneTerminalHost arcaneHost = this.locateArcanePartHost(guiID, player, world, pos, side, arcaneLocator);
-                return new GuiArcaneTerm(
-                        this.initContainer(new ContainerArcaneTerm(player.inventory, arcaneHost), arcaneLocator),
-                        player.inventory);
+                this.locateArcanePartHost(guiID, player, world, pos, side, arcaneLocator);
+                return this.createClientGuiElement(guiID, player, arcaneLocator);
             }
             case WIRELESS_ARCANE_TERMINAL:
                 throw rejectWirelessLegacyRoute(guiID, "client IGuiHandler", player);
             case ARCANE_INSCRIBER: {
                 GuiHostLocator arcaneLocator = this.getArcanePartLocator(pos, side);
-                IArcaneTerminalHost arcaneHost = this.locateArcanePartHost(guiID, player, world, pos, side, arcaneLocator);
-                return new GuiArcaneInscriber(
-                        this.initContainer(new ContainerArcaneInscriber(player.inventory, arcaneHost), arcaneLocator),
-                        player.inventory);
+                this.locateArcanePartHost(guiID, player, world, pos, side, arcaneLocator);
+                return this.createClientGuiElement(guiID, player, arcaneLocator);
             }
             case AE2_CRAFT_AMOUNT:
             case AE2_CRAFT_CONFIRM:
