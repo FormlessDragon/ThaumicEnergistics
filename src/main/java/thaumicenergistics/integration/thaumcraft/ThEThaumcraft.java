@@ -26,7 +26,7 @@ import thaumcraft.api.items.ItemsTC;
 import thaumcraft.api.research.ResearchCategories;
 import thaumcraft.api.research.ScanningManager;
 import thaumcraft.api.research.theorycraft.TheorycraftManager;
-import thaumicenergistics.api.ThEApi;
+import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.integration.IThEIntegration;
 import thaumicenergistics.integration.thaumcraft.research.AidMEController;
@@ -285,7 +285,7 @@ public class ThEThaumcraft implements IThEIntegration {
     private void registerInfusionRecipes() {
         ThaumcraftApi.addInfusionCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "infusion_provider"), new InfusionRecipe(
                 "INFUSIONPROVIDER@2",
-                ThEApi.instance().blocks().infusionProvider().stack(),
+                ThEFeatures.instance().blocks().infusionProvider().stack(),
                 2,
                 new AspectList().add(Aspect.MECHANISM, 25).add(Aspect.MAGIC, 25).add(Aspect.EXCHANGE, 20),
                 AEBlocks.INTERFACE.block(),
@@ -296,7 +296,7 @@ public class ThEThaumcraft implements IThEIntegration {
         ));
         ThaumcraftApi.addInfusionCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "arcane_assembler"), new InfusionRecipe(
                 "ARCANEASSEMBLER@2",
-                ThEApi.instance().blocks().arcaneAssembler().stack(),
+                ThEFeatures.instance().blocks().arcaneAssembler().stack(),
                 6,
                 new AspectList().add(Aspect.CRAFT, 64).add(Aspect.EXCHANGE, 32).add(Aspect.AURA, 16).add(Aspect.MAGIC, 16).add(Aspect.METAL, 8).add(Aspect.CRYSTAL, 8),
                 AEBlocks.MOLECULAR_ASSEMBLER.block(),

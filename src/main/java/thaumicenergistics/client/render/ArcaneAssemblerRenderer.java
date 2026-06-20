@@ -8,8 +8,8 @@ import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.particle.ParticleCrafting;
+import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.tile.TileArcaneAssembler;
 
 /**
@@ -18,7 +18,7 @@ import thaumicenergistics.tile.TileArcaneAssembler;
 @Deprecated
 @SideOnly(Side.CLIENT)
 public class ArcaneAssemblerRenderer extends TileEntitySpecialRenderer<TileArcaneAssembler> {
-    private final double particleMultiplier = ThEApi.instance().config().arcaneAssemblerParticleMultiplier();
+    private final double particleMultiplier = ThEFeatures.instance().config().arcaneAssemblerParticleMultiplier();
     private double particleProgress = 0.0F;
 
     @Override

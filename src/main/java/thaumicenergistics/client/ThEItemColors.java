@@ -10,7 +10,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.items.ItemDummyAspect;
 
 import javax.annotation.Nullable;
@@ -26,12 +25,12 @@ public class ThEItemColors {
 
     public static void registerItemColors() {
         //IItemColor dummyItemColor = new ThEItemColors.DummyAspectItemColors();
-        //ThEApi.instance().items().dummyAspect().maybeItem()
+        //ThEFeatures.instance().items().dummyAspect().maybeItem()
                 //.ifPresent(item -> Minecraft.getMinecraft().getItemColors().registerItemColorHandler(dummyItemColor, item));
 
         //IItemColor terminalItemColor = new ThEItemColors.TerminalItemColor();
         //IBlockColor terminalBlockColor = new ThEItemColors.TerminalBlockColor();
-        //ThEApi.instance().items().arcaneTerminal().maybeItem().ifPresent(item -> {
+        //ThEFeatures.instance().items().arcaneTerminal().maybeItem().ifPresent(item -> {
             //Minecraft.getMinecraft().getItemColors().registerItemColorHandler(terminalItemColor, item);
             // Minecraft.getMinecraft().getBlockColors().registerBlockColorHandler(terminalBlockColor, item);
         //});

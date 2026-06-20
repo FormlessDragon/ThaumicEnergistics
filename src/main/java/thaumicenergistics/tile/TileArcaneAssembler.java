@@ -24,9 +24,9 @@ import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aura.AuraHelper;
 import thaumicenergistics.api.IThELangKey;
-import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.client.gui.IThEGuiTile;
+import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.init.ModGUIs;
@@ -281,7 +281,6 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThESubscriba
         }
         if (recipe.visCost() > 0) {
             // TODO
-            //final ItemStack visRangeUpgrade = ThEApi.instance().items().upgradeArcane().maybeStack(1).orElseThrow(RuntimeException::new);
             final ItemStack visRangeUpgrade = ThEItems.UPGRADE_ARCANE.stack(1);
             TCUtil.drainVis(this.getWorld(), this.getPos(), recipe.visCost() * pushMultiplier, this.upgradeInv.getInstalledUpgrades(visRangeUpgrade.getItem()));
         }
@@ -320,7 +319,7 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThESubscriba
     @Nonnull
     @Override
     public TickingRequest getTickingRequest(@Nonnull IGridNode node) {
-        return new TickingRequest(ThEApi.instance().config().tickTimeArcaneAssemblerMin(), ThEApi.instance().config().tickTimeArcaneAssemblerMax(), !this.isBusy());
+        return new TickingRequest(ThEFeatures.instance().config().tickTimeArcaneAssemblerMin(), ThEFeatures.instance().config().tickTimeArcaneAssemblerMax(), !this.isBusy());
     }
 
     /**
@@ -413,17 +412,17 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThESubscriba
         if (this.isActive()) {
             if (this.hasJob()) {
                 if (this.isCrafting()) {
-                    consumer.accept(localizationMapper.apply(ThEApi.instance().lang().arcaneAssemblerBusy()));
-                    consumer.accept(localizationMapper.apply(ThEApi.instance().lang().arcaneAssemblerProgress()) + " " + this.getProgress() + "%");
+                    consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerBusy()));
+                    consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerProgress()) + " " + this.getProgress() + "%");
                 } else {
-                    consumer.accept(localizationMapper.apply(ThEApi.instance().lang().arcaneAssemblerPrep()));
+                    consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerPrep()));
                     if (this.isMissingAspect())
-                        consumer.accept(localizationMapper.apply(ThEApi.instance().lang().arcaneAssemblerNoAspect()));
+                        consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerNoAspect()));
                     if (!this.getHasEnoughVis())
-                        consumer.accept(localizationMapper.apply(ThEApi.instance().lang().arcaneAssemblerNoVis()));
+                        consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerNoVis()));
                 }
             } else
-                consumer.accept(localizationMapper.apply(ThEApi.instance().lang().arcaneAssemblerIdle()));
+                consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerIdle()));
         }
     }
 

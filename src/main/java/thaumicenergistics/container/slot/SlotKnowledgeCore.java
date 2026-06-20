@@ -1,7 +1,7 @@
 package thaumicenergistics.container.slot;
 
 import net.minecraftforge.items.IItemHandler;
-import thaumicenergistics.ThaumicEnergisticsApi;
+import thaumicenergistics.core.ThEFeatures;
 
 import javax.annotation.Nullable;
 
@@ -16,6 +16,6 @@ public class SlotKnowledgeCore extends ThESlot {
     @Nullable
     @Override
     public String getSlotTexture() {
-        return ThaumicEnergisticsApi.instance().textures().knowledgeCoreSlot().toString();
+        return ThEFeatures.instance().textures().knowledgeCoreSlot().toString();
     }
 }

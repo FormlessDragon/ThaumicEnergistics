@@ -5,10 +5,10 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
-import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.gui.component.GuiImageButton;
 import thaumicenergistics.client.gui.style.ThEGuiStyleManager;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
+import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.util.KnowledgeCoreUtil;
@@ -76,7 +76,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     @Override
     protected void drawVisInfo() {
         this.fontRenderer.drawString(
-                ThEApi.instance().lang().guiVisRequired().getLocalizedKey(this.getVisIfSet(this.visRequired)),
+                ThEFeatures.instance().lang().guiVisRequired().getLocalizedKey(this.getVisIfSet(this.visRequired)),
                 60,
                 this.ySize - 168,
                 4210752);
@@ -95,7 +95,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
                 renderButton(coreViewButton, false);
                 renderButton(coreDelButton, false);
                 if ((coreViewButton.isHovered() || coreDelButton.isHovered()))
-                    renderText(ThEApi.instance().lang().guiKnowledgeCoreBlank().getLocalizedKey(), mouseX, mouseY);
+                    renderText(ThEFeatures.instance().lang().guiKnowledgeCoreBlank().getLocalizedKey(), mouseX, mouseY);
             } else {
                 renderButton(coreViewButton, true);
                 renderButton(coreDelButton, true);
@@ -103,17 +103,17 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
             if (coreAddButton.isHovered()) {
                 if (hasRecipe) {
                     if (!hasArcaneRecipe)
-                        renderText(ThEApi.instance().lang().guiRecipeNotArcane().getLocalizedKey(), mouseX, mouseY);
+                        renderText(ThEFeatures.instance().lang().guiRecipeNotArcane().getLocalizedKey(), mouseX, mouseY);
                     else if (recipeExists)
-                        renderText(ThEApi.instance().lang().guiRecipeAlreadyStored().getLocalizedKey(), mouseX, mouseY);
-                } else renderText(ThEApi.instance().lang().guiNoRecipe().getLocalizedKey(), mouseX, mouseY);
+                        renderText(ThEFeatures.instance().lang().guiRecipeAlreadyStored().getLocalizedKey(), mouseX, mouseY);
+                } else renderText(ThEFeatures.instance().lang().guiNoRecipe().getLocalizedKey(), mouseX, mouseY);
             }
         } else {
             renderButton(coreAddButton, false);
             renderButton(coreViewButton, false);
             renderButton(coreDelButton, false);
             if ((coreViewButton.isHovered() || coreDelButton.isHovered() || coreAddButton.isHovered()))
-                renderText(ThEApi.instance().lang().guiInsertKnowledgeCore().getLocalizedKey(), mouseX, mouseY);
+                renderText(ThEFeatures.instance().lang().guiInsertKnowledgeCore().getLocalizedKey(), mouseX, mouseY);
         }
     }
 

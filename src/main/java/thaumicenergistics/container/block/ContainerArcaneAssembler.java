@@ -12,11 +12,11 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.PlayerMainInvWrapper;
-import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
 import thaumicenergistics.container.slot.SlotUpgrade;
+import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketPlaySound;
 import thaumicenergistics.tile.TileArcaneAssembler;
@@ -52,11 +52,11 @@ public class ContainerArcaneAssembler extends ContainerBase {
 
     public void playCoreSound(EntityPlayer player) { // plays the right sound, when the Knowledge Core gets removed or placed in the slot
         if (this.getInventory("cores").getStackInSlot(0).isEmpty()) {
-            player.world.playSound(player, TE.getPos(), new SoundEvent(ThEApi.instance().sounds().knowledgeCorePowerDown()), SoundCategory.BLOCKS, 1, 1);
-            PacketHandler.sendToPlayer((EntityPlayerMP) player, new PacketPlaySound(TE.getPos(), ThEApi.instance().sounds().knowledgeCorePowerDown(), SoundCategory.BLOCKS, 1, 1));
+            player.world.playSound(player, TE.getPos(), new SoundEvent(ThEFeatures.instance().sounds().knowledgeCorePowerDown()), SoundCategory.BLOCKS, 1, 1);
+            PacketHandler.sendToPlayer((EntityPlayerMP) player, new PacketPlaySound(TE.getPos(), ThEFeatures.instance().sounds().knowledgeCorePowerDown(), SoundCategory.BLOCKS, 1, 1));
         } else {
-            player.world.playSound(player, TE.getPos(), new SoundEvent(ThEApi.instance().sounds().knowledgeCorePowerUp()), SoundCategory.BLOCKS, 1, 1);
-            PacketHandler.sendToPlayer((EntityPlayerMP) player, new PacketPlaySound(TE.getPos(), ThEApi.instance().sounds().knowledgeCorePowerUp(), SoundCategory.BLOCKS, 1, 1));
+            player.world.playSound(player, TE.getPos(), new SoundEvent(ThEFeatures.instance().sounds().knowledgeCorePowerUp()), SoundCategory.BLOCKS, 1, 1);
+            PacketHandler.sendToPlayer((EntityPlayerMP) player, new PacketPlaySound(TE.getPos(), ThEFeatures.instance().sounds().knowledgeCorePowerUp(), SoundCategory.BLOCKS, 1, 1));
         }
     }
 

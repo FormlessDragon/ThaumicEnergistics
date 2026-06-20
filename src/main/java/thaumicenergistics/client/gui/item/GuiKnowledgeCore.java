@@ -5,9 +5,9 @@ import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Slot;
 import net.minecraft.util.ResourceLocation;
 import thaumicenergistics.thaumicenergistics.Reference;
-import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
+import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketUIAction;
@@ -76,7 +76,7 @@ public class GuiKnowledgeCore extends GuiContainer {
                 this.drawTexturedModalRect(this.xSize - 22, 0, 16, 9 * 16, 16, 16);
                 break;
         }
-        this.fontRenderer.drawString(ThEApi.instance().lang().itemKnowledgeCore().getLocalizedKey(), 8, 5, 4210752);
+        this.fontRenderer.drawString(ThEFeatures.instance().lang().itemKnowledgeCore().getLocalizedKey(), 8, 5, 4210752);
     }
 
     @Override

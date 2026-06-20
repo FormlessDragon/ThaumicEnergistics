@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.MathHelper;
-import thaumicenergistics.api.ThEApi;
+import thaumicenergistics.core.ThEFeatures;
 
 import java.awt.*;
 
@@ -17,8 +17,8 @@ import java.awt.*;
  */
 @Deprecated
 public class GuiSearchField extends GuiTextField {
-    private static final String ASPECT_SEARCH_PREFIX = ThEApi.instance().config().aspectSearchPrefix();
-    private static final String MOD_SEARCH_PREFIX = ThEApi.instance().config().modSearchPrefix();
+    private static final String ASPECT_SEARCH_PREFIX = ThEFeatures.instance().config().aspectSearchPrefix();
+    private static final String MOD_SEARCH_PREFIX = ThEFeatures.instance().config().modSearchPrefix();
     protected int enabledTextColor = 0xFFE0E0E0;
     protected int disabledTextColor = 0xFF707070;
     protected int aspectSearchTextColor = 0xFFE6B3FF;

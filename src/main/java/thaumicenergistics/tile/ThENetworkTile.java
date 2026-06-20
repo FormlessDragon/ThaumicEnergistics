@@ -9,7 +9,7 @@ import ae2.tile.grid.AENetworkedTile;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.NBTTagCompound;
 import thaumicenergistics.api.IThELangKey;
-import thaumicenergistics.api.ThEApi;
+import thaumicenergistics.core.ThEFeatures;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -109,12 +109,12 @@ public abstract class ThENetworkTile extends AENetworkedTile implements ThENetwo
     public void withPowerStateText(Consumer<String> consumer, Function<IThELangKey, String> localizationMapper) {
         if (this.isPowered()) {
             if (this.isVisuallyOnline()) {
-                consumer.accept(localizationMapper.apply(ThEApi.instance().lang().deviceOnline()));
+                consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().deviceOnline()));
             } else {
-                consumer.accept(localizationMapper.apply(ThEApi.instance().lang().deviceMissingChannel()));
+                consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().deviceMissingChannel()));
             }
         } else {
-            consumer.accept(localizationMapper.apply(ThEApi.instance().lang().deviceOffline()));
+            consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().deviceOffline()));
         }
     }
 

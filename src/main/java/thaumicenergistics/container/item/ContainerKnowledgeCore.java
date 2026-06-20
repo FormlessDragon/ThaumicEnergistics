@@ -8,13 +8,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.items.wrapper.InvWrapper;
-import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.slot.SlotGhost;
+import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.network.packets.PacketUIAction;
@@ -146,7 +146,7 @@ public class ContainerKnowledgeCore extends ContainerBase implements ISubGui {
     }
 
     public void playWriteSound(EntityPlayer player) {
-        player.world.playSound(player, parentContainer.getPartPos(), new SoundEvent(ThEApi.instance().sounds().knowledgeCoreWrite()), SoundCategory.BLOCKS, 1, 1);
+        player.world.playSound(player, parentContainer.getPartPos(), new SoundEvent(ThEFeatures.instance().sounds().knowledgeCoreWrite()), SoundCategory.BLOCKS, 1, 1);
     }
 
     public ModGUIs getGUIAction() {

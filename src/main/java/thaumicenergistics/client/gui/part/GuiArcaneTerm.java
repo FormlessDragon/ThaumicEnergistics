@@ -8,9 +8,9 @@ import ae2.core.AEConfig;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentTranslation;
-import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.gui.style.ThEGuiStyleManager;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
+import thaumicenergistics.core.ThEFeatures;
 
 public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
     public static final String STYLE_PATH = "/screens/terminals/arcane_terminal.json";
@@ -61,7 +61,7 @@ public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
 
         if (this.discount > 0f) {
             this.fontRenderer.drawString(
-                    ThEApi.instance().lang().guiVisDiscount().getLocalizedKey((int) (this.discount * 100)),
+                    ThEFeatures.instance().lang().guiVisDiscount().getLocalizedKey((int) (this.discount * 100)),
                     90,
                     this.ySize - 94,
                     4210752);
@@ -70,7 +70,7 @@ public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
 
     protected void drawVisInfo() {
         this.fontRenderer.drawString(
-                ThEApi.instance()
+                ThEFeatures.instance()
                         .lang()
                         .guiVisRequiredOutOf()
                         .getLocalizedKey(

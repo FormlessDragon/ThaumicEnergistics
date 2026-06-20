@@ -7,9 +7,9 @@ import net.minecraftforge.items.IItemHandler;
 import thaumicenergistics.thaumicenergistics.Reference;
 import org.lwjgl.opengl.GL11;
 import thaumcraft.codechicken.lib.math.MathHelper;
-import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.client.gui.GuiBase;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
+import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketAssemblerGUIUpdateRequest;
 import thaumicenergistics.network.packets.PacketSubscribe;
@@ -64,13 +64,13 @@ public class GuiArcaneAssembler extends GuiBase {
     @Override
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
         super.drawGuiContainerForegroundLayer(mouseX, mouseY);
-        this.fontRenderer.drawString(ThEApi.instance().lang().tileArcaneAssembler().getLocalizedKey(), 8, 3, 4210752);
+        this.fontRenderer.drawString(ThEFeatures.instance().lang().tileArcaneAssembler().getLocalizedKey(), 8, 3, 4210752);
         this.fontRenderer.drawString(I18n.format("container.inventory"), 8, this.getYSize() - 92, 4210752);
         if (!this.inv.getStackInSlot(0).isEmpty()) {
             if (this.aspectExists.containsValue(false))
-                this.fontRenderer.drawString(ThEApi.instance().lang().guiOutOfAspect().getLocalizedKey(), 100, this.getYSize() - 92, Color.RED.getRGB());
+                this.fontRenderer.drawString(ThEFeatures.instance().lang().guiOutOfAspect().getLocalizedKey(), 100, this.getYSize() - 92, Color.RED.getRGB());
             if (!this.hasEnoughVis)
-                this.fontRenderer.drawString(ThEApi.instance().lang().guiOutOfVis().getLocalizedKey(), 115, 3, Color.RED.getRGB());
+                this.fontRenderer.drawString(ThEFeatures.instance().lang().guiOutOfVis().getLocalizedKey(), 115, 3, Color.RED.getRGB());
         }
     }
 
