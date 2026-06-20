@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
+import thaumcraft.common.tiles.essentia.TileJarFillable;
 import thaumicenergistics.me.key.AEEssentiaKey;
 
 import java.util.LinkedHashMap;
@@ -49,6 +50,83 @@ class EssentiaContainerStrategyUtilTest {
 
         assertEquals(4, inserted);
         assertEquals(0, container.containerContains(Aspect.AIR));
+    }
+
+    @Test
+    void simulatedInsertCapsSingleEssentiaProbeAtThaumcraftJarCapacity() {
+        SingleInsertThaumcraftJar container = new SingleInsertThaumcraftJar(TileJarFillable.CAPACITY * 2);
+
+        int inserted = EssentiaContainerStrategyUtil.simulateInsert(
+                container,
+                Aspect.AIR,
+                TileJarFillable.CAPACITY + 100);
+
+        assertEquals(TileJarFillable.CAPACITY, inserted);
+        assertEquals(TileJarFillable.CAPACITY, container.singleInsertAttempts());
+        assertEquals(0, container.containerContains(Aspect.AIR));
+    }
+
+    @Test
+    void simulatedInsertPreservesGenericProbeSafetyLimitForNonJarSingleInsertContainers() {
+        TestAspectContainer container = new TestAspectContainer(TileJarFillable.CAPACITY * 2, false, 1);
+
+        int inserted = EssentiaContainerStrategyUtil.simulateInsert(
+                container,
+                Aspect.AIR,
+                TileJarFillable.CAPACITY + 2);
+
+        assertEquals(TileJarFillable.CAPACITY + 1, inserted);
+        assertEquals(TileJarFillable.CAPACITY + 1, container.singleInsertAttempts);
+        assertEquals(0, container.containerContains(Aspect.AIR));
+    }
+
+    @Test
+    void simulatedInsertRollsBackSingleEssentiaProbeToOriginalAmount() {
+        TestAspectContainer container = new TestAspectContainer(TileJarFillable.CAPACITY * 2, false, 1);
+        container.addToContainer(Aspect.AIR, 1);
+
+        int inserted = EssentiaContainerStrategyUtil.simulateInsert(container, Aspect.AIR, 4);
+
+        assertEquals(4, inserted);
+        assertEquals(1, container.containerContains(Aspect.AIR));
+    }
+
+    @Test
+    void storageSimulationCapsSingleEssentiaProbeAtThaumcraftJarCapacityWithoutCallback() {
+        SingleInsertThaumcraftJar container = new SingleInsertThaumcraftJar(TileJarFillable.CAPACITY * 2);
+        CountingCallback callback = new CountingCallback();
+        MEStorage storage = EssentiaContainerStrategyUtil.createStorage(container, false, callback);
+        AEEssentiaKey air = AEEssentiaKey.of(Aspect.AIR);
+
+        long inserted = storage.insert(
+                air,
+                TileJarFillable.CAPACITY + 100L,
+                Actionable.SIMULATE,
+                IActionSource.empty());
+
+        assertEquals(TileJarFillable.CAPACITY, inserted);
+        assertEquals(TileJarFillable.CAPACITY, container.singleInsertAttempts());
+        assertEquals(0, container.containerContains(Aspect.AIR));
+        assertEquals(0, callback.calls);
+    }
+
+    @Test
+    void storageSimulationPreservesGenericProbeSafetyLimitForNonJarSingleInsertContainers() {
+        TestAspectContainer container = new TestAspectContainer(TileJarFillable.CAPACITY * 2, false, 1);
+        CountingCallback callback = new CountingCallback();
+        MEStorage storage = EssentiaContainerStrategyUtil.createStorage(container, false, callback);
+        AEEssentiaKey air = AEEssentiaKey.of(Aspect.AIR);
+
+        long inserted = storage.insert(
+                air,
+                TileJarFillable.CAPACITY + 2L,
+                Actionable.SIMULATE,
+                IActionSource.empty());
+
+        assertEquals(TileJarFillable.CAPACITY + 1, inserted);
+        assertEquals(TileJarFillable.CAPACITY + 1, container.singleInsertAttempts);
+        assertEquals(0, container.containerContains(Aspect.AIR));
+        assertEquals(0, callback.calls);
     }
 
     @Test
@@ -111,6 +189,7 @@ class EssentiaContainerStrategyUtilTest {
         private final int capacity;
         private final boolean singleAspect;
         private final int maxAcceptedPerCall;
+        private int singleInsertAttempts;
 
         private TestAspectContainer(int capacity, boolean singleAspect, int maxAcceptedPerCall) {
             this.capacity = capacity;
@@ -146,6 +225,9 @@ class EssentiaContainerStrategyUtilTest {
 
         @Override
         public int addToContainer(Aspect aspect, int amount) {
+            if (amount == 1) {
+                this.singleInsertAttempts++;
+            }
             if (amount <= 0 || aspect == null || amount > this.maxAcceptedPerCall) {
                 return amount;
             }
@@ -229,6 +311,63 @@ class EssentiaContainerStrategyUtilTest {
         @Override
         public int addToContainer(Aspect aspect, int amount) {
             throw new NullPointerException("test container failure");
+        }
+    }
+
+    private static final class SingleInsertThaumcraftJar extends TileJarFillable {
+        private final TestAspectContainer delegate;
+
+        private SingleInsertThaumcraftJar(int capacity) {
+            this.delegate = new TestAspectContainer(capacity, false, 1);
+        }
+
+        @Override
+        public AspectList getAspects() {
+            return this.delegate.getAspects();
+        }
+
+        @Override
+        public void setAspects(AspectList aspects) {
+            this.delegate.setAspects(aspects);
+        }
+
+        @Override
+        public boolean doesContainerAccept(Aspect aspect) {
+            return this.delegate.doesContainerAccept(aspect);
+        }
+
+        @Override
+        public int addToContainer(Aspect aspect, int amount) {
+            return this.delegate.addToContainer(aspect, amount);
+        }
+
+        @Override
+        public boolean takeFromContainer(Aspect aspect, int amount) {
+            return this.delegate.takeFromContainer(aspect, amount);
+        }
+
+        @Override
+        public boolean takeFromContainer(AspectList aspects) {
+            return this.delegate.takeFromContainer(aspects);
+        }
+
+        @Override
+        public boolean doesContainerContainAmount(Aspect aspect, int amount) {
+            return this.delegate.doesContainerContainAmount(aspect, amount);
+        }
+
+        @Override
+        public boolean doesContainerContain(AspectList aspects) {
+            return this.delegate.doesContainerContain(aspects);
+        }
+
+        @Override
+        public int containerContains(Aspect aspect) {
+            return this.delegate.containerContains(aspect);
+        }
+
+        private int singleInsertAttempts() {
+            return this.delegate.singleInsertAttempts;
         }
     }
 

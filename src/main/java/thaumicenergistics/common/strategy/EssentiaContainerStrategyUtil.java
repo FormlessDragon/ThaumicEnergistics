@@ -9,6 +9,7 @@ import net.minecraft.util.text.ITextComponent;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
+import thaumcraft.common.tiles.essentia.TileJarFillable;
 import thaumicenergistics.util.ThELog;
 import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.me.key.AEEssentiaKeys;
@@ -17,7 +18,8 @@ import java.util.Objects;
 
 final class EssentiaContainerStrategyUtil {
 
-    static final int LEGACY_JAR_ASPECT_CAPACITY_ESTIMATE = 250;
+    static final int THAUMCRAFT_JAR_ASPECT_CAPACITY = TileJarFillable.CAPACITY;
+    static final int GENERIC_SINGLE_INSERT_PROBE_LIMIT = 250;
 
     private EssentiaContainerStrategyUtil() {
     }
@@ -58,7 +60,7 @@ final class EssentiaContainerStrategyUtil {
                 inserted++;
                 remaining--;
             }
-            int singleInsertLimit = Math.min(remaining, LEGACY_JAR_ASPECT_CAPACITY_ESTIMATE);
+            int singleInsertLimit = Math.min(remaining, getSingleInsertProbeBudget(container, inserted));
             for (int attempts = 0; attempts < singleInsertLimit; attempts++) {
                 if (insertOnce(container, aspect, 1) != 1) {
                     break;
@@ -77,6 +79,13 @@ final class EssentiaContainerStrategyUtil {
             return 0;
         }
         return inserted;
+    }
+
+    private static int getSingleInsertProbeBudget(IAspectContainer container, int alreadyInserted) {
+        int boundary = container instanceof TileJarFillable
+                ? THAUMCRAFT_JAR_ASPECT_CAPACITY
+                : alreadyInserted + GENERIC_SINGLE_INSERT_PROBE_LIMIT;
+        return Math.max(0, boundary - alreadyInserted);
     }
 
     static boolean canAttemptInsert(IAspectContainer container, Aspect aspect) {
