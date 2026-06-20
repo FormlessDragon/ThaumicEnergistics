@@ -1,5 +1,6 @@
 package thaumicenergistics.container.item;
 
+import ae2.container.AEBaseContainer;
 import ae2.api.storage.ILinkStatus;
 import ae2.api.storage.MEStorage;
 import ae2.api.util.IConfigManager;
@@ -26,7 +27,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.container.ActionType;
+import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
+import thaumicenergistics.container.slot.SlotGhost;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.network.packets.PacketUIAction;
 import thaumicenergistics.test.FakeMinecraft;
@@ -116,6 +119,27 @@ class ContainerKnowledgeCoreTest {
                 () -> assertSame(locator, container.getLocator()),
                 () -> assertSame(host, container.getHost()),
                 () -> assertSame(host, container.getLocator().locate(player, IArcaneTerminalHost.class)));
+    }
+
+    @Test
+    void registersKnowledgeCoreGhostSlotsWithSupergiantSlotSemantics() {
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
+        RecordingArcaneHost host = new RecordingArcaneHost();
+        GuiHostLocator locator = new FixedArcaneHostLocator(host);
+        ContainerArcaneInscriber parent = newParent(player, host, locator);
+
+        ContainerKnowledgeCore container = new ContainerKnowledgeCore(
+                player, ModGUIs.KNOWLEDGE_CORE_VIEW, parent, locator);
+        AEBaseContainer aeContainer = assertInstanceOf(AEBaseContainer.class, container);
+
+        assertAll(
+                () -> assertEquals(9, aeContainer.getSlots(ThESlotSemantics.KNOWLEDGE_CORE).size()),
+                () -> assertEquals(container.inventorySlots,
+                        aeContainer.getSlots(ThESlotSemantics.KNOWLEDGE_CORE)),
+                () -> assertTrue(aeContainer.getSlots(ThESlotSemantics.KNOWLEDGE_CORE).stream()
+                        .allMatch(slot -> slot instanceof SlotGhost)),
+                () -> assertTrue(aeContainer.getSlots(ThESlotSemantics.KNOWLEDGE_CORE).stream()
+                        .allMatch(slot -> aeContainer.getSlotSemantic(slot) == ThESlotSemantics.KNOWLEDGE_CORE)));
     }
 
     @Test

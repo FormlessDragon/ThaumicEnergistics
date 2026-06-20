@@ -1,7 +1,6 @@
 package thaumicenergistics.client.gui;
 
 import ae2.api.config.Setting;
-import ae2.api.config.Settings;
 import ae2.api.util.IConfigManager;
 import ae2.api.util.IConfigurableObject;
 import ae2.client.gui.widgets.ITooltip;
@@ -17,7 +16,6 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.opengl.GL11;
-import thaumicenergistics.client.gui.component.GuiImgButton;
 import thaumicenergistics.client.gui.helpers.GuiScrollBar;
 import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.slot.ISlotOptional;
@@ -27,9 +25,6 @@ import thaumicenergistics.container.slot.ThESlot;
 import java.awt.*;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static thaumicenergistics.config.ThESettings.actions;
-import static thaumicenergistics.config.ThESettings.searchMode;
 
 /**
  * @author BrockWS
@@ -149,14 +144,6 @@ public abstract class GuiBase extends GuiContainer {
         if (this.inventorySlots instanceof IConfigurableObject) {
             IConfigManager configManager = ((IConfigurableObject) this.inventorySlots).getConfigManager();
             putSetting(configManager, setting, value);
-            this.buttonList.forEach(btn -> {
-                if (!(btn instanceof GuiImgButton))
-                    return;
-                GuiImgButton b = (GuiImgButton) btn;
-                if (actions() == b.getSetting() || Settings.TERMINAL_STYLE == b.getSetting() || searchMode() == b.getSetting())
-                    return;
-                b.set(getSetting(configManager, b.getSetting()));
-            });
         }
     }
 
@@ -175,11 +162,6 @@ public abstract class GuiBase extends GuiContainer {
             throw new IllegalArgumentException("Cannot set config setting " + setting.getName() + " to null");
         }
         configManager.putSetting(setting, setting.getEnumClass().cast(value));
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Enum<?> getSetting(IConfigManager configManager, Setting<?> setting) {
-        return configManager.getSetting((Setting) setting);
     }
 
     protected abstract ResourceLocation getGuiBackground();

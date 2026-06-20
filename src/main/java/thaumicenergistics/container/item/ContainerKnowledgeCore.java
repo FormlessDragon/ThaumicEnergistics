@@ -12,6 +12,7 @@ import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.ContainerBase;
+import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.slot.SlotGhost;
 import thaumicenergistics.core.definitions.ThEItems;
@@ -91,7 +92,7 @@ public class ContainerKnowledgeCore extends ContainerBase implements ISubGui {
                 KnowledgeCoreUtil.Recipe recipe = KnowledgeCoreUtil.getRecipe(knowledgeCoreStack, i);
                 if (recipe != null) slotGhost.putStack(recipe.result());
             }
-            this.addSlotToContainer(slotGhost);
+            this.addSlot(slotGhost, ThESlotSemantics.KNOWLEDGE_CORE);
         }
     }
 
