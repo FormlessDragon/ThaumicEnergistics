@@ -4,10 +4,13 @@ import ae2.api.config.Settings;
 import ae2.api.config.SortOrder;
 import ae2.api.util.IConfigManager;
 import ae2.api.util.IConfigurableObject;
+import net.minecraft.init.Bootstrap;
 import net.minecraft.util.ResourceLocation;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.config.AESettings;
 import thaumicenergistics.container.ContainerBase;
+import thaumicenergistics.test.FakeMinecraft;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -15,6 +18,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GuiBaseTest {
+
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        if (!Bootstrap.isRegistered()) {
+            Bootstrap.register();
+        }
+    }
 
     @Test
     void updateSettingRejectsNullValueBeforeSupergiantManagerCanStoreIt() {
@@ -73,7 +83,7 @@ class GuiBaseTest {
         private final IConfigManager configManager;
 
         private TestContainer(AESettings.SUBJECT subject) {
-            super(null);
+            super(FakeMinecraft.player(FakeMinecraft.clientWorld()));
             this.configManager = AESettings.createConfigManager(subject, () -> {
             });
         }
@@ -86,7 +96,7 @@ class GuiBaseTest {
 
     private static final class NonConfigurableContainer extends ContainerBase {
         private NonConfigurableContainer() {
-            super(null);
+            super(FakeMinecraft.player(FakeMinecraft.clientWorld()));
         }
     }
 }

@@ -1,12 +1,11 @@
 package thaumicenergistics.container.block;
 
+import ae2.container.SlotSemantics;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.SoundCategory;
@@ -15,15 +14,13 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.PlayerMainInvWrapper;
 import thaumicenergistics.api.ThEApi;
 import thaumicenergistics.container.ContainerBase;
+import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
 import thaumicenergistics.container.slot.SlotUpgrade;
-import thaumicenergistics.items.ItemKnowledgeCore;
-import thaumicenergistics.items.ItemMaterial;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketPlaySound;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.ForgeUtil;
-import thaumicenergistics.util.ItemHandlerUtil;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -36,9 +33,9 @@ public class ContainerArcaneAssembler extends ContainerBase {
     public ContainerArcaneAssembler(EntityPlayer player, TileArcaneAssembler TE) {
         super(player);
         this.TE = TE;
-        this.addSlotToContainer(new SlotKnowledgeCore(this.getInventory("cores"), 0, 81, 66));
+        this.addSlot(new SlotKnowledgeCore(this.getInventory("cores"), 0, 81, 66), ThESlotSemantics.KNOWLEDGE_CORE);
         for (int i = 0; i < this.getInventory("upgrades").getSlots(); i++)
-            this.addSlotToContainer(new SlotUpgrade(this.getInventory("upgrades"), i, 186, 8 + i * 18));
+            this.addSlot(new SlotUpgrade(this.getInventory("upgrades"), i, 186, 8 + i * 18), SlotSemantics.UPGRADE);
         this.bindPlayerInventory(new PlayerMainInvWrapper(player.inventory), 0, 147);
         this.addListener(new KnowledgeCoreSlotListener());
         if (ForgeUtil.isServer())
@@ -93,12 +90,4 @@ public class ContainerArcaneAssembler extends ContainerBase {
         }
     }
 
-    @Override
-    protected void handleQuickMove(Slot slot, ItemStack itemStack) {
-        Item item = itemStack.getItem();
-        if (item instanceof ItemKnowledgeCore)
-            ItemHandlerUtil.quickMoveSlot(this.getInventory("cores"), slot);
-        else if (item instanceof ItemMaterial || item instanceof ae2.items.materials.MaterialItem)
-            ItemHandlerUtil.quickMoveSlot(this.getInventory("upgrades"), slot);
-    }
 }

@@ -1,23 +1,29 @@
 package thaumicenergistics.container;
 
+import ae2.container.AEBaseContainer;
+import ae2.container.SlotSemantics;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.ClickType;
-import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
-import thaumicenergistics.container.slot.*;
+import thaumicenergistics.container.slot.SlotArcaneResult;
+import thaumicenergistics.container.slot.SlotArmor;
+import thaumicenergistics.container.slot.SlotGhost;
+import thaumicenergistics.container.slot.SlotGhostEssentia;
+import thaumicenergistics.container.slot.ThEGhostSlot;
+import thaumicenergistics.container.slot.ThESlot;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketInvHeldUpdate;
 import thaumicenergistics.network.packets.PacketUIAction;
 import thaumicenergistics.util.EssentiaFilter;
 import thaumicenergistics.util.ForgeUtil;
-import thaumicenergistics.util.ItemHandlerUtil;
+
+import java.util.Objects;
 
 /**
  * The base container for all containers in Thaumic Energistics
@@ -25,18 +31,33 @@ import thaumicenergistics.util.ItemHandlerUtil;
  *
  * @author BrockWS
  */
-public abstract class ContainerBase extends Container {
+public abstract class ContainerBase extends AEBaseContainer {
 
     public EntityPlayer player;
 
     public ContainerBase(EntityPlayer player) {
+        super(Objects.requireNonNull(player, "player").inventory, null);
         this.player = player;
     }
 
     @Override
     public ItemStack transferStackInSlot(EntityPlayer playerIn, int index) {
-        // TODO
-        return ItemStack.EMPTY;
+        if (index < 0 || index >= this.inventorySlots.size()) {
+            return ItemStack.EMPTY;
+        }
+
+        Slot slot = this.getSlot(index);
+        ItemStack originalStack = slot.getStack().copy();
+        ItemStack movedStack = super.transferStackInSlot(playerIn, index);
+        if (!movedStack.isEmpty() || originalStack.isEmpty()) {
+            return movedStack;
+        }
+
+        ItemStack remainingStack = slot.getStack();
+        return ItemStack.areItemStacksEqual(originalStack, remainingStack)
+                && ItemStack.areItemStackTagsEqual(originalStack, remainingStack)
+                ? ItemStack.EMPTY
+                : originalStack;
     }
 
     @Override
@@ -96,18 +117,16 @@ public abstract class ContainerBase extends Container {
             }
             return ItemStack.EMPTY;
         }
-        if (clickType == ClickType.QUICK_MOVE) {
-            if (slot instanceof SlotUpgrade || slot instanceof SlotKnowledgeCore)
-                ItemHandlerUtil.quickMoveSlot(new InvWrapper(this.player.inventory), slot, false, true);
-            else
-                handleQuickMove(slot, slot.getStack());
-            return ItemStack.EMPTY;
-        }
         return super.slotClick(slotID, dragType, clickType, player);
     }
 
-    protected void handleQuickMove(Slot slot, ItemStack itemStack) {
-
+    @Override
+    protected boolean isValidQuickMoveDestination(Slot candidateSlot, ItemStack stackToMove, boolean fromPlayerSide) {
+        return !(candidateSlot instanceof SlotGhost)
+                && !(candidateSlot instanceof ThEGhostSlot)
+                && !(candidateSlot instanceof SlotGhostEssentia)
+                && !(candidateSlot instanceof SlotArcaneResult)
+                && super.isValidQuickMoveDestination(candidateSlot, stackToMove, fromPlayerSide);
     }
 
     @Override
@@ -116,20 +135,22 @@ public abstract class ContainerBase extends Container {
     }
 
     protected void bindPlayerArmour(EntityPlayer player, IItemHandler inv, int offsetX, int offsetY) {
-        this.addSlotToContainer(new SlotArmor(player, inv, 0, offsetX, offsetY + 8 + 18 * 3));
-        this.addSlotToContainer(new SlotArmor(player, inv, 1, offsetX, offsetY + 8 + 18 * 2));
-        this.addSlotToContainer(new SlotArmor(player, inv, 2, offsetX, offsetY + 8 + 18));
-        this.addSlotToContainer(new SlotArmor(player, inv, 3, offsetX, offsetY + 8));
+        this.addSlot(new SlotArmor(player, inv, 0, offsetX, offsetY + 8 + 18 * 3), ThESlotSemantics.PLAYER_ARMOR);
+        this.addSlot(new SlotArmor(player, inv, 1, offsetX, offsetY + 8 + 18 * 2), ThESlotSemantics.PLAYER_ARMOR);
+        this.addSlot(new SlotArmor(player, inv, 2, offsetX, offsetY + 8 + 18), ThESlotSemantics.PLAYER_ARMOR);
+        this.addSlot(new SlotArmor(player, inv, 3, offsetX, offsetY + 8), ThESlotSemantics.PLAYER_ARMOR);
     }
 
     protected void bindPlayerInventory(IItemHandler player, int offsetX, int offsetY) {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 9; j++) {
-                this.addSlotToContainer(new ThESlot(player, 9 * i + j + 9, offsetX + 8 + 18 * j, offsetY + 2 + 18 * i));
+                this.addSlot(new ThESlot(player, 9 * i + j + 9, offsetX + 8 + 18 * j, offsetY + 2 + 18 * i),
+                        SlotSemantics.PLAYER_INVENTORY);
             }
         }
         for (int i = 0; i < 9; i++) {
-            this.addSlotToContainer(new ThESlot(player, i, offsetX + 8 + 18 * i, offsetY + 60));
+            this.addSlot(new ThESlot(player, i, offsetX + 8 + 18 * i, offsetY + 60),
+                    SlotSemantics.PLAYER_HOTBAR);
         }
     }
 

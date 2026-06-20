@@ -6,6 +6,7 @@ import ae2.container.SlotSemantics;
 public final class ThESlotSemantics {
 
     public static final SlotSemantic ARCANE_CRYSTAL = SlotSemantics.register("THE_ARCANE_CRYSTAL", true);
+    public static final SlotSemantic KNOWLEDGE_CORE = SlotSemantics.register("THE_KNOWLEDGE_CORE", false, 100);
     public static final SlotSemantic PLAYER_ARMOR = SlotSemantics.register("THE_PLAYER_ARMOR", true, 2500);
 
     private ThESlotSemantics() {

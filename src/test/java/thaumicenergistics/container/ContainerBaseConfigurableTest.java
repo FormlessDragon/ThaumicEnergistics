@@ -4,6 +4,7 @@ import ae2.api.config.Setting;
 import ae2.api.config.Settings;
 import ae2.api.config.SortOrder;
 import ae2.api.util.IConfigManager;
+import net.minecraft.init.Bootstrap;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
@@ -11,8 +12,10 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import net.minecraftforge.fml.common.thread.SidedThreadGroups;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.config.AESettings;
+import thaumicenergistics.test.FakeMinecraft;
 
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +25,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ContainerBaseConfigurableTest {
+
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        if (!Bootstrap.isRegistered()) {
+            Bootstrap.register();
+        }
+    }
 
     @Test
     void detectAndSendChangesRejectsNullServerValueBeforeClientManagerCanStoreIt() throws Throwable {
@@ -89,7 +99,7 @@ class ContainerBaseConfigurableTest {
 
     private static final class TestContainer extends ContainerBaseConfigurable {
         private TestContainer(IConfigManager serverConfigManager) {
-            super(null, serverConfigManager);
+            super(FakeMinecraft.player(FakeMinecraft.serverWorld()), serverConfigManager);
         }
 
         private void attachListener(IContainerListener listener) {
