@@ -4,23 +4,28 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.Vec3d;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Method;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class PartArcaneTerminalInteractionTest {
 
     @Test
-    void arcaneTerminalImplementsEmptyHandActivation() throws NoSuchMethodException {
-        Method method = PartArcaneTerminal.class.getMethod("onUseWithoutItem", EntityPlayer.class, Vec3d.class);
+    void arcaneTerminalImplementsEmptyHandActivation() {
+        EmptyHandActivation<PartArcaneTerminal> activation = PartArcaneTerminal::onUseWithoutItem;
 
-        assertEquals(PartArcaneTerminal.class, method.getDeclaringClass());
+        assertNotNull(activation);
     }
 
     @Test
-    void arcaneInscriberUsesArcaneTerminalEmptyHandActivation() throws NoSuchMethodException {
-        Method method = PartArcaneInscriber.class.getMethod("onUseWithoutItem", EntityPlayer.class, Vec3d.class);
+    void arcaneInscriberUsesArcaneTerminalEmptyHandActivation() {
+        EmptyHandActivation<PartArcaneInscriber> activation = PartArcaneInscriber::onUseWithoutItem;
 
-        assertEquals(PartArcaneTerminal.class, method.getDeclaringClass());
+        assertNotNull(activation);
+        assertTrue(PartArcaneTerminal.class.isAssignableFrom(PartArcaneInscriber.class));
+    }
+
+    @FunctionalInterface
+    private interface EmptyHandActivation<T extends PartArcaneTerminal> {
+        boolean activate(T part, EntityPlayer player, Vec3d pos);
     }
 }

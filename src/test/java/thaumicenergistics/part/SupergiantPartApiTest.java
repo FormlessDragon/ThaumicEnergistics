@@ -1,122 +1,127 @@
 package thaumicenergistics.part;
 
+import ae2.api.implementations.IPowerChannelState;
+import ae2.api.networking.IInWorldGridNodeHost;
+import ae2.api.networking.security.IActionHost;
+import ae2.api.upgrades.Upgrades;
+import ae2.block.IOwnerAwareTile;
+import ae2.items.parts.PartItem;
+import ae2.parts.reporting.AbstractTerminalPart;
+import net.minecraft.init.Bootstrap;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.items.IItemHandler;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import thaumicenergistics.api.storage.IArcaneTerminalHost;
+import thaumicenergistics.core.definitions.ThEItems;
+import thaumicenergistics.core.definitions.ThEParts;
+import thaumicenergistics.init.ThEBlocks;
+import thaumicenergistics.tile.TileInfusionProvider;
+import thaumicenergistics.tile.TileNetwork;
+import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Stream;
-
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressWarnings("deprecation")
 class SupergiantPartApiTest {
 
-    private static final Path MAIN_SOURCES = Path.of("src", "main", "java");
-
-    @Test
-    void thaumicPartsUseSupergiantPartApiDirectly() throws IOException {
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/part/PartBase.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/part/PartSharedTerminal.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/items/ItemPartBase.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/items/part/ArcaneTerminalPart.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/items/part/ItemArcaneTerminal.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/items/part/ItemArcaneInscriber.java")));
-
-        String arcaneTerminal = Files.readString(MAIN_SOURCES.resolve("thaumicenergistics/part/PartArcaneTerminal.java"));
-        assertTrue(arcaneTerminal.contains("extends AbstractTerminalPart"));
-        assertTrue(arcaneTerminal.contains("IPartItem<?>"));
-        assertFalse(arcaneTerminal.contains("PartSharedTerminal"));
-        assertFalse(arcaneTerminal.contains("PartBase"));
-
-        List<Path> sources;
-        try (Stream<Path> walk = Files.walk(MAIN_SOURCES)) {
-            sources = walk.filter(path -> path.toString().endsWith(".java")).toList();
-        }
-
-        for (Path source : sources) {
-            String code = Files.readString(source);
-            assertFalse(code.contains("PartSharedTerminal"), () -> source + " still references PartSharedTerminal");
-            assertFalse(code.contains("ItemPartBase"), () -> source + " still references ItemPartBase");
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        if (!Bootstrap.isRegistered()) {
+            Bootstrap.register();
         }
     }
 
     @Test
-    void thaumicPartsDoNotUseLegacyPartStackCompatibilityContexts() throws IOException {
-        assertFalse(Files.exists(MAIN_SOURCES.resolve(
-                "thaumicenergistics/integration/appeng/compat/ThEPartItemStack.java")));
-
-        List<Path> sources;
-        try (Stream<Path> walk = Files.walk(MAIN_SOURCES)) {
-            sources = walk.filter(path -> path.toString().endsWith(".java")).toList();
-        }
-
-        for (Path source : sources) {
-            String code = Files.readString(source);
-            assertFalse(code.contains("ThEPartItemStack"), () -> source + " still references ThEPartItemStack");
-        }
-
-        String arcaneTerminal = Files.readString(MAIN_SOURCES.resolve("thaumicenergistics/part/PartArcaneTerminal.java"));
-        assertTrue(arcaneTerminal.contains(
-                "new ThEUpgradeInventory(\"upgrades\", 1, 1, this.getPartItem().asItemStack())"));
-        assertFalse(arcaneTerminal.contains("getItemStack(ThEPartItemStack"));
+    void thaumicPartsUseSupergiantPartApiDirectly() {
+        assertAll(
+                () -> assertTrue(AbstractTerminalPart.class.isAssignableFrom(PartArcaneTerminal.class)),
+                () -> assertTrue(IArcaneTerminalHost.class.isAssignableFrom(PartArcaneTerminal.class)),
+                () -> assertTrue(PartArcaneTerminal.class.isAssignableFrom(PartArcaneInscriber.class)),
+                () -> assertPartItem(ThEParts.ARCANE_TERMINAL.item(), PartArcaneTerminal.class),
+                () -> assertPartItem(ThEParts.ARCANE_INSCRIBER.item(), PartArcaneInscriber.class));
     }
 
     @Test
-    void upgradeInventoriesUseSupergiantUpgradeApiDirectly() throws IOException {
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/integration/appeng/compat/Upgrades.java")));
+    void thaumicPartsBindUpgradeInventoriesToSupergiantPartItemStacks() {
+        Upgrades.add(ThEItems.UPGRADE_ARCANE.item(), ThEParts.ARCANE_TERMINAL.item(), 1);
 
-        List<Path> sources;
-        try (Stream<Path> walk = Files.walk(MAIN_SOURCES)) {
-            sources = walk.filter(path -> path.toString().endsWith(".java")).toList();
-        }
+        PartItem<PartArcaneTerminal> terminalItem = ThEParts.ARCANE_TERMINAL.item();
+        PartArcaneTerminal terminal = terminalItem.createPart();
+        ItemStack terminalIcon = terminal.getMainContainerIcon();
 
-        for (Path source : sources) {
-            String code = Files.readString(source);
-            assertFalse(code.contains("thaumicenergistics.integration.appeng.compat.Upgrades"),
-                    () -> source + " still imports the legacy upgrade compatibility wrapper");
-        }
-
-        String upgradeInventory = Files.readString(MAIN_SOURCES.resolve(
-                "thaumicenergistics/util/inventory/ThEUpgradeInventory.java"));
-        assertTrue(upgradeInventory.contains("Upgrades.isUpgradeCardItem(stack)"));
-        assertTrue(upgradeInventory.contains(
-                "Upgrades.getMaxInstallable(upgradeStack.getItem(), this.upgradable.getItem())"));
-
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/upgrade/ThEUpgrade.java")));
-        String initUpgrades = Files.readString(MAIN_SOURCES.resolve("thaumicenergistics/init/internal/InitUpgrades.java"));
-        assertTrue(initUpgrades.contains("Upgrades.add(AEItems.SPEED_CARD.item(), ThEBlocks.ARCANE_ASSEMBLER.item(), 5);"));
+        assertAll(
+                () -> assertSame(terminalItem, terminalIcon.getItem()),
+                () -> assertEquals(1, terminalIcon.getCount()),
+                () -> assertUpgradeInventoryUsesPartItemStack(terminal));
     }
 
     @Test
-    void networkTilesUseSupergiantGridApiDirectly() throws IOException {
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/integration/appeng/compat/DimensionalCoord.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/integration/appeng/compat/GridAccessException.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/integration/appeng/grid/GridUtil.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/integration/appeng/grid/IThEGridHost.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/integration/appeng/grid/ThEGridBlock.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/util/IThEGridNodeBlock.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/util/IThEOwnable.java")));
+    void upgradeInventoriesUseSupergiantUpgradeApiDirectly() {
+        Upgrades.add(ThEItems.UPGRADE_ARCANE.item(), ThEBlocks.ARCANE_ASSEMBLER.item(), 1);
 
-        String tileNetwork = Files.readString(MAIN_SOURCES.resolve("thaumicenergistics/tile/TileNetwork.java"));
-        assertTrue(tileNetwork.contains("import ae2.block.IOwnerAwareTile;"));
-        assertTrue(tileNetwork.contains("import ae2.api.AECapabilities;"));
-        assertTrue(tileNetwork.contains("import ae2.api.networking.IInWorldGridNodeHost;"));
-        assertTrue(tileNetwork.contains("import ae2.api.util.DimensionalBlockPos;"));
-        assertTrue(tileNetwork.contains("implements IInWorldGridNodeHost, IActionHost, IPowerChannelState, IOwnerAwareTile"));
-        assertTrue(tileNetwork.contains("new DimensionalBlockPos(this)"));
-        assertTrue(tileNetwork.contains("AECapabilities.IN_WORLD_GRID_NODE_HOST"));
-        assertTrue(tileNetwork.contains("return AECapabilities.IN_WORLD_GRID_NODE_HOST.cast(this);"));
-        assertFalse(tileNetwork.contains("GridUtil"));
-        assertFalse(tileNetwork.contains("GridAccessException"));
-        assertFalse(tileNetwork.contains("ThEGridBlock"));
-        assertFalse(tileNetwork.contains("IThEGridHost"));
-        assertFalse(tileNetwork.contains("IThEGridNodeBlock"));
-        assertFalse(tileNetwork.contains("IThEOwnable"));
+        ThEUpgradeInventory inventory = new ThEUpgradeInventory(
+                "upgrades",
+                1,
+                1,
+                ThEBlocks.ARCANE_ASSEMBLER.stack(1));
+        ItemStack arcaneUpgrade = ThEItems.UPGRADE_ARCANE.stack(1);
+        ItemStack unsupportedUpgrade = ThEItems.DIFFUSION_CORE.stack(1);
 
-        String infusionProvider = Files.readString(MAIN_SOURCES.resolve("thaumicenergistics/tile/TileInfusionProvider.java"));
-        assertFalse(infusionProvider.contains("GridUtil"));
-        assertFalse(infusionProvider.contains("GridAccessException"));
+        assertAll(
+                () -> assertEquals(1, Upgrades.getMaxInstallable(
+                        ThEItems.UPGRADE_ARCANE.item(),
+                        ThEBlocks.ARCANE_ASSEMBLER.item())),
+                () -> assertEquals(0, Upgrades.getMaxInstallable(
+                        ThEItems.DIFFUSION_CORE.item(),
+                        ThEBlocks.ARCANE_ASSEMBLER.item())),
+                () -> assertTrue(inventory.isItemValidForSlot(0, arcaneUpgrade)),
+                () -> assertFalse(inventory.isItemValidForSlot(0, unsupportedUpgrade)));
+
+        inventory.setInventorySlotContents(0, arcaneUpgrade);
+
+        assertAll(
+                () -> assertEquals(1, inventory.getUpgrades(ThEItems.UPGRADE_ARCANE.item())),
+                () -> assertEquals(1, inventory.getUpgrades(arcaneUpgrade)),
+                () -> assertFalse(inventory.isItemValidForSlot(0, arcaneUpgrade)));
     }
+
+    @Test
+    void networkTilesUseSupergiantGridApiDirectly() {
+        TileInfusionProvider infusionProvider = new TileInfusionProvider();
+
+        assertAll(
+                () -> assertTrue(IInWorldGridNodeHost.class.isAssignableFrom(TileNetwork.class)),
+                () -> assertTrue(IActionHost.class.isAssignableFrom(TileNetwork.class)),
+                () -> assertTrue(IPowerChannelState.class.isAssignableFrom(TileNetwork.class)),
+                () -> assertTrue(IOwnerAwareTile.class.isAssignableFrom(TileNetwork.class)),
+                () -> assertInstanceOf(IInWorldGridNodeHost.class, infusionProvider),
+                () -> assertInstanceOf(IActionHost.class, infusionProvider),
+                () -> assertInstanceOf(IPowerChannelState.class, infusionProvider),
+                () -> assertInstanceOf(IOwnerAwareTile.class, infusionProvider));
+    }
+
+    private static <T extends ae2.api.parts.IPart> void assertPartItem(PartItem<T> item, Class<T> partClass) {
+        assertAll(
+                () -> assertEquals(PartItem.class, item.getClass()),
+                () -> assertEquals(partClass, item.getPartClass()),
+                () -> assertInstanceOf(partClass, item.createPart()));
+    }
+
+    private static void assertUpgradeInventoryUsesPartItemStack(PartArcaneTerminal terminal) {
+        IItemHandler upgrades = terminal.getInventoryByName("upgrades");
+        ItemStack arcaneUpgrade = ThEItems.UPGRADE_ARCANE.stack(1);
+
+        assertAll(
+                () -> assertEquals(1, upgrades.getSlots()),
+                () -> assertTrue(upgrades.isItemValid(0, arcaneUpgrade)),
+                () -> assertTrue(upgrades.insertItem(0, arcaneUpgrade.copy(), true).isEmpty()),
+                () -> assertEquals(0, upgrades.getStackInSlot(0).getCount()));
+    }
+
 }

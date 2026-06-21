@@ -1,61 +1,84 @@
 package thaumicenergistics.core.definitions;
 
+import ae2.api.parts.IPart;
+import ae2.core.definitions.ItemDefinition;
+import ae2.items.parts.PartItem;
+import ae2.parts.p2p.P2PTunnelPart;
+import ae2.parts.reporting.AbstractTerminalPart;
+import net.minecraft.item.Item;
+import net.minecraft.util.ResourceLocation;
 import org.junit.jupiter.api.Test;
+import thaumicenergistics.ThaumicEnergistics;
+import thaumicenergistics.api.ids.ThEPartIds;
+import thaumicenergistics.part.ArcaneP2PTunnelPart;
+import thaumicenergistics.part.PartArcaneInscriber;
+import thaumicenergistics.part.PartArcaneTerminal;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ThEPartRegistrationTest {
 
     @Test
-    void partsUseDedicatedSupergiantPartDefinitions() throws IOException {
-        String partIds = source("src/main/java/thaumicenergistics/api/ids/ThEPartIds.java");
-        String parts = source("src/main/java/thaumicenergistics/core/definitions/ThEParts.java");
-        String compactParts = compact(parts);
-        String items = source("src/main/java/thaumicenergistics/core/definitions/ThEItems.java");
-        String registry = source("src/main/java/thaumicenergistics/init/RegistryHandler.java");
-        String models = source("src/main/java/thaumicenergistics/init/client/InitModelRegistration.java");
-        String arcaneTerminalPart = source("src/main/java/thaumicenergistics/part/PartArcaneTerminal.java");
-        String arcaneInscriberPart = source("src/main/java/thaumicenergistics/part/PartArcaneInscriber.java");
+    void partsUseDedicatedSupergiantPartDefinitions() {
+        assertPartId(ThEPartIds.ARCANE_TERMINAL, "arcane_terminal");
+        assertPartId(ThEPartIds.ARCANE_INSCRIBER, "arcane_inscriber");
+        assertPartId(ThEPartIds.ARCANE_P2P_TUNNEL, "arcane_p2p_tunnel");
 
-        assertTrue(partIds.contains("ARCANE_TERMINAL = id(\"arcane_terminal\")"));
-        assertTrue(partIds.contains("ARCANE_INSCRIBER = id(\"arcane_inscriber\")"));
-        assertTrue(partIds.contains("ARCANE_P2P_TUNNEL = id(\"arcane_p2p_tunnel\")"));
+        assertPartDefinition(ThEParts.ARCANE_TERMINAL, ThEPartIds.ARCANE_TERMINAL, PartArcaneTerminal.class);
+        assertPartDefinition(ThEParts.ARCANE_INSCRIBER, ThEPartIds.ARCANE_INSCRIBER, PartArcaneInscriber.class);
+        assertPartDefinition(ThEParts.ARCANE_P2P_TUNNEL, ThEPartIds.ARCANE_P2P_TUNNEL, ArcaneP2PTunnelPart.class);
 
-        assertTrue(parts.contains("ItemDefinition<PartItem<PartArcaneTerminal>> ARCANE_TERMINAL"));
-        assertTrue(compactParts.contains("createPart(ThEPartIds.ARCANE_TERMINAL,PartArcaneTerminal.class,PartArcaneTerminal::new)"));
-        assertTrue(parts.contains("ItemDefinition<PartItem<PartArcaneInscriber>> ARCANE_INSCRIBER"));
-        assertTrue(compactParts.contains("createPart(ThEPartIds.ARCANE_INSCRIBER,PartArcaneInscriber.class,PartArcaneInscriber::new)"));
-        assertTrue(parts.contains("ItemDefinition<PartItem<ArcaneP2PTunnelPart>> ARCANE_P2P_TUNNEL"));
-        assertTrue(compactParts.contains("createPart(ThEPartIds.ARCANE_P2P_TUNNEL,ArcaneP2PTunnelPart.class,ArcaneP2PTunnelPart::new)"));
-        assertTrue(parts.contains("PartModels.registerModels(PartModelsHelper.createModels(partClass))"));
-        assertTrue(parts.contains("new PartItem<>(partClass, factory)"));
+        assertPartType(AbstractTerminalPart.class, PartArcaneTerminal.class);
+        assertPartType(AbstractTerminalPart.class, PartArcaneInscriber.class);
+        assertPartType(P2PTunnelPart.class, ArcaneP2PTunnelPart.class);
 
-        assertTrue(arcaneTerminalPart.contains("import ae2.items.parts.PartModels;"));
-        assertTrue(arcaneTerminalPart.contains("@PartModels"));
-        assertTrue(arcaneInscriberPart.contains("import ae2.items.parts.PartModels;"));
-        assertTrue(arcaneInscriberPart.contains("@PartModels"));
+        ItemDefinition<?>[] parts = ThEParts.all();
+        assertSame(ThEParts.ARCANE_TERMINAL, parts[0]);
+        assertSame(ThEParts.ARCANE_INSCRIBER, parts[1]);
+        assertSame(ThEParts.ARCANE_P2P_TUNNEL, parts[2]);
+        assertRegisteredByParts(ThEParts.ARCANE_TERMINAL);
+        assertRegisteredByParts(ThEParts.ARCANE_INSCRIBER);
+        assertRegisteredByParts(ThEParts.ARCANE_P2P_TUNNEL);
 
-        assertFalse(items.contains("ItemDefinition<PartItem<PartArcaneTerminal>>"));
-        assertFalse(items.contains("ItemDefinition<PartItem<PartArcaneInscriber>>"));
-        assertFalse(items.contains("ItemDefinition<PartItem<ArcaneP2PTunnelPart>>"));
-        assertFalse(items.contains("ThEItemIds.ARCANE_TERMINAL"));
-        assertFalse(items.contains("ThEItemIds.ARCANE_INSCRIBER"));
-        assertFalse(items.contains("ThEItemIds.ARCANE_P2P_TUNNEL"));
+        parts[0] = null;
+        assertSame(ThEParts.ARCANE_TERMINAL, ThEParts.all()[0]);
 
-        assertTrue(registry.contains("ThEParts.register(event);"));
-        assertTrue(models.contains("ThEParts.all()"));
+        assertNotRegisteredByItems(ThEParts.ARCANE_TERMINAL.item());
+        assertNotRegisteredByItems(ThEParts.ARCANE_INSCRIBER.item());
+        assertNotRegisteredByItems(ThEParts.ARCANE_P2P_TUNNEL.item());
     }
 
-    private static String source(String path) throws IOException {
-        return Files.readString(Path.of(path)).replace("\r\n", "\n");
+    private static void assertPartId(ResourceLocation id, String path) {
+        assertEquals(ThaumicEnergistics.id(path), id);
+        assertEquals(path, id.getPath());
     }
 
-    private static String compact(String source) {
-        return source.replaceAll("\\s+", "");
+    private static <T extends IPart> void assertPartDefinition(ItemDefinition<PartItem<T>> definition,
+                                                              ResourceLocation id, Class<T> partClass) {
+        assertEquals(id, definition.id());
+        PartItem<T> item = definition.item();
+        assertNotNull(item);
+        assertEquals(PartItem.class, item.getClass());
+        assertEquals(id, item.getRegistryName());
+        assertEquals(partClass, item.getPartClass());
+    }
+
+    private static void assertPartType(Class<?> parentClass, Class<?> partClass) {
+        assertTrue(parentClass.isAssignableFrom(partClass));
+    }
+
+    private static void assertRegisteredByParts(ItemDefinition<?> definition) {
+        assertTrue(Arrays.stream(ThEParts.all()).anyMatch(candidate -> candidate == definition));
+    }
+
+    private static void assertNotRegisteredByItems(Item item) {
+        assertNotNull(item);
+        assertFalse(Arrays.stream(ThEItems.all()).anyMatch(definition -> definition.item() == item));
     }
 }

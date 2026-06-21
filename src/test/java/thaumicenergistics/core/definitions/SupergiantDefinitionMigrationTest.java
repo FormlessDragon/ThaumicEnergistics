@@ -1,80 +1,101 @@
 package thaumicenergistics.core.definitions;
 
+import ae2.api.upgrades.Upgrades;
+import ae2.core.definitions.BlockDefinition;
+import net.minecraft.block.Block;
+import net.minecraft.init.Bootstrap;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.util.ResourceLocation;
 import org.junit.jupiter.api.Test;
+import thaumicenergistics.ThaumicEnergistics;
+import thaumicenergistics.api.ids.ThEBlockIds;
+import thaumicenergistics.block.BlockArcaneAssembler;
+import thaumicenergistics.block.BlockInfusionProvider;
+import thaumicenergistics.init.ThEBlocks;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SupergiantDefinitionMigrationTest {
 
-    private static final Path MAIN_SOURCES = Path.of("src", "main", "java");
-
     @Test
-    void legacyThaumicDefinitionPackageIsRemoved() throws IOException {
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/api/definitions/IThEItemDefinition.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/api/definitions/IThEBlockDefinition.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/api/definitions/IThETileDefinition.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/core/definitions/ThEItemDefinition.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/core/definitions/ThEBlockDefinition.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/core/definitions/ThETileDefinition.java")));
+    void thaumicBlocksUseSupergiantBlockDefinitions() {
+        bootstrapMinecraft();
 
-        for (Path source : javaSources()) {
-            String code = Files.readString(source);
-            assertFalse(code.contains("thaumicenergistics.api.definitions"),
-                    () -> source + " still imports the legacy definition package");
-            assertFalse(code.contains("ThEItemDefinition"),
-                    () -> source + " still references the legacy item definition wrapper");
-            assertFalse(code.contains("ThEBlockDefinition"),
-                    () -> source + " still references the legacy block definition wrapper");
-            assertFalse(code.contains("ThETileDefinition"),
-                    () -> source + " still references the legacy tile definition wrapper");
-        }
+        assertBlockDefinition(
+                ThEBlocks.INFUSION_PROVIDER,
+                ThaumicEnergistics.id("infusion_provider"),
+                BlockInfusionProvider.class);
+        assertBlockDefinition(
+                ThEBlocks.ARCANE_ASSEMBLER,
+                ThaumicEnergistics.id("arcane_assembler"),
+                BlockArcaneAssembler.class);
     }
 
     @Test
-    void thaumicBlocksUseSupergiantBlockDefinitions() throws IOException {
-        String blocks = Files.readString(MAIN_SOURCES.resolve("thaumicenergistics/init/ThEBlocks.java"));
-
-        assertTrue(blocks.contains("import ae2.core.definitions.BlockDefinition;"));
-        assertTrue(blocks.contains("public static final BlockDefinition<BlockInfusionProvider> INFUSION_PROVIDER"));
-        assertTrue(blocks.contains("public static final BlockDefinition<BlockArcaneAssembler> ARCANE_ASSEMBLER"));
-        assertTrue(blocks.contains("event.getRegistry().register(definition.block())"));
-        assertTrue(blocks.contains("event.getRegistry().register(definition.item())"));
-        assertFalse(blocks.contains("public static List<BlockBase> BLOCKS"));
-        assertFalse(blocks.contains("new ItemBlock(block)"));
-
-        String blockIds = Files.readString(MAIN_SOURCES.resolve("thaumicenergistics/api/ids/ThEBlockIds.java"));
-        assertTrue(blockIds.contains("INFUSION_PROVIDER = id(\"infusion_provider\")"));
-        assertTrue(blockIds.contains("ARCANE_ASSEMBLER = id(\"arcane_assembler\")"));
+    void thaumicBlockIdsUseThaumicEnergisticsIds() {
+        assertEquals(ThaumicEnergistics.id("infusion_provider"), ThEBlockIds.INFUSION_PROVIDER);
+        assertEquals(ThaumicEnergistics.id("arcane_assembler"), ThEBlockIds.ARCANE_ASSEMBLER);
     }
 
     @Test
-    void upgradeRegistrationUsesSupergiantInitPattern() throws IOException {
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/api/IThEUpgrade.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/api/IThEUpgrades.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/upgrade/ThEUpgrade.java")));
-        assertFalse(Files.exists(MAIN_SOURCES.resolve("thaumicenergistics/upgrade/ThEUpgrades.java")));
+    void thaumicBlockDefinitionsAreExposedAsAClonedArray() {
+        bootstrapMinecraft();
 
-        String mod = Files.readString(MAIN_SOURCES.resolve("thaumicenergistics/ThaumicEnergistics.java"));
-        assertTrue(mod.contains("import thaumicenergistics.init.internal.InitUpgrades;"));
-        assertTrue(mod.contains("InitUpgrades.init();"));
-        assertFalse(mod.contains("registerUpgrade("));
-        assertFalse(mod.contains("IThEUpgrades"));
+        BlockDefinition<?>[] definitions = ThEBlocks.all();
 
-        String initUpgrades = Files.readString(MAIN_SOURCES.resolve("thaumicenergistics/init/internal/InitUpgrades.java"));
-        assertTrue(initUpgrades.contains("import ae2.api.upgrades.Upgrades;"));
-        assertTrue(initUpgrades.contains("Upgrades.add(AEItems.SPEED_CARD.item(), ThEBlocks.ARCANE_ASSEMBLER.item(), 5);"));
+        assertTrue(Arrays.stream(definitions).anyMatch(definition -> definition == ThEBlocks.INFUSION_PROVIDER));
+        assertTrue(Arrays.stream(definitions).anyMatch(definition -> definition == ThEBlocks.ARCANE_ASSEMBLER));
+
+        BlockDefinition<?>[] anotherSnapshot = ThEBlocks.all();
+        assertNotSame(definitions, anotherSnapshot);
+        assertArrayEquals(definitions, anotherSnapshot);
+
+        definitions[0] = null;
+        assertArrayEquals(anotherSnapshot, ThEBlocks.all());
     }
 
-    private static List<Path> javaSources() throws IOException {
-        try (Stream<Path> walk = Files.walk(MAIN_SOURCES)) {
-            return walk.filter(path -> path.toString().endsWith(".java")).toList();
+    @Test
+    void supergiantUpgradeRegistryAcceptsThaumicDefinitions() {
+        bootstrapMinecraft();
+
+        Upgrades.add(ThEItems.UPGRADE_ARCANE.item(), ThEBlocks.ARCANE_ASSEMBLER.item(), 1);
+        Upgrades.add(ThEItems.BLANK_KNOWLEDGE_CORE.item(), ThEParts.ARCANE_INSCRIBER.item(), 1);
+        Upgrades.add(ThEItems.KNOWLEDGE_CORE.item(), ThEParts.ARCANE_INSCRIBER.item(), 1);
+
+        assertEquals(1, Upgrades.getMaxInstallable(ThEItems.UPGRADE_ARCANE.item(), ThEBlocks.ARCANE_ASSEMBLER.item()));
+        assertEquals(1, Upgrades.getMaxInstallable(ThEItems.BLANK_KNOWLEDGE_CORE.item(), ThEParts.ARCANE_INSCRIBER.item()));
+        assertEquals(1, Upgrades.getMaxInstallable(ThEItems.KNOWLEDGE_CORE.item(), ThEParts.ARCANE_INSCRIBER.item()));
+    }
+
+    private static <T extends Block> void assertBlockDefinition(
+            BlockDefinition<T> definition,
+            ResourceLocation id,
+            Class<T> blockType) {
+        T block = definition.block();
+        ItemBlock item = definition.item();
+
+        assertAll(
+                () -> assertEquals(id, definition.id()),
+                () -> assertInstanceOf(blockType, block),
+                () -> assertNotNull(item),
+                () -> assertEquals(block, item.getBlock()),
+                () -> assertEquals(id, block.getRegistryName()),
+                () -> assertEquals(id, item.getRegistryName()),
+                () -> assertEquals("tile." + id.getNamespace() + "." + id.getPath(), block.getTranslationKey()),
+                () -> assertEquals(block.getTranslationKey(), item.getTranslationKey()));
+    }
+
+    private static void bootstrapMinecraft() {
+        if (!Bootstrap.isRegistered()) {
+            Bootstrap.register();
         }
     }
 }

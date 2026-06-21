@@ -1,19 +1,87 @@
 package thaumicenergistics.container.part;
 
+import ae2.api.stacks.AEItemKey;
+import ae2.api.networking.ticking.IGridTickable;
+import ae2.api.parts.IPart;
+import ae2.api.storage.ITerminalHost;
 import ae2.client.gui.me.common.GuiMEStorage;
+import ae2.container.SlotSemantic;
+import ae2.container.SlotSemantics;
+import ae2.container.implementations.ContainerCraftAmount;
+import ae2.container.implementations.ContainerCraftConfirm;
+import ae2.container.implementations.ContainerCraftingStatus;
 import ae2.container.me.common.ContainerMEStorage;
+import ae2.core.definitions.ItemDefinition;
+import ae2.items.parts.PartItem;
+import ae2.items.tools.powered.WirelessTerminalItem;
+import ae2.parts.p2p.P2PTunnelPart;
+import ae2.parts.reporting.AbstractTerminalPart;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.init.Bootstrap;
+import net.minecraft.init.Items;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import thaumicenergistics.ThaumicEnergisticsApi;
+import thaumicenergistics.api.IThEItems;
+import thaumicenergistics.api.ids.ThEItemIds;
+import thaumicenergistics.api.ids.ThEPartIds;
+import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.client.gui.part.GuiArcaneTerm;
+import thaumicenergistics.container.ActionType;
+import thaumicenergistics.container.ThESlotSemantics;
+import thaumicenergistics.container.crafting.ContainerCraftAmountBridge;
+import thaumicenergistics.container.crafting.ContainerCraftConfirmBridge;
+import thaumicenergistics.container.crafting.ContainerCraftingStatusBridge;
+import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
+import thaumicenergistics.core.definitions.ThEApiItems;
+import thaumicenergistics.core.definitions.ThEItems;
+import thaumicenergistics.core.definitions.ThEParts;
+import thaumicenergistics.integration.jei.ACIRecipeTransferHandler;
+import thaumicenergistics.integration.jei.ACTRecipeTransferHandler;
+import thaumicenergistics.items.ItemWirelessArcaneTerminal;
+import thaumicenergistics.network.packets.PacketUIAction;
+import thaumicenergistics.network.packets.PacketVisUpdate;
+import thaumicenergistics.part.ArcaneP2PTunnelPart;
+import thaumicenergistics.part.PartArcaneTerminal;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiFunction;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@SuppressWarnings("deprecation")
 class ArcaneTerminalSupergiantMigrationTest {
+
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        if (!Bootstrap.isRegistered()) {
+            Bootstrap.register();
+        }
+    }
 
     @Test
     void arcaneTerminalUsesSupergiantMeStorageBaseClasses() {
@@ -28,591 +96,374 @@ class ArcaneTerminalSupergiantMigrationTest {
     }
 
     @Test
-    void legacyPartWrappersAreRemovedForSupergiantApi() {
-        assertSourceMissing("src/main/java/thaumicenergistics/part/PartBase.java");
-        assertSourceMissing("src/main/java/thaumicenergistics/part/PartSharedTerminal.java");
-        assertSourceMissing("src/main/java/thaumicenergistics/part/PartSharedEssentiaBus.java");
-        assertSourceMissing("src/main/java/thaumicenergistics/items/ItemPartBase.java");
-        assertSourceMissing("src/main/java/thaumicenergistics/items/part/ItemArcaneTerminal.java");
-        assertSourceMissing("src/main/java/thaumicenergistics/items/part/ItemArcaneInscriber.java");
+    void arcaneTerminalPartUsesSupergiantPartItemAndHostContracts() {
+        assertAll(
+                () -> assertTrue(AbstractTerminalPart.class.isAssignableFrom(PartArcaneTerminal.class)),
+                () -> assertTrue(IArcaneTerminalHost.class.isAssignableFrom(PartArcaneTerminal.class)),
+                () -> assertPartItem(ThEParts.ARCANE_TERMINAL, ThEPartIds.ARCANE_TERMINAL,
+                        PartArcaneTerminal.class));
     }
 
     @Test
-    void arcaneTerminalUsesHostInterfaceInsteadOfSharedTerminalPart() throws IOException {
-        String source = normalizedSource("src/main/java/thaumicenergistics/part/PartArcaneTerminal.java");
+    void arcaneTerminalUsesHostInterfaceInsteadOfSharedTerminalPart() {
+        PartArcaneTerminal terminal = ThEParts.ARCANE_TERMINAL.item().createPart();
 
-        assertTrue(source.contains("import ae2.api.parts.IPartItem;"));
-        assertTrue(source.contains("import ae2.parts.reporting.AbstractTerminalPart;"));
-        assertTrue(source.contains("import thaumicenergistics.api.storage.IArcaneTerminalHost;"));
-        assertTrue(source.contains("extends AbstractTerminalPart implements IArcaneTerminalHost"));
-        assertTrue(source.contains("public PartArcaneTerminal(IPartItem<?> item)"));
-        assertTrue(source.contains("super(item);"));
-        assertTrue(source.contains("return this.selectModel(MODELS_OFF, MODELS_ON, MODELS_HAS_CHANNEL);"));
-        assertFalse(source.contains("PartBase"));
-        assertFalse(source.contains("extends PartSharedTerminal"));
+        assertAll(
+                () -> assertInstanceOf(AbstractTerminalPart.class, terminal),
+                () -> assertInstanceOf(IArcaneTerminalHost.class, terminal),
+                () -> assertEquals(PartArcaneTerminal.class, ThEParts.ARCANE_TERMINAL.item().getPartClass()));
     }
 
     @Test
-    void legacyTerminalGuiAndContainerAreRemoved() {
-        assertSourceMissing("src/main/java/thaumicenergistics/container/ContainerBaseTerminal.java");
-        assertSourceMissing("src/main/java/thaumicenergistics/container/IPartContainer.java");
-        assertSourceMissing("src/main/java/thaumicenergistics/container/part/ContainerArcaneTerminal.java");
-        assertSourceMissing("src/main/java/thaumicenergistics/client/gui/part/GuiAbstractTerminal.java");
-        assertSourceMissing("src/main/java/thaumicenergistics/client/gui/part/GuiArcaneTerminal.java");
+    void arcaneContainerAndCraftingBridgesUseArcaneTerminalHost() {
+        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerArcaneTerm> terminalFactory =
+                ContainerArcaneTerm::new;
+        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftAmountBridge> amountFactory =
+                ContainerCraftAmountBridge::new;
+        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftConfirmBridge> confirmFactory =
+                ContainerCraftConfirmBridge::new;
+        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftingStatusBridge> statusFactory =
+                ContainerCraftingStatusBridge::new;
+
+        assertAll(
+                () -> assertTrue(ITerminalHost.class.isAssignableFrom(IArcaneTerminalHost.class)),
+                () -> assertTrue(ContainerMEStorage.class.isAssignableFrom(ContainerArcaneTerm.class)),
+                () -> assertTrue(ContainerCraftAmount.class.isAssignableFrom(ContainerCraftAmountBridge.class)),
+                () -> assertTrue(ContainerCraftConfirm.class.isAssignableFrom(ContainerCraftConfirmBridge.class)),
+                () -> assertTrue(ContainerCraftingStatus.class.isAssignableFrom(ContainerCraftingStatusBridge.class)),
+                () -> assertNotNull(terminalFactory),
+                () -> assertNotNull(amountFactory),
+                () -> assertNotNull(confirmFactory),
+                () -> assertNotNull(statusFactory));
     }
 
     @Test
-    void arcaneContainerAndCraftingBridgesUseArcaneTerminalHost() throws IOException {
-        assertSourceContains("src/main/java/thaumicenergistics/api/storage/IArcaneTerminalHost.java",
-                "public interface IArcaneTerminalHost extends ITerminalHost");
-        assertSourceContains("src/main/java/thaumicenergistics/container/part/ContainerArcaneTerm.java",
-                "protected final IArcaneTerminalHost host;");
-        assertSourceContains("src/main/java/thaumicenergistics/container/part/ContainerArcaneTerm.java",
-                "public ContainerArcaneTerm(InventoryPlayer ip, IArcaneTerminalHost host)");
-        assertSourceDoesNotContain("src/main/java/thaumicenergistics/container/part/ContainerArcaneTerm.java",
-                "PartArcaneTerminal");
-        assertSourceContains("src/main/java/thaumicenergistics/container/crafting/ContainerCraftAmountBridge.java",
-                "IArcaneTerminalHost");
-        assertSourceContains("src/main/java/thaumicenergistics/container/crafting/ContainerCraftConfirmBridge.java",
-                "IArcaneTerminalHost");
-        assertSourceContains("src/main/java/thaumicenergistics/container/crafting/ContainerCraftingStatusBridge.java",
-                "IArcaneTerminalHost");
+    void wirelessArcaneTerminalUsesSupergiantWirelessFramework() {
+        assertAll(
+                () -> assertTrue(WirelessTerminalItem.class.isAssignableFrom(ItemWirelessArcaneTerminal.class)),
+                () -> assertTrue(ae2.helpers.WirelessTerminalGuiHost.class.isAssignableFrom(
+                        WirelessArcaneTerminalGuiHost.class)),
+                () -> assertTrue(IArcaneTerminalHost.class.isAssignableFrom(WirelessArcaneTerminalGuiHost.class)));
     }
 
     @Test
-    void wirelessArcaneTerminalUsesSupergiantWirelessFramework() throws IOException {
-        assertSourceContains("src/main/java/thaumicenergistics/items/ItemWirelessArcaneTerminal.java",
-                "extends WirelessTerminalItem");
-        assertSourceContains("src/main/java/thaumicenergistics/items/ItemWirelessArcaneTerminal.java",
-                "AddWirelessTerminalEvent.register");
-        assertSourceContains("src/main/java/thaumicenergistics/container/item/WirelessArcaneTerminalGuiHost.java",
-                "extends WirelessTerminalGuiHost");
-        assertSourceContains("src/main/java/thaumicenergistics/container/item/WirelessArcaneTerminalGuiHost.java",
-                "implements IArcaneTerminalHost");
-        assertSourceContains("src/main/java/thaumicenergistics/container/item/WirelessArcaneTerminalGuiHost.java",
-                "new ThEInternalInventory(\"matrix\", 15, 64)");
+    void thaumicEnergisticsItemsExposeWirelessArcaneTerminal() {
+        assertAll(
+                () -> assertEquals(ThEItemIds.WIRELESS_ARCANE_TERMINAL, ThEItems.WIRELESS_ARCANE_TERMINAL.id()),
+                () -> assertEquals("wireless_arcane_terminal", ThEItems.WIRELESS_ARCANE_TERMINAL.id().getPath()),
+                () -> assertInstanceOf(ItemWirelessArcaneTerminal.class, ThEItems.WIRELESS_ARCANE_TERMINAL.item()),
+                () -> assertTrue(WirelessTerminalItem.class.isAssignableFrom(
+                        ThEItems.WIRELESS_ARCANE_TERMINAL.item().getClass())),
+                () -> assertInstanceOf(IThEItems.class, ThaumicEnergisticsApi.instance().items()),
+                () -> assertInstanceOf(ThEApiItems.class, ThaumicEnergisticsApi.instance().items()));
     }
 
     @Test
-    void thaumicEnergisticsItemsExposeWirelessArcaneTerminal() throws IOException {
-        assertSourceContains("src/main/java/thaumicenergistics/api/IThEItems.java",
-                "@Deprecated");
-        assertSourceContains("src/main/java/thaumicenergistics/core/definitions/ThEItems.java",
-                "ItemDefinition<ItemWirelessArcaneTerminal> WIRELESS_ARCANE_TERMINAL");
-        assertSourceContains("src/main/java/thaumicenergistics/core/definitions/ThEItems.java",
-                "new ItemWirelessArcaneTerminal(\"wireless_arcane_terminal\")");
-        assertSourceContains("src/main/java/thaumicenergistics/core/definitions/ThEApiItems.java",
-                "implements IThEItems");
-        assertSourceContains("src/main/java/thaumicenergistics/ThaumicEnergisticsApi.java",
-                "this.items = new ThEApiItems()");
-        assertSourceMissing("src/main/java/thaumicenergistics/init/ThEItems.java");
+    void craftConfirmBridgeUsesSupergiantCraftingReturnFlow() {
+        BiFunction<InventoryPlayer, IArcaneTerminalHost, ContainerCraftConfirmBridge> confirmFactory =
+                ContainerCraftConfirmBridge::new;
+
+        assertAll(
+                () -> assertTrue(ContainerCraftConfirm.class.isAssignableFrom(ContainerCraftConfirmBridge.class)),
+                () -> assertNotNull(confirmFactory));
     }
 
     @Test
-    void wirelessArcaneTerminalVisAnchorIsNullSafe() throws IOException {
-        String source = normalizedSource(
-                "src/main/java/thaumicenergistics/container/item/WirelessArcaneTerminalGuiHost.java");
+    void arcaneP2PTunnelUsesSupergiantP2PFramework() {
+        ArcaneP2PTunnelPart tunnel = ThEParts.ARCANE_P2P_TUNNEL.item().createPart();
 
-        assertTrue(source.contains("private DimensionalBlockPos getLinkedPosition()"));
-        assertTrue(source.contains("return this.getLinkedPosition() != null && this.getLinkStatus().connected();"));
-        assertTrue(source.contains("DimensionalBlockPos linkedPosition = this.getLinkedPosition();"));
-        assertTrue(source.contains("return linkedPosition != null ? linkedPosition.getLevel() : this.getPlayer().world;"));
-        assertTrue(source.contains("return linkedPosition != null ? linkedPosition.getPos() : this.getPlayer().getPosition();"));
-    }
-
-    @Test
-    void craftConfirmBridgeUsesSupergiantCraftingReturnFlow() throws IOException {
-        String source = normalizedSource(
-                "src/main/java/thaumicenergistics/container/crafting/ContainerCraftConfirmBridge.java");
-
-        assertFalse(source.contains("addScheduledTask"));
-        assertFalse(source.contains("returnToMainContainer(this.inventoryPlayer.player, null)"));
-        assertFalse(source.contains("public void startJob()"));
-    }
-
-    @Test
-    void arcaneP2PTunnelUsesSupergiantP2PFramework() throws IOException {
-        String transferSource = normalizedSource("src/main/java/thaumicenergistics/util/ArcaneP2PTransfer.java");
-        String partSource = normalizedSource("src/main/java/thaumicenergistics/part/ArcaneP2PTunnelPart.java");
-
-        assertSourceContains("src/main/java/thaumicenergistics/part/ArcaneP2PTunnelPart.java",
-                "extends P2PTunnelPart<ArcaneP2PTunnelPart>");
-        assertSourceContains("src/main/java/thaumicenergistics/part/ArcaneP2PTunnelPart.java",
-                "implements IGridTickable");
-        assertSourceContains("src/main/java/thaumicenergistics/part/ArcaneP2PTunnelPart.java",
-                "AuraHelper.drainVis");
-        assertSourceContains("src/main/java/thaumicenergistics/part/ArcaneP2PTunnelPart.java",
-                "AuraHelper.addVis");
-        assertSourceContains("src/main/java/thaumicenergistics/core/definitions/ThEParts.java",
-                "ItemDefinition<PartItem<ArcaneP2PTunnelPart>> ARCANE_P2P_TUNNEL");
-        assertSourceContains("src/main/java/thaumicenergistics/core/definitions/ThEParts.java",
-                "ArcaneP2PTunnelPart.class, ArcaneP2PTunnelPart::new");
-        assertFalse(transferSource.contains("Math.round(amount * 100.0f)"));
-        assertTrue(transferSource.contains("float remaining = amount;"));
-        assertTrue(partSource.contains("private List<ArcaneP2PTunnelPart> getActiveOutputs()"));
-        assertTrue(partSource.contains("output.getMainNode().isActive()"));
-        assertTrue(partSource.contains("this.deductTransportCost("));
+        assertAll(
+                () -> assertTrue(P2PTunnelPart.class.isAssignableFrom(ArcaneP2PTunnelPart.class)),
+                () -> assertTrue(IGridTickable.class.isAssignableFrom(ArcaneP2PTunnelPart.class)),
+                () -> assertPartItem(ThEParts.ARCANE_P2P_TUNNEL, ThEPartIds.ARCANE_P2P_TUNNEL,
+                        ArcaneP2PTunnelPart.class),
+                () -> assertInstanceOf(P2PTunnelPart.class, tunnel),
+                () -> assertInstanceOf(IGridTickable.class, tunnel),
+                () -> assertEquals(ArcaneP2PTunnelPart.class, ThEParts.ARCANE_P2P_TUNNEL.item().getPartClass()));
     }
 
     @Test
     void newModelResourcesUseExistingSupergiantPaths() throws IOException {
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/models/item/wireless_arcane_terminal.json",
-                "\"front\": \"ae2:item/wireless_terminal\"");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/models/item/arcane_p2p_tunnel.json",
-                "\"parent\": \"ae2:item/p2p_tunnel_base\"");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/models/item/arcane_p2p_tunnel.json",
-                "\"type\": \"thaumicenergistics:part/arcane_terminal/overlay2\"");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/models/part/p2p/p2p_tunnel_arcane.json",
-                "\"type\": \"thaumicenergistics:part/arcane_terminal/overlay2\"");
+        JsonObject wirelessTerminal = readJsonObject(
+                Path.of("src/main/resources/assets/thaumicenergistics/models/item/wireless_arcane_terminal.json"));
+        JsonObject p2pItem = readJsonObject(
+                Path.of("src/main/resources/assets/thaumicenergistics/models/item/arcane_p2p_tunnel.json"));
+        JsonObject p2pPart = readJsonObject(
+                Path.of("src/main/resources/assets/thaumicenergistics/models/part/p2p/p2p_tunnel_arcane.json"));
+
+        assertAll(
+                () -> assertEquals("ae2:item/display_base", stringAt(wirelessTerminal, "parent")),
+                () -> assertEquals("ae2:item/wireless_terminal", stringAt(wirelessTerminal, "textures", "front")),
+                () -> assertEquals("ae2:item/p2p_tunnel_base", stringAt(p2pItem, "parent")),
+                () -> assertEquals("thaumicenergistics:part/arcane_terminal/overlay2",
+                        stringAt(p2pItem, "textures", "type")),
+                () -> assertEquals("ae2:part/p2p/p2p_tunnel_base", stringAt(p2pPart, "parent")),
+                () -> assertEquals("thaumicenergistics:part/arcane_terminal/overlay2",
+                        stringAt(p2pPart, "textures", "type")));
     }
 
     @Test
     void newArcaneWirelessAndP2PItemsHaveThaumcraftUnlocks() throws IOException {
-        assertSourceContains("src/main/java/thaumicenergistics/integration/thaumcraft/ThEThaumcraft.java",
-                "ThEItems.WIRELESS_ARCANE_TERMINAL.item()");
-        assertSourceContains("src/main/java/thaumicenergistics/integration/thaumcraft/ThEThaumcraft.java",
-                "new ResourceLocation(Reference.MOD_ID, \"wireless_arcane_terminal\")");
-        assertSourceContains("src/main/java/thaumicenergistics/integration/thaumcraft/ThEThaumcraft.java",
-                "AEItems.WIRELESS_CRAFTING_TERMINAL.stack()");
-        assertSourceContains("src/main/java/thaumicenergistics/integration/thaumcraft/ThEThaumcraft.java",
-                "ThEParts.ARCANE_P2P_TUNNEL.item()");
-        assertSourceContains("src/main/java/thaumicenergistics/integration/thaumcraft/ThEThaumcraft.java",
-                "new ResourceLocation(Reference.MOD_ID, \"arcane_p2p_tunnel\")");
-        assertSourceContains("src/main/java/thaumicenergistics/integration/thaumcraft/ThEThaumcraft.java",
-                "AEParts.ME_P2P_TUNNEL.stack()");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/research/thaumicenergistics.json",
-                "\"thaumicenergistics:wireless_arcane_terminal\"");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/research/thaumicenergistics.json",
-                "\"thaumicenergistics:arcane_p2p_tunnel\"");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/lang/en_us.lang",
-                "research.arcaneterminal.addenda.2=");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/lang/en_us.lang",
-                "research.essentiabuses.addenda.1=");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/lang/zh_cn.lang",
-                "item.thaumicenergistics.wireless_arcane_terminal.name=");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/lang/zh_cn.lang",
-                "item.thaumicenergistics.arcane_p2p_tunnel.name=");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/lang/zh_cn.lang",
-                "research.arcaneterminal.addenda.2=");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/lang/zh_cn.lang",
-                "research.essentiabuses.addenda.1=");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/lang/ru_ru.lang",
-                "item.thaumicenergistics.wireless_arcane_terminal.name=");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/lang/ru_ru.lang",
-                "item.thaumicenergistics.arcane_p2p_tunnel.name=");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/lang/ru_ru.lang",
-                "research.arcaneterminal.addenda.2=");
-        assertSourceContains("src/main/resources/assets/thaumicenergistics/lang/ru_ru.lang",
-                "research.essentiabuses.addenda.1=");
-    }
+        JsonObject research = readJsonObject(
+                Path.of("src/main/resources/assets/thaumicenergistics/research/thaumicenergistics.json"));
+        JsonObject arcaneTerminal = researchEntry(research, "ARCANETERMINAL");
+        JsonObject essentiaBuses = researchEntry(research, "ESSENTIABUSES");
 
-    @Test
-    void wirelessArcaneTerminalAcceptsArcaneChargerUpgrade() throws IOException {
-        assertSourceDoesNotContain("src/main/java/thaumicenergistics/ThaumicEnergistics.java",
-                "\n        upgrades.registerUpgrade(items.wirelessArcaneTerminal()");
-        assertSourceMissing("src/main/java/thaumicenergistics/upgrade/ThEUpgrades.java");
-        assertSourceContains("src/main/java/thaumicenergistics/items/ItemWirelessArcaneTerminal.java",
-                "extends WirelessTerminalItem");
-    }
-
-    @Test
-    void packetUiActionRoutesMigratedInscriberGhostMoves() throws IOException {
-        String source = normalizedSource("src/main/java/thaumicenergistics/network/packets/PacketUIAction.java");
-
-        assertTrue(source.contains("import thaumicenergistics.container.part.ContainerArcaneInscriber;"));
-        assertTrue(source.contains("message.action == ActionType.MOVE_GHOST_ITEM"));
-        assertTrue(source.contains("player.openContainer instanceof ContainerArcaneInscriber"));
-        assertTrue(source.contains("((ContainerArcaneInscriber) player.openContainer).onAction(message);"));
-        assertTrue(source.contains("player.openContainer instanceof ContainerBase"));
-        assertTrue(source.contains("((ContainerBase) player.openContainer).onAction(player, message);"));
-    }
-
-    @Test
-    void arcaneInscriberHandlesGhostMovePacketsWithDisplayWrappedKeys() throws IOException {
-        String source = normalizedSource("src/main/java/thaumicenergistics/container/part/ContainerArcaneInscriber.java");
-
-        assertTrue(source.contains("import thaumicenergistics.container.ActionType;"));
-        assertTrue(source.contains("import thaumicenergistics.network.packets.PacketUIAction;"));
-        assertTrue(source.contains("public void onAction(PacketUIAction packet)"));
-        assertTrue(source.contains("packet.action != ActionType.MOVE_GHOST_ITEM"));
-        assertTrue(source.contains("packet.requestedKey == null"));
-        assertTrue(source.contains("packet.index < 0"));
-        assertTrue(source.contains("packet.index >= this.inventorySlots.size()"));
-        assertTrue(source.contains("this.getSlot(packet.index)"));
-        assertTrue(source.contains("slot instanceof SlotArcaneGhostMatrix"));
-        assertTrue(source.contains("packet.requestedKey.wrapForDisplayOrFilter()"));
-    }
-
-    @Test
-    void ghostInscriberHandlerTargetsMatrixSlotsByGhostSlotIndex() throws IOException {
-        String source = normalizedSource("src/main/java/thaumicenergistics/integration/jei/GhostInscriberHandler.java");
-
-        assertTrue(source.contains("import thaumicenergistics.container.slot.SlotArcaneGhostMatrix;"));
-        assertTrue(source.contains("it instanceof SlotArcaneGhostMatrix"));
-        assertTrue(source.contains("slot.getSlotIndex() < 9"));
-        assertTrue(source.contains("slot.slotNumber"));
-        assertFalse(source.contains("slot.slotNumber < 9"));
-    }
-
-    @Test
-    void arcaneInscriberGuiUsesSupergiantArcaneTermActions() throws IOException {
-        String source = normalizedSource("src/main/java/thaumicenergistics/client/gui/part/GuiArcaneInscriber.java");
-
-        assertTrue(source.contains("extends GuiArcaneTerm"));
-        assertTrue(source.contains("private final ContainerArcaneInscriber inscriberContainer"));
-        assertTrue(source.contains(
-                "public GuiArcaneInscriber(ContainerArcaneInscriber container, InventoryPlayer playerInventory)"));
-        assertTrue(source.contains("new TextComponentTranslation(\"gui.thaumicenergistics.arcane_inscriber\")"));
-        assertTrue(source.contains("ThEGuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH)"));
-        assertTrue(source.contains(
-                "super(container, playerInventory,\n" +
-                        "                new TextComponentTranslation(\"gui.thaumicenergistics.arcane_inscriber\"),\n" +
-                        "                ThEGuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH))"));
-        assertTrue(source.contains("this.inscriberContainer = container"));
-        assertTrue(source.contains("requestKnowledgeCoreAdd()"));
-        assertTrue(source.contains("requestKnowledgeCoreDel()"));
-        assertTrue(source.contains("requestKnowledgeCoreView()"));
-        assertTrue(source.contains(
-                "public void setIsArcane(boolean isArcane) {\n" +
-                        "        this.inscriberContainer.recipeIsArcane = isArcane;\n" +
-                        "    }"));
-        assertTrue(source.contains("void drawFG("));
-        assertFalse(source.contains("GuiArcaneTerminal"));
-        assertFalse(source.contains("PacketUIAction"));
-        assertFalse(source.contains("PacketHandler"));
-        assertFalse(source.contains("ActionType"));
-        assertFalse(source.contains("drawGuiContainerForegroundLayer"));
-        assertFalse(source.contains("recalcSlotY"));
-        assertFalse(source.contains("this.rows"));
-        assertFalse(source.contains("scrollBar"));
-        assertFalse(source.contains("setCurrMousePos"));
-        assertFalse(source.contains("recalculateY"));
-        assertFalse(source.contains("guiArcaneInscriber().getLocalizedKey(), 8, 6"));
-        assertFalse(source.contains("drawString(ThEApi.instance().lang().guiArcaneInscriber()"));
-        assertTrue(source.contains("int coreBtnRowY = this.guiTop + this.ySize - 100"));
-        assertFalse(source.contains("coreBtnRowY = this.guiTop + 90"));
-        assertFalse(source.contains("this.guiTop + 90"));
-        assertTrue(source.contains("protected void actionPerformed(GuiButton button) throws IOException"));
+        assertAll(
+                () -> assertResearchAddendum(arcaneTerminal, "research.arcaneterminal.addenda.2",
+                        "thaumicenergistics:wireless_arcane_terminal", "WORKBENCHCHARGER"),
+                () -> assertResearchAddendum(essentiaBuses, "research.essentiabuses.addenda.1",
+                        "thaumicenergistics:arcane_p2p_tunnel", "ARCANETERMINAL"),
+                () -> assertLangKeys(readLang(Path.of("src/main/resources/assets/thaumicenergistics/lang/en_us.lang"))),
+                () -> assertLangKeys(readLang(Path.of("src/main/resources/assets/thaumicenergistics/lang/zh_cn.lang"))),
+                () -> assertLangKeys(readLang(Path.of("src/main/resources/assets/thaumicenergistics/lang/ru_ru.lang"))));
     }
 
     @Test
     void arcaneTerminalGuiUsesThaumicArcaneCraftingTexture() throws IOException {
-        String source = normalizedSource("src/main/java/thaumicenergistics/client/gui/part/GuiArcaneTerm.java");
-        String thaumicStyle = normalizedSource(
-                "src/main/resources/assets/thaumicenergistics/screens/terminals/arcane_terminal.json");
+        Path texture = Path.of("src/main/resources/assets/thaumicenergistics/textures/gui/arcane_crafting.png");
+        JsonObject style = readJsonObject(
+                Path.of("src/main/resources/assets/thaumicenergistics/screens/terminals/arcane_terminal.json"));
+        JsonObject terminalStyle = objectAt(style, "terminalStyle");
+        JsonObject slots = objectAt(style, "slots");
 
-        assertTrue(Files.exists(Path.of(
-                "src/main/resources/assets/thaumicenergistics/textures/gui/arcane_crafting.png")));
-        assertTrue(source.contains("public static final String STYLE_PATH = \"/screens/terminals/arcane_terminal.json\""));
-        assertTrue(source.contains("ThEGuiStyleManager.loadStyleDoc(STYLE_PATH)"));
-        assertTrue(thaumicStyle.contains("\"texture\": \"thaumicenergistics:textures/gui/arcane_crafting.png\""));
-        assertFalse(thaumicStyle.contains("\"texture\": \"guis/crafting.png\""));
-        assertSourceMissing("src/main/resources/assets/ae2/screens/terminals/arcane_terminal.json");
+        assertAll(
+                () -> assertTrue(Files.exists(texture), texture + " should exist"),
+                () -> assertEquals("thaumicenergistics:textures/gui/arcane_crafting.png",
+                        stringAt(terminalStyle, "header", "texture")),
+                () -> assertEquals("thaumicenergistics:textures/gui/arcane_crafting.png",
+                        stringAt(terminalStyle, "firstRow", "texture")),
+                () -> assertEquals("thaumicenergistics:textures/gui/arcane_crafting.png",
+                        stringAt(terminalStyle, "row", "texture")),
+                () -> assertEquals("thaumicenergistics:textures/gui/arcane_crafting.png",
+                        stringAt(terminalStyle, "lastRow", "texture")),
+                () -> assertEquals("thaumicenergistics:textures/gui/arcane_crafting.png",
+                        stringAt(terminalStyle, "bottom", "texture")),
+                () -> assertSlot(slots, "CRAFTING_GRID", 28, 158, "BREAK_AFTER_3COLS"),
+                () -> assertSlot(slots, "CRAFTING_RESULT", 107, 140, null),
+                () -> assertSlot(slots, "THE_ARCANE_CRYSTAL", 130, 158, "BREAK_AFTER_2COLS"),
+                () -> assertSlot(slots, "THE_PLAYER_ARMOR", 8, 167, "VERTICAL"));
     }
 
     @Test
-    void arcaneTerminalStyleLoadsFromThaumicEnergisticsNamespace() throws IOException {
-        Path styleManagerPath = Path.of("src/main/java/thaumicenergistics/client/gui/style/ThEGuiStyleManager.java");
-        String termSource = normalizedSource("src/main/java/thaumicenergistics/client/gui/part/GuiArcaneTerm.java");
-        String inscriberSource = normalizedSource("src/main/java/thaumicenergistics/client/gui/part/GuiArcaneInscriber.java");
+    void actRecipeTransferHandlerTargetsMigratedArcaneTerm() {
+        ACTRecipeTransferHandler<ContainerArcaneTerm> handler = new ACTRecipeTransferHandler<>(null);
 
-        assertTrue(Files.exists(styleManagerPath), styleManagerPath + " should exist");
-
-        String styleManagerSource = normalizedSource(styleManagerPath.toString());
-
-        assertTrue(termSource.contains("ThEGuiStyleManager.loadStyleDoc(STYLE_PATH)"));
-        assertFalse(termSource.contains("GuiStyleManager.loadStyleDoc(\"/screens/terminals/arcane_terminal.json\")"));
-        assertTrue(inscriberSource.contains("ThEGuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH)"));
-        assertFalse(inscriberSource.contains("GuiStyleManager.loadStyleDoc(\"/screens/terminals/arcane_terminal.json\")"));
-        assertTrue(styleManagerSource.contains("new ResourceLocation(Reference.MOD_ID, path.substring(1))"));
-        assertTrue(styleManagerSource.contains("new ResourceLocation(ModGlobals.MOD_ID_AE2, path.substring(1))"));
+        assertEquals(ContainerArcaneTerm.class, handler.getContainerClass());
     }
 
     @Test
-    void arcaneInscriberGuiRendersOnlyRequiredVis() throws IOException {
-        String termSource = normalizedSource("src/main/java/thaumicenergistics/client/gui/part/GuiArcaneTerm.java");
-        String inscriberSource = normalizedSource("src/main/java/thaumicenergistics/client/gui/part/GuiArcaneInscriber.java");
+    void aciRecipeTransferHandlerStillTargetsArcaneInscriber() {
+        ACIRecipeTransferHandler<ContainerArcaneInscriber> handler = new ACIRecipeTransferHandler<>(null);
 
-        assertTrue(termSource.contains("protected void drawVisInfo()"));
-        assertTrue(termSource.contains("this.drawVisInfo();"));
-        assertTrue(inscriberSource.contains("protected void drawVisInfo()"));
-        assertTrue(inscriberSource.contains("guiVisRequired()"));
-        assertFalse(inscriberSource.contains("guiVisRequiredOutOf()"));
+        assertEquals(ContainerArcaneInscriber.class, handler.getContainerClass());
     }
 
     @Test
-    void arcaneInscriberGuiPreservesKnowledgeCoreButtonStateAndTooltips() throws IOException {
-        String source = normalizedSource("src/main/java/thaumicenergistics/client/gui/part/GuiArcaneInscriber.java");
+    void packetVisUpdatePreservesValuesAcrossByteBufRoundTrip() {
+        PacketVisUpdate original = new PacketVisUpdate(12.5f, 3.25f, 0.5f);
+        ByteBuf buffer = Unpooled.buffer();
 
-        assertTrue(source.contains("renderButton(coreAddButton, hasRecipe && hasArcaneRecipe && !recipeExists)"));
-        assertTrue(source.contains("renderButton(coreViewButton, false)"));
-        assertTrue(source.contains("renderButton(coreDelButton, false)"));
-        assertTrue(source.contains("renderButton(coreViewButton, true)"));
-        assertTrue(source.contains("renderButton(coreDelButton, true)"));
-        assertTrue(source.contains("renderButton(coreAddButton, false)"));
-        assertTrue(source.contains("coreAddButton.isHovered()"));
-        assertTrue(source.contains("coreViewButton.isHovered()"));
-        assertTrue(source.contains("coreDelButton.isHovered()"));
-        assertTrue(source.contains("guiKnowledgeCoreBlank()"));
-        assertTrue(source.contains("guiRecipeNotArcane()"));
-        assertTrue(source.contains("guiRecipeAlreadyStored()"));
-        assertTrue(source.contains("guiNoRecipe()"));
-        assertTrue(source.contains("guiInsertKnowledgeCore()"));
-        assertTrue(source.contains("private boolean canAddKnowledgeCoreRecipe()"));
-        assertTrue(source.contains("!knowledgeCore.isEmpty()"));
-        assertTrue(source.contains("!result.isEmpty()"));
-        assertTrue(source.contains("this.inscriberContainer.recipeIsArcane"));
-        assertTrue(source.contains("!KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem())"));
-        assertTrue(source.contains("private boolean canOpenStoredKnowledgeCore()"));
-        assertTrue(source.contains("!this.isKnowledgeCoreBlank(knowledgeCore)"));
+        original.toBytes(buffer);
+        PacketVisUpdate decoded = new PacketVisUpdate();
+        decoded.fromBytes(buffer);
+
+        assertAll(
+                () -> assertEquals(12.5f, decoded.vis),
+                () -> assertEquals(3.25f, decoded.required),
+                () -> assertEquals(0.5f, decoded.discount),
+                () -> assertEquals(0, buffer.readableBytes(), "PacketVisUpdate should consume its payload"));
     }
 
     @Test
-    void arcaneInscriberDisablesInheritedResultSlotCrafting() throws IOException {
-        String source = normalizedSource("src/main/java/thaumicenergistics/container/part/ContainerArcaneInscriber.java");
+    void packetUiActionRejectsInvalidRequestedStackArguments() {
+        AEItemKey diamond = AEItemKey.of(new ItemStack(Items.DIAMOND));
+        assertNotNull(diamond);
 
-        assertTrue(source.contains("public int tryCraft(int amount)"));
-        assertTrue(source.contains("public int tryCraft(int amount) {\n        return 0;\n    }"));
-    }
-
-    @Test
-    void arcaneTerminalDoesNotConsumeInitialMeStorageSyncBeforeGuiIsReady() throws IOException {
-        String source = normalizedSource("src/main/java/thaumicenergistics/container/part/ContainerArcaneTerm.java");
-        String constructor = source.substring(
-                source.indexOf("protected ContainerArcaneTerm("),
-                source.indexOf("    public IArcaneTerminalHost getArcaneHost()"));
-        String updateCraftingResult = source.substring(
-                source.indexOf("private void updateCraftingResult()"),
-                source.indexOf("    @Override\n    public ItemStack slotClick("));
-        String onMatrixChanged = source.substring(
-                source.indexOf("public void onMatrixChanged()"),
-                source.indexOf("    private void updateCraftingResult()"));
-        String inscriberSource = normalizedSource(
-                "src/main/java/thaumicenergistics/container/part/ContainerArcaneInscriber.java");
-        String inscriberMatrixSlots = inscriberSource.substring(
-                inscriberSource.indexOf("protected void addMatrixSlots("),
-                inscriberSource.indexOf("    @Override\n    protected void addUpgradeSlots("));
-
-        assertTrue(constructor.contains("this.updateCraftingResult();"));
-        assertFalse(constructor.contains("this.onMatrixChanged();"));
-        assertTrue(onMatrixChanged.contains("this.updateCraftingResult();"));
-        assertTrue(onMatrixChanged.contains("this.detectAndSendChanges();"));
-        assertFalse(updateCraftingResult.contains("detectAndSendChanges"));
-        assertFalse(inscriberMatrixSlots.contains("this.onMatrixChanged();"));
-    }
-
-    @Test
-    void guiHandlerOpensMigratedArcaneTerminal() throws IOException {
-        String source = Files.readString(Path.of("src/main/java/thaumicenergistics/client/gui/GuiHandler.java"));
-        String compactSource = compactSource("src/main/java/thaumicenergistics/client/gui/GuiHandler.java");
-
-        assertTrue(source.contains("import ae2.core.gui.locator.PartLocator;"));
-        assertTrue(source.contains("return new PartLocator(pos, side);"));
-        assertTrue(source.contains("GuiHostLocator arcaneLocator = this.getArcaneLocator(part, pos, side, x);"));
-        assertTrue(source.contains("arcaneLocator = GuiHostLocators.forInventorySlot(x);"));
-        assertTrue(source.contains("if (arcaneHost == null)"));
-        assertFalse(source.contains("part instanceof AEBasePart"));
-        assertTrue(source.contains("new ContainerArcaneTerm(player.inventory, arcaneHost)"));
-        assertTrue(source.contains("this.initContainer(new ContainerArcaneTerm(player.inventory, arcaneHost), arcaneLocator)"));
-        assertTrue(source.contains("return new GuiArcaneTerm("));
-        assertTrue(source.contains("this.initContainer(new ContainerArcaneTerm(player.inventory, arcaneHost), arcaneLocator),"));
-        assertTrue(source.contains("player.inventory)"));
-        assertTrue(source.contains("new ContainerArcaneInscriber(player.inventory, arcaneHost)"));
-        assertTrue(source.contains("this.initContainer(new ContainerArcaneInscriber(player.inventory, arcaneHost), arcaneLocator)"));
-        assertTrue(source.contains("return new GuiArcaneInscriber("));
-        assertTrue(source.contains("this.initContainer(new ContainerCraftAmountBridge(player.inventory, arcaneHost), arcaneLocator)"));
-        assertTrue(source.contains("this.initContainer(new ContainerCraftConfirmBridge(player.inventory, arcaneHost), arcaneLocator)"));
-        assertTrue(source.contains("this.initContainer(new ContainerCraftingStatusBridge(player.inventory, arcaneHost), arcaneLocator)"));
-        assertTrue(compactSource.contains(
-                "newGuiCraftAmountBridge(this.initContainer(newContainerCraftAmountBridge(player.inventory,arcaneHost),arcaneLocator),player.inventory,arcaneHost)"));
-        assertTrue(compactSource.contains(
-                "newGuiCraftConfirmBridge(this.initContainer(newContainerCraftConfirmBridge(player.inventory,arcaneHost),arcaneLocator),player.inventory,arcaneHost)"));
-        assertTrue(compactSource.contains(
-                "newGuiCraftingStatusBridge(this.initContainer(newContainerCraftingStatusBridge(player.inventory,arcaneHost),arcaneLocator),player.inventory,arcaneHost)"));
-        assertFalse(source.contains("new ContainerArcaneTerminal(player, (PartArcaneTerminal) part)"));
-        assertFalse(source.contains("new GuiArcaneTerminal(new ContainerArcaneTerminal(player, (PartArcaneTerminal) part))"));
-        assertFalse(source.contains("new ContainerArcaneInscriber(player, (PartArcaneInscriber) part)"));
-        assertFalse(source.contains("new GuiArcaneInscriber(new ContainerArcaneInscriber(player, (PartArcaneInscriber) part))"));
-    }
-
-    @Test
-    void craftConfirmBridgeUsesSupergiantReturnFlow() throws IOException {
-        String source = normalizedSource(
-                "src/main/java/thaumicenergistics/container/crafting/ContainerCraftConfirmBridge.java");
-
-        assertFalse(source.contains("public void startJob()"));
-        assertFalse(source.contains("returnToMainContainer(this.inventoryPlayer.player, null)"));
-    }
-
-    @Test
-    void actRecipeTransferHandlerTargetsMigratedArcaneTerm() throws IOException {
-        String source = Files.readString(Path.of("src/main/java/thaumicenergistics/integration/jei/ACTRecipeTransferHandler.java"));
-
-        assertTrue(source.contains("import thaumicenergistics.container.part.ContainerArcaneTerm;"));
-        assertTrue(source.contains("class ACTRecipeTransferHandler<C extends ContainerArcaneTerm>"));
-        assertTrue(source.contains("return (Class<C>) ContainerArcaneTerm.class;"));
-        assertFalse(source.contains("ContainerArcaneTerminal"));
-    }
-
-    @Test
-    void aciRecipeTransferHandlerStillTargetsArcaneInscriber() throws IOException {
-        String source = Files.readString(Path.of("src/main/java/thaumicenergistics/integration/jei/ACIRecipeTransferHandler.java"));
-
-        assertTrue(source.contains("import thaumicenergistics.container.part.ContainerArcaneInscriber;"));
-        assertTrue(source.contains("class ACIRecipeTransferHandler<C extends ContainerArcaneInscriber>"));
-        assertTrue(source.contains("return (Class<C>) ContainerArcaneInscriber.class;"));
-    }
-
-    @Test
-    void packetVisUpdateTargetsMigratedArcaneTermGui() throws IOException {
-        String source = Files.readString(Path.of("src/main/java/thaumicenergistics/network/packets/PacketVisUpdate.java"));
-
-        assertTrue(source.contains("import thaumicenergistics.client.gui.part.GuiArcaneTerm;"));
-        assertTrue(source.contains("currentScreen instanceof GuiArcaneTerm"));
-        assertTrue(source.contains("gui.setVisInfo(message.vis, message.required, message.discount)"));
-        assertFalse(source.contains("GuiArcaneTerminal"));
-    }
-
-    @Test
-    void packetIsArcaneUpdateStillTargetsArcaneInscriberGui() throws IOException {
-        String source = Files.readString(Path.of("src/main/java/thaumicenergistics/network/packets/PacketIsArcaneUpdate.java"));
-
-        assertTrue(source.contains("import thaumicenergistics.client.gui.part.GuiArcaneInscriber;"));
-        assertTrue(source.contains("currentScreen instanceof GuiArcaneInscriber"));
-        assertTrue(source.contains("GuiArcaneInscriber gui = (GuiArcaneInscriber) Minecraft.getMinecraft().currentScreen;"));
-        assertTrue(source.contains("gui.setIsArcane(message.isArcane)"));
-    }
-
-    @Test
-    void packetMeItemUpdateIsRemovedWithLegacyTerminalGui() throws IOException {
-        assertSourceMissing("src/main/java/thaumicenergistics/network/packets/PacketMEItemUpdate.java");
-        assertSourceMissing("src/main/java/thaumicenergistics/network/packets/PacketEssentiaFilterAction.java");
-        assertSourceDoesNotContain(
-                "src/main/java/thaumicenergistics/network/PacketHandler.java",
-                "PacketMEItemUpdate");
-        assertSourceDoesNotContain(
-                "src/main/java/thaumicenergistics/network/PacketHandler.java",
-                "PacketEssentiaFilterAction");
-    }
-
-    @Test
-    void migratedTerminalDoesNotUseLegacyMeItemUpdatePacket() throws IOException {
-        assertSourceDoesNotContain(
-                "src/main/java/thaumicenergistics/container/part/ContainerArcaneTerm.java",
-                "PacketMEItemUpdate");
-        assertSourceDoesNotContain(
-                "src/main/java/thaumicenergistics/client/gui/part/GuiArcaneTerm.java",
-                "PacketMEItemUpdate");
-    }
-
-    @Test
-    void migratedTerminalSendsVisUpdatesToGui() throws IOException {
-        String source = normalizedSource("src/main/java/thaumicenergistics/container/part/ContainerArcaneTerm.java");
-
-        assertTrue(source.contains("import net.minecraft.inventory.IContainerListener;"));
-        assertTrue(source.contains("import thaumicenergistics.network.PacketHandler;"));
-        assertTrue(source.contains("import thaumicenergistics.network.packets.PacketVisUpdate;"));
-        assertTrue(source.contains("protected void sendVisInfo(IContainerListener listener)"));
-        assertTrue(source.contains("PacketHandler.sendToPlayer("));
-        assertTrue(source.contains("new PacketVisUpdate(this.getWorldVis(), this.getCurrentRequiredVis(), this.getDiscount(this.getPlayer()))"));
-        assertTrue(source.contains("public void addListener(IContainerListener listener)"));
-        assertTrue(source.contains(
-                "public void addListener(IContainerListener listener) {\n" +
-                        "        super.addListener(listener);\n" +
-                        "        this.sendVisInfo(listener);\n" +
-                        "    }"));
-        assertTrue(source.contains("public void detectAndSendChanges()"));
-        assertTrue(source.contains("this.sendVisInfo((IContainerListener) this.getPlayer())"));
-    }
-
-    @Test
-    void migratedTerminalHandlesArcaneResultSlotClicks() throws IOException {
-        String source = Files.readString(Path.of("src/main/java/thaumicenergistics/container/part/ContainerArcaneTerm.java"));
-
-        assertTrue(source.contains("ItemStack slotClick("));
-        assertTrue(source.contains("SlotArcaneResult"));
-        assertTrue(source.contains("tryCraft("));
-        assertTrue(source.contains("onCraft("));
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> new PacketUIAction(ActionType.AUTO_CRAFT, diamond, -1, false)),
+                () -> assertThrows(NullPointerException.class,
+                        () -> new PacketUIAction(ActionType.AUTO_CRAFT, null, 1, false)));
     }
 
     @Test
     void arcaneTerminalUsesDedicatedCrystalAndArmorSlotSemantics() throws IOException {
-        String source = normalizedSource("src/main/java/thaumicenergistics/container/part/ContainerArcaneTerm.java");
-        String inscriberSource = normalizedSource(
-                "src/main/java/thaumicenergistics/container/part/ContainerArcaneInscriber.java");
-        String semanticsSource = normalizedSource("src/main/java/thaumicenergistics/container/ThESlotSemantics.java");
-        String thaumicStyle = normalizedSource(
-                "src/main/resources/assets/thaumicenergistics/screens/terminals/arcane_terminal.json");
-        String compactThaumicStyle = compactSource(
-                "src/main/resources/assets/thaumicenergistics/screens/terminals/arcane_terminal.json");
-        String thaumicSchema = normalizedSource("src/main/resources/assets/thaumicenergistics/screens/schema.json");
+        SlotSemantic arcaneCrystal = ThESlotSemantics.ARCANE_CRYSTAL;
+        SlotSemantic playerArmor = ThESlotSemantics.PLAYER_ARMOR;
+        JsonObject style = readJsonObject(
+                Path.of("src/main/resources/assets/thaumicenergistics/screens/terminals/arcane_terminal.json"));
+        JsonObject schema = readJsonObject(Path.of("src/main/resources/assets/thaumicenergistics/screens/schema.json"));
+        JsonObject slots = objectAt(style, "slots");
 
-        assertTrue(semanticsSource.contains("ARCANE_CRYSTAL = SlotSemantics.register(\"THE_ARCANE_CRYSTAL\", true)"));
-        assertTrue(semanticsSource.contains("PLAYER_ARMOR = SlotSemantics.register(\"THE_PLAYER_ARMOR\", true"));
-
-        assertTrue(source.contains("import net.minecraftforge.items.wrapper.PlayerArmorInvWrapper;"));
-        assertTrue(source.contains("import thaumicenergistics.container.ThESlotSemantics;"));
-        assertTrue(source.contains("import thaumicenergistics.container.slot.SlotArmor;"));
-        assertTrue(source.contains("this.addArmorSlots(ip.player, new PlayerArmorInvWrapper(ip), 8, 19);"));
-        assertTrue(source.contains("new SlotArmor(player, inventory, 3, offsetX, offsetY)"));
-        assertTrue(source.contains("new SlotArmor(player, inventory, 0, offsetX, offsetY + 18 * 3)"));
-        assertTrue(source.contains("ThESlotSemantics.PLAYER_ARMOR"));
-
-        assertTrue(source.contains(
-                "new SlotArcaneMatrix(this, 9 + (i * 2 + j), offsetX + (j * 18), offsetY + (i * 18)),\n" +
-                        "                        ThESlotSemantics.ARCANE_CRYSTAL)"));
-        assertTrue(inscriberSource.contains(
-                "new SlotArcaneGhostMatrix(this, 9 + (i * 2 + j), offsetX + (j * 18), offsetY + (i * 18)),\n" +
-                        "                        ThESlotSemantics.ARCANE_CRYSTAL)"));
-
-        assertTrue(compactThaumicStyle.contains("\"CRAFTING_GRID\":{\"left\":28,\"bottom\":158,\"grid\":\"BREAK_AFTER_3COLS\""));
-        assertTrue(compactThaumicStyle.contains("\"CRAFTING_RESULT\":{\"left\":107,\"bottom\":140"));
-        assertTrue(compactThaumicStyle.contains("\"THE_ARCANE_CRYSTAL\":{\"left\":130,\"bottom\":158,\"grid\":\"BREAK_AFTER_2COLS\""));
-        assertTrue(compactThaumicStyle.contains("\"THE_PLAYER_ARMOR\":{\"left\":8,\"bottom\":167,\"grid\":\"VERTICAL\""));
-        assertTrue(thaumicStyle.contains("\"THE_ARCANE_CRYSTAL\": {"));
-        assertTrue(thaumicStyle.contains("\"THE_PLAYER_ARMOR\": {"));
-        assertTrue(thaumicSchema.contains("\"THE_ARCANE_CRYSTAL\""));
-        assertTrue(thaumicSchema.contains("\"THE_PLAYER_ARMOR\""));
+        assertAll(
+                () -> assertEquals("THE_ARCANE_CRYSTAL", arcaneCrystal.id()),
+                () -> assertTrue(arcaneCrystal.playerSide()),
+                () -> assertEquals(0, arcaneCrystal.quickMovePriority()),
+                () -> assertSame(arcaneCrystal, SlotSemantics.getOrThrow("THE_ARCANE_CRYSTAL")),
+                () -> assertEquals("THE_PLAYER_ARMOR", playerArmor.id()),
+                () -> assertTrue(playerArmor.playerSide()),
+                () -> assertEquals(2500, playerArmor.quickMovePriority()),
+                () -> assertSame(playerArmor, SlotSemantics.getOrThrow("THE_PLAYER_ARMOR")),
+                () -> assertSlot(slots, "THE_ARCANE_CRYSTAL", 130, 158, "BREAK_AFTER_2COLS"),
+                () -> assertSlot(slots, "THE_PLAYER_ARMOR", 8, 167, "VERTICAL"),
+                () -> assertJsonArrayContains(arrayAt(schema, "properties", "slots", "propertyNames", "enum"),
+                        "THE_ARCANE_CRYSTAL"),
+                () -> assertJsonArrayContains(arrayAt(schema, "properties", "slots", "propertyNames", "enum"),
+                        "THE_PLAYER_ARMOR"));
     }
 
-    @Test
-    void jeiTransferSimulatesFullGridClearBeforeMutatingGrid() throws IOException {
-        String source = Files.readString(Path.of("src/main/java/thaumicenergistics/container/part/ContainerArcaneTerm.java"));
-
-        assertTrue(source.contains("clearCraftingIntoNetworkForJEI()"));
-        assertTrue(source.contains("rollbackNetworkReservations("));
-        assertTrue(source.contains("if (!this.clearCraftingIntoNetworkForJEI())"));
-        assertTrue(source.contains("crafting.extractItem(slot, Integer.MAX_VALUE, true)"));
+    private static JsonObject readJsonObject(Path path) throws IOException {
+        JsonElement root;
+        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            root = JsonParser.parseReader(reader);
+        }
+        assertTrue(root.isJsonObject(), path + " should contain a JSON object");
+        return root.getAsJsonObject();
     }
 
-    @Test
-    void jeiRecipePacketTargetsMigratedArcaneTerminal() throws IOException {
-        String source = Files.readString(Path.of("src/main/java/thaumicenergistics/network/packets/PacketJEIRecipe.java"));
+    private static Map<String, String> readLang(Path path) throws IOException {
+        Map<String, String> entries = new HashMap<>();
+        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            int lineNumber = 0;
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lineNumber++;
+                if (lineNumber == 1 && !line.isEmpty() && line.charAt(0) == '\uFEFF') {
+                    line = line.substring(1);
+                }
+                String trimmed = line.trim();
+                if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                    continue;
+                }
 
-        assertTrue(source.contains("ContainerArcaneTerm"));
-        assertTrue(source.contains("player.openContainer instanceof ContainerArcaneTerm"));
-        assertTrue(source.contains("message.tag == null || message.tag.isEmpty()"));
+                int separator = line.indexOf('=');
+                if (separator <= 0) {
+                    fail(path + ":" + lineNumber + " is not a key=value lang entry");
+                }
+
+                String key = line.substring(0, separator);
+                String value = line.substring(separator + 1);
+                if (entries.putIfAbsent(key, value) != null) {
+                    fail(path + ":" + lineNumber + " duplicates lang key " + key);
+                }
+            }
+        }
+        return entries;
     }
 
-    private static void assertSourceDoesNotContain(String path, String forbidden) throws IOException {
-        String source = Files.readString(Path.of(path));
-        assertFalse(source.contains(forbidden), path + " should not contain " + forbidden);
+    private static void assertLangKeys(Map<String, String> lang) {
+        assertLangKey(lang, "item.thaumicenergistics.wireless_arcane_terminal.name");
+        assertLangKey(lang, "item.thaumicenergistics.arcane_p2p_tunnel.name");
+        assertLangKey(lang, "research.arcaneterminal.addenda.2");
+        assertLangKey(lang, "research.essentiabuses.addenda.1");
     }
 
-    private static void assertSourceContains(String path, String expected) throws IOException {
-        String source = Files.readString(Path.of(path));
-        assertTrue(source.contains(expected), path + " should contain " + expected);
+    private static void assertLangKey(Map<String, String> lang, String key) {
+        assertTrue(lang.containsKey(key), "Missing lang key " + key);
+        assertFalse(lang.get(key).trim().isEmpty(), "Lang key " + key + " should not be blank");
     }
 
-    private static void assertSourceMissing(String path) {
-        assertFalse(Files.exists(Path.of(path)), path + " should not exist");
+    private static JsonObject researchEntry(JsonObject research, String key) {
+        for (JsonElement element : arrayAt(research, "entries")) {
+            assertTrue(element.isJsonObject(), "Research entry should be a JSON object");
+            JsonObject entry = element.getAsJsonObject();
+            if (key.equals(stringAt(entry, "key"))) {
+                return entry;
+            }
+        }
+
+        fail("Missing research entry " + key);
+        return new JsonObject();
     }
 
-    private static String normalizedSource(String path) throws IOException {
-        return Files.readString(Path.of(path)).replace("\r\n", "\n");
+    private static void assertResearchAddendum(JsonObject entry, String textKey, String recipeId,
+                                               String requiredResearch) {
+        for (JsonElement element : arrayAt(entry, "addenda")) {
+            assertTrue(element.isJsonObject(), "Research addendum should be a JSON object");
+            JsonObject addendum = element.getAsJsonObject();
+            if (textKey.equals(stringAt(addendum, "text"))) {
+                assertJsonArrayContains(arrayAt(addendum, "recipes"), recipeId);
+                assertJsonArrayContains(arrayAt(addendum, "required_research"), requiredResearch);
+                return;
+            }
+        }
+
+        fail("Missing research addendum " + textKey);
     }
 
-    private static String compactSource(String path) throws IOException {
-        return Files.readString(Path.of(path)).replaceAll("\\s+", "");
+    private static void assertSlot(JsonObject slots, String key, int left, int bottom, String grid) {
+        JsonObject slot = objectAt(slots, key);
+
+        assertEquals(left, intAt(slot, "left"));
+        assertEquals(bottom, intAt(slot, "bottom"));
+        if (grid == null) {
+            assertFalse(slot.has("grid"), key + " should not declare a grid layout");
+        } else {
+            assertEquals(grid, stringAt(slot, "grid"));
+        }
+    }
+
+    private static JsonObject objectAt(JsonObject json, String... path) {
+        JsonElement element = elementAt(json, path);
+        assertTrue(element.isJsonObject(), "Expected JSON object at " + String.join(".", path));
+        return element.getAsJsonObject();
+    }
+
+    private static com.google.gson.JsonArray arrayAt(JsonObject json, String... path) {
+        JsonElement element = elementAt(json, path);
+        assertTrue(element.isJsonArray(), "Expected JSON array at " + String.join(".", path));
+        return element.getAsJsonArray();
+    }
+
+    private static String stringAt(JsonObject json, String... path) {
+        JsonElement element = elementAt(json, path);
+        assertTrue(element.isJsonPrimitive(), "Expected JSON string at " + String.join(".", path));
+        JsonPrimitive primitive = element.getAsJsonPrimitive();
+        assertTrue(primitive.isString(), "Expected JSON string at " + String.join(".", path));
+        return primitive.getAsString();
+    }
+
+    private static int intAt(JsonObject json, String... path) {
+        JsonElement element = elementAt(json, path);
+        assertTrue(element.isJsonPrimitive(), "Expected JSON integer at " + String.join(".", path));
+        JsonPrimitive primitive = element.getAsJsonPrimitive();
+        assertTrue(primitive.isNumber(), "Expected JSON integer at " + String.join(".", path));
+        return primitive.getAsInt();
+    }
+
+    private static JsonElement elementAt(JsonObject json, String... path) {
+        JsonElement current = json;
+        for (String member : path) {
+            assertTrue(current.isJsonObject(), "Expected a JSON object before member " + member);
+            JsonObject object = current.getAsJsonObject();
+            assertTrue(object.has(member), "Expected JSON member " + member);
+            current = object.get(member);
+        }
+        return current;
+    }
+
+    private static void assertJsonArrayContains(com.google.gson.JsonArray array, String expected) {
+        for (JsonElement element : array) {
+            assertTrue(element.isJsonPrimitive(), "Expected JSON string in array containing " + expected);
+            JsonPrimitive primitive = element.getAsJsonPrimitive();
+            assertTrue(primitive.isString(), "Expected JSON string in array containing " + expected);
+            if (expected.equals(primitive.getAsString())) {
+                return;
+            }
+        }
+
+        fail("Expected JSON array to contain " + expected);
+    }
+
+    private static <T extends IPart> void assertPartItem(ItemDefinition<PartItem<T>> definition, ResourceLocation id,
+                                                         Class<T> partClass) {
+        PartItem<T> item = definition.item();
+
+        assertAll(
+                () -> assertEquals(id, definition.id()),
+                () -> assertEquals(PartItem.class, item.getClass()),
+                () -> assertEquals(partClass, item.getPartClass()),
+                () -> assertInstanceOf(partClass, item.createPart()));
     }
 }

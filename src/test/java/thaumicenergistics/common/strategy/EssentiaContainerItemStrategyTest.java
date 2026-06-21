@@ -18,15 +18,11 @@ import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
 import thaumcraft.api.items.ItemsTC;
-import thaumicenergistics.api.IThEApi;
-import thaumicenergistics.api.IThEConfig;
-import thaumicenergistics.api.ThEApi;
+import thaumicenergistics.config.ThEConfig;
 import thaumicenergistics.me.key.AEEssentiaKey;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Proxy;
-import java.util.LinkedHashMap;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,7 +37,7 @@ class EssentiaContainerItemStrategyTest {
         bootstrapMinecraft();
 
         Item previousPhial = ItemsTC.phial;
-        Object previousApi = installApiConfigStub();
+        Map<String, Integer> previousCapacities = installEssentiaCapacityConfig();
         TestEssentiaContainerItem phial = new TestEssentiaContainerItem("thaumcraft", "phial");
         ItemsTC.phial = phial;
         try {
@@ -73,7 +69,7 @@ class EssentiaContainerItemStrategyTest {
             assertEquals(10, filled.getAmount(Aspect.AIR));
         } finally {
             ItemsTC.phial = previousPhial;
-            restoreApi(previousApi);
+            restoreEssentiaCapacityConfig(previousCapacities);
         }
     }
 
@@ -81,7 +77,7 @@ class EssentiaContainerItemStrategyTest {
     void insertAllowsPartialFillWhenSourceProvidesLessThanCapacity() {
         bootstrapMinecraft();
 
-        Object previousApi = installApiConfigStub();
+        Map<String, Integer> previousCapacities = installEssentiaCapacityConfig();
         try {
             TestEssentiaContainerItem phial = new TestEssentiaContainerItem("thaumcraft", "phial");
             TestStackContext context = new TestStackContext(new ItemStack(phial));
@@ -93,7 +89,7 @@ class EssentiaContainerItemStrategyTest {
 
             assertEquals(7, phial.getAspects(context.getStack()).getAmount(Aspect.AIR));
         } finally {
-            restoreApi(previousApi);
+            restoreEssentiaCapacityConfig(previousCapacities);
         }
     }
 
@@ -101,7 +97,7 @@ class EssentiaContainerItemStrategyTest {
     void insertModulateDoesNotPromoteSingleEssentiaToFullContainer() {
         bootstrapMinecraft();
 
-        Object previousApi = installApiConfigStub();
+        Map<String, Integer> previousCapacities = installEssentiaCapacityConfig();
         try {
             TestEssentiaContainerItem phial = new TestEssentiaContainerItem("thaumcraft", "phial");
             TestStackContext context = new TestStackContext(new ItemStack(phial));
@@ -112,7 +108,7 @@ class EssentiaContainerItemStrategyTest {
 
             assertEquals(1, phial.getAspects(context.getStack()).getAmount(Aspect.AIR));
         } finally {
-            restoreApi(previousApi);
+            restoreEssentiaCapacityConfig(previousCapacities);
         }
     }
 
@@ -120,7 +116,7 @@ class EssentiaContainerItemStrategyTest {
     void insertClampsToRemainingSpaceInPartiallyFilledContainer() {
         bootstrapMinecraft();
 
-        Object previousApi = installApiConfigStub();
+        Map<String, Integer> previousCapacities = installEssentiaCapacityConfig();
         try {
             TestEssentiaContainerItem phial = new TestEssentiaContainerItem("thaumcraft", "phial");
             ItemStack partialPhial = new ItemStack(phial);
@@ -135,7 +131,7 @@ class EssentiaContainerItemStrategyTest {
 
             assertEquals(10, phial.getAspects(context.getStack()).getAmount(Aspect.AIR));
         } finally {
-            restoreApi(previousApi);
+            restoreEssentiaCapacityConfig(previousCapacities);
         }
     }
 
@@ -143,7 +139,7 @@ class EssentiaContainerItemStrategyTest {
     void insertSimulationUsesKnownPartialAmountWhenFullContainerCannotFit() {
         bootstrapMinecraft();
 
-        Object previousApi = installApiConfigStub();
+        Map<String, Integer> previousCapacities = installEssentiaCapacityConfig();
         try {
             TestEssentiaContainerItem phial = new TestEssentiaContainerItem("thaumcraft", "phial");
             OnlyAmountContext context = new OnlyAmountContext(new ItemStack(phial), 7);
@@ -155,7 +151,7 @@ class EssentiaContainerItemStrategyTest {
 
             assertEquals(7, phial.getAspects(context.getStack()).getAmount(Aspect.AIR));
         } finally {
-            restoreApi(previousApi);
+            restoreEssentiaCapacityConfig(previousCapacities);
         }
     }
 
@@ -163,7 +159,7 @@ class EssentiaContainerItemStrategyTest {
     void extractAllowsPartialEmptyWhenNetworkCanOnlyAcceptPart() {
         bootstrapMinecraft();
 
-        Object previousApi = installApiConfigStub();
+        Map<String, Integer> previousCapacities = installEssentiaCapacityConfig();
         try {
             TestEssentiaContainerItem phial = new TestEssentiaContainerItem("thaumcraft", "phial");
             ItemStack partialPhial = new ItemStack(phial);
@@ -178,7 +174,7 @@ class EssentiaContainerItemStrategyTest {
 
             assertEquals(4, phial.getAspects(context.getStack()).getAmount(Aspect.AIR));
         } finally {
-            restoreApi(previousApi);
+            restoreEssentiaCapacityConfig(previousCapacities);
         }
     }
 
@@ -188,44 +184,16 @@ class EssentiaContainerItemStrategyTest {
         }
     }
 
-    private static Object installApiConfigStub() {
-        try {
-            Field apiField = ThEApi.class.getDeclaredField("API");
-            apiField.setAccessible(true);
-            Object previousApi = apiField.get(null);
-            apiField.set(null, Proxy.newProxyInstance(
-                    IThEApi.class.getClassLoader(),
-                    new Class<?>[]{IThEApi.class},
-                    (proxy, method, args) -> {
-                        if ("config".equals(method.getName())) {
-                            return Proxy.newProxyInstance(
-                                    IThEConfig.class.getClassLoader(),
-                                    new Class<?>[]{IThEConfig.class},
-                                    (configProxy, configMethod, configArgs) -> {
-                                        if ("essentiaContainerCapacity".equals(configMethod.getName())) {
-                                            Map<String, Integer> capacities = new HashMap<>();
-                                            capacities.put("thaumcraft:phial", 10);
-                                            return capacities;
-                                        }
-                                        throw new UnsupportedOperationException(configMethod.getName());
-                                    });
-                        }
-                        throw new UnsupportedOperationException(method.getName());
-                    }));
-            return previousApi;
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Could not install test API config stub", e);
-        }
+    private static Map<String, Integer> installEssentiaCapacityConfig() {
+        Map<String, Integer> previousCapacities = new HashMap<>(ThEConfig.essentiaContainerCapacity);
+        ThEConfig.essentiaContainerCapacity.clear();
+        ThEConfig.essentiaContainerCapacity.put("thaumcraft:phial", 10);
+        return previousCapacities;
     }
 
-    private static void restoreApi(Object previousApi) {
-        try {
-            Field apiField = ThEApi.class.getDeclaredField("API");
-            apiField.setAccessible(true);
-            apiField.set(null, previousApi);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Could not restore API config stub", e);
-        }
+    private static void restoreEssentiaCapacityConfig(Map<String, Integer> previousCapacities) {
+        ThEConfig.essentiaContainerCapacity.clear();
+        ThEConfig.essentiaContainerCapacity.putAll(previousCapacities);
     }
 
     private static final class TestEssentiaContainerItem extends Item implements IEssentiaContainerItem {

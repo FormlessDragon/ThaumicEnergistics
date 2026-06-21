@@ -1,6 +1,6 @@
 package thaumicenergistics.api;
 
-import java.lang.reflect.Method;
+import thaumicenergistics.ThaumicEnergisticsApi;
 
 /**
  * API entry point
@@ -20,13 +20,7 @@ public class ThEApi {
      */
     public static IThEApi instance() {
         if (ThEApi.API == null) {
-            try {
-                Class clazz = Class.forName("thaumicenergistics.ThaumicEnergisticsApi");
-                Method instanceAccessor = clazz.getMethod("instance");
-                ThEApi.API = (IThEApi) instanceAccessor.invoke(null);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            ThEApi.API = ThaumicEnergisticsApi.instance();
         }
         return ThEApi.API;
     }
