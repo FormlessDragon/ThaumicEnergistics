@@ -10,12 +10,8 @@ import thaumcraft.codechicken.lib.math.MathHelper;
 import thaumicenergistics.client.gui.GuiBase;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
 import thaumicenergistics.core.ThEFeatures;
-import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.network.packets.PacketAssemblerGUIUpdateRequest;
-import thaumicenergistics.network.packets.PacketSubscribe;
 
 import java.awt.*;
-import java.util.HashMap;
 
 /**
  * @author Alex811
@@ -31,8 +27,6 @@ public class GuiArcaneAssembler extends GuiBase {
     private final ContainerArcaneAssembler container;
     private final IItemHandler inv;
     private float enAlpha;
-    private boolean hasEnoughVis = true;
-    private HashMap<String, Boolean> aspectExists = new HashMap<>();
 
     public GuiArcaneAssembler(ContainerArcaneAssembler container) {
         super(container);
@@ -55,7 +49,6 @@ public class GuiArcaneAssembler extends GuiBase {
 
     @Override
     public void initGui() {
-        PacketHandler.sendToServer(new PacketAssemblerGUIUpdateRequest(this.container.getTE()));
         this.xSize = WIDTH;
         this.ySize = HEIGHT;
         super.initGui();
@@ -67,9 +60,9 @@ public class GuiArcaneAssembler extends GuiBase {
         this.fontRenderer.drawString(ThEFeatures.instance().lang().tileArcaneAssembler().getLocalizedKey(), 8, 3, 4210752);
         this.fontRenderer.drawString(I18n.format("container.inventory"), 8, this.getYSize() - 92, 4210752);
         if (!this.inv.getStackInSlot(0).isEmpty()) {
-            if (this.aspectExists.containsValue(false))
+            if (this.container.getGuiState().getAspectExists().containsValue(false))
                 this.fontRenderer.drawString(ThEFeatures.instance().lang().guiOutOfAspect().getLocalizedKey(), 100, this.getYSize() - 92, Color.RED.getRGB());
-            if (!this.hasEnoughVis)
+            if (!this.container.getGuiState().hasEnoughVis())
                 this.fontRenderer.drawString(ThEFeatures.instance().lang().guiOutOfVis().getLocalizedKey(), 115, 3, Color.RED.getRGB());
         }
     }
@@ -95,7 +88,7 @@ public class GuiArcaneAssembler extends GuiBase {
 
         this.mc.getTextureManager().bindTexture(ASPECTS);
         for (int i = 0; i < 6; i++) {
-            Boolean haveAspect = aspectExists.get(aspects[i]);
+            Boolean haveAspect = this.container.getGuiState().getAspectExists().get(aspects[i]);
             int x = aspectGUILoc[i][0];
             int y = aspectGUILoc[i][1];
             if (haveAspect != null && !this.inv.getStackInSlot(0).isEmpty()) {   // recipe needs this aspect & we have a KCore
@@ -111,16 +104,5 @@ public class GuiArcaneAssembler extends GuiBase {
             drawModalRectWithCustomSizedTexture(this.guiLeft + x, this.guiTop + y, x, y, 40, 40, this.xSize, this.ySize);
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         }
-    }
-
-    @Override
-    public void onGuiClosed() {
-        super.onGuiClosed();
-        PacketHandler.sendToServer(new PacketSubscribe<>(container.getTE(), false)); // unsubscribe from aspect availability updates
-    }
-
-    public void updateGUI(HashMap<String, Boolean> aspectExists, boolean hasEnoughVis) {
-        this.aspectExists = aspectExists;
-        this.hasEnoughVis = hasEnoughVis;
     }
 }

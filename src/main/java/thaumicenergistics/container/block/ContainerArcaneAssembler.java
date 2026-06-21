@@ -1,6 +1,7 @@
 package thaumicenergistics.container.block;
 
 import ae2.container.SlotSemantics;
+import ae2.container.guisync.GuiSync;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
@@ -29,6 +30,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
  */
 public class ContainerArcaneAssembler extends ContainerBase {
     protected TileArcaneAssembler TE;
+    @GuiSync(20)
+    private ArcaneAssemblerGuiState guiState = ArcaneAssemblerGuiState.EMPTY;
 
     public ContainerArcaneAssembler(EntityPlayer player, TileArcaneAssembler TE) {
         super(player);
@@ -38,8 +41,7 @@ public class ContainerArcaneAssembler extends ContainerBase {
             this.addSlot(new SlotUpgrade(this.getInventory("upgrades"), i, 186, 8 + i * 18), SlotSemantics.UPGRADE);
         this.bindPlayerInventory(new PlayerMainInvWrapper(player.inventory), 0, 147);
         this.addListener(new KnowledgeCoreSlotListener());
-        if (ForgeUtil.isServer())
-            TE.subscribe(player);   // subscribe to aspect availability updates
+        this.refreshGuiState();
     }
 
     public IItemHandler getInventory(String name) {
@@ -48,6 +50,22 @@ public class ContainerArcaneAssembler extends ContainerBase {
 
     public TileArcaneAssembler getTE() {
         return TE;
+    }
+
+    public ArcaneAssemblerGuiState getGuiState() {
+        return this.guiState;
+    }
+
+    @Override
+    public void detectAndSendChanges() {
+        if (this.isServerSide()) {
+            this.refreshGuiState();
+        }
+        super.detectAndSendChanges();
+    }
+
+    private void refreshGuiState() {
+        this.guiState = ArcaneAssemblerGuiState.from(this.TE);
     }
 
     public void playCoreSound(EntityPlayer player) { // plays the right sound, when the Knowledge Core gets removed or placed in the slot

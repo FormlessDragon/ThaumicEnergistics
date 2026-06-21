@@ -16,7 +16,6 @@ import ae2.core.definitions.AEItems;
 import ae2.core.gui.locator.GuiHostLocators;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.MathHelper;
@@ -32,8 +31,6 @@ import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.me.key.AEEssentiaKey;
-import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.network.packets.PacketAssemblerGUIUpdate;
 import thaumicenergistics.util.*;
 import thaumicenergistics.util.inventory.IThEInvTile;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
@@ -57,7 +54,7 @@ import java.util.function.Function;
 /**
  * @author Alex811
  */
-public class TileArcaneAssembler extends ThENetworkTile implements IThESubscribable, IThEInvTile, IThEGuiTile, ICraftingProvider, IGridTickable {
+public class TileArcaneAssembler extends ThENetworkTile implements IThEInvTile, IThEGuiTile, ICraftingProvider, IGridTickable {
     protected static final int BASE_STEP = 5;               // step to increase progress by / tick (not counting upgrades)
     protected ThEInternalInventory coreInv;                 // contains Knowledge Core
     protected ThEUpgradeInventory upgradeInv;
@@ -251,8 +248,6 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThESubscriba
         if (prevHasEnoughVis != this.hasEnoughVis || prevMissingAspect != this.missingAspect.get()) { // update client if needed
             this.saveVisualChange();
         }
-        if (prevHasEnoughVis != this.hasEnoughVis || !prevAspectExists.equals(this.aspectExists))    // update client if needed
-            this.notifySubs();
         if (!canCraft)
             return false; // we don't have the ingredients, tell AE2 we can't craft
         // Craft
@@ -341,7 +336,6 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThESubscriba
                     this.aspectExists = new HashMap<>();
                     this.hasEnoughVis = true;
                     this.saveVisualChange();
-                    this.notifySubs();
                 } else
                     this.noPushFlag = true;
             }
@@ -379,10 +373,6 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThESubscriba
     private void saveVisualChange() {
         this.saveChanges();
         this.markForUpdate();
-    }
-
-    protected void notifySubs() { // update client side, to show details in the GUI
-        this.notifySubs(player -> PacketHandler.sendToPlayer((EntityPlayerMP) player, new PacketAssemblerGUIUpdate(this)));
     }
 
     public HashMap<String, Boolean> getAspectExists() {
