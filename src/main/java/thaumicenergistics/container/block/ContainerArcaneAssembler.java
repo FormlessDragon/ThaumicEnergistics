@@ -1,19 +1,19 @@
 package thaumicenergistics.container.block;
 
+import ae2.container.AEBaseContainer;
 import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.wrapper.PlayerMainInvWrapper;
-import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
 import thaumicenergistics.container.slot.SlotUpgrade;
@@ -23,22 +23,23 @@ import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.ThELog;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.Objects;
 
 /**
  * @author Alex811
  */
-public class ContainerArcaneAssembler extends ContainerBase {
+public class ContainerArcaneAssembler extends AEBaseContainer {
     protected TileArcaneAssembler TE;
     @GuiSync(20)
     private ArcaneAssemblerGuiState guiState = ArcaneAssemblerGuiState.EMPTY;
 
     public ContainerArcaneAssembler(EntityPlayer player, TileArcaneAssembler TE) {
-        super(player);
-        this.TE = TE;
+        super(Objects.requireNonNull(player, "player").inventory, null);
+        this.TE = Objects.requireNonNull(TE, "TE");
         this.addSlot(new SlotKnowledgeCore(this.getInventory("cores"), 0, 81, 66), ThESlotSemantics.KNOWLEDGE_CORE);
         for (int i = 0; i < this.getInventory("upgrades").getSlots(); i++)
             this.addSlot(new SlotUpgrade(this.getInventory("upgrades"), i, 186, 8 + i * 18), SlotSemantics.UPGRADE);
-        this.bindPlayerInventory(new PlayerMainInvWrapper(player.inventory), 0, 147);
+        this.addPlayerInventorySlots(8, 149);
         this.addListener(new KnowledgeCoreSlotListener());
         this.refreshGuiState();
     }
@@ -84,6 +85,26 @@ public class ContainerArcaneAssembler extends ContainerBase {
         return soundEvent;
     }
 
+    @Override
+    public ItemStack transferStackInSlot(EntityPlayer playerIn, int index) {
+        if (index < 0 || index >= this.inventorySlots.size()) {
+            return ItemStack.EMPTY;
+        }
+
+        Slot slot = this.getSlot(index);
+        ItemStack originalStack = slot.getStack().copy();
+        ItemStack movedStack = super.transferStackInSlot(playerIn, index);
+        if (!movedStack.isEmpty() || originalStack.isEmpty()) {
+            return movedStack;
+        }
+
+        ItemStack remainingStack = slot.getStack();
+        return ItemStack.areItemStacksEqual(originalStack, remainingStack)
+                && ItemStack.areItemStackTagsEqual(originalStack, remainingStack)
+                ? ItemStack.EMPTY
+                : originalStack;
+    }
+
     private class KnowledgeCoreSlotListener implements IContainerListener {
         private boolean opened = false;
 
@@ -91,7 +112,7 @@ public class ContainerArcaneAssembler extends ContainerBase {
         @ParametersAreNonnullByDefault
         public void sendSlotContents(Container containerToSend, int slotInd, ItemStack stack) {
             if (slotInd == 0 && opened && ForgeUtil.isServer()) {
-                ContainerArcaneAssembler.this.playCoreSound(ContainerArcaneAssembler.this.player);
+                ContainerArcaneAssembler.this.playCoreSound(ContainerArcaneAssembler.this.getPlayer());
                 ContainerArcaneAssembler.this.TE.init();
             }
             opened = true;

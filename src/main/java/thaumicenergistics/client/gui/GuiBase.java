@@ -9,11 +9,11 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.opengl.GL11;
-import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.slot.ISlotOptional;
 import thaumicenergistics.container.slot.SlotGhostEssentia;
 import thaumicenergistics.container.slot.ThESlot;
@@ -30,7 +30,7 @@ public abstract class GuiBase extends GuiContainer {
     private int currMouseX = 0;
     private int currMouseY = 0;
 
-    public GuiBase(ContainerBase container) {
+    public GuiBase(Container container) {
         super(container);
     }
 
