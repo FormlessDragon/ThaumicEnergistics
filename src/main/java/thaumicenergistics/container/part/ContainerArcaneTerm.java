@@ -7,6 +7,7 @@ import ae2.api.storage.StorageHelper;
 import ae2.container.GuiIds;
 import ae2.container.SlotSemantics;
 import ae2.container.me.common.ContainerMEStorage;
+import ae2.core.network.serverbound.GuiActionPacket;
 import com.google.common.collect.Lists;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -43,23 +44,27 @@ import thaumicenergistics.container.slot.SlotArcaneMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.container.slot.SlotUpgrade;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
+import thaumicenergistics.integration.jei.ArcaneRecipeTransferPayload;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketVisUpdate;
 import thaumicenergistics.util.ForgeUtil;
-import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.TCUtil;
 import thaumicenergistics.util.ThELog;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class ContainerArcaneTerm extends ContainerMEStorage implements ICraftingContainer {
 
     private static final String ACTION_CLEAR_GRID = "clearGrid";
     private static final String ACTION_SET_CLEAR_ON_CLOSE = "setClearOnClose";
+    private static final String ACTION_JEI_RECIPE_TRANSFER = "jeiRecipeTransfer";
+    private static final int ACTION_JEI_RECIPE_TRANSFER_MAX_LENGTH = GuiActionPacket.MAX_JSON_PAYLOAD_LENGTH;
 
     protected final IArcaneTerminalHost host;
     protected final IInventory craftingResult;
@@ -81,6 +86,8 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         this.addArmorSlots(ip.player, new PlayerArmorInvWrapper(ip), 8, 19);
         this.registerClientAction(ACTION_CLEAR_GRID, this::clearCraftingGrid);
         this.registerClientAction(ACTION_SET_CLEAR_ON_CLOSE, Boolean.class, this::setClearGridOnClose);
+        this.registerClientAction(ACTION_JEI_RECIPE_TRANSFER, ArcaneRecipeTransferPayload.class,
+                ACTION_JEI_RECIPE_TRANSFER_MAX_LENGTH, this::receiveJEITransfer);
         this.updateCraftingResult();
     }
 
@@ -468,16 +475,58 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         }
         this.onMatrixChanged();
 
-        this.handleJEITag(0, normal);
-        this.handleJEITag(9, crystals);
+        this.handleJEITags(normal, crystals);
 
         this.onMatrixChanged();
     }
 
-    private void handleJEITag(int startAtSlot, NBTBase ingredientGroup) {
-        IItemHandler crafting = this.getInventory("crafting");
-        IItemHandler playerInv = this.getInventory("player");
+    public void requestJEITransfer(ArcaneRecipeTransferPayload payload) {
+        if (payload == null) {
+            throw new IllegalArgumentException("JEI recipe transfer payload is missing");
+        }
+        if (this.isClientSide()) {
+            this.sendClientAction(ACTION_JEI_RECIPE_TRANSFER, payload);
+            return;
+        }
 
+        this.receiveJEITransfer(payload);
+    }
+
+    private void receiveJEITransfer(ArcaneRecipeTransferPayload payload) {
+        NBTTagCompound tag;
+        try {
+            tag = payload.toValidatedTag();
+        } catch (IllegalArgumentException e) {
+            ThELog.warn("Rejecting invalid JEI recipe transfer payload: {}", e.getMessage());
+            throw e;
+        }
+
+        this.handleJEITransfer(this.getPlayer(), tag);
+    }
+
+    private void handleJEITags(NBTBase normalGroup, NBTBase crystalGroup) {
+        IItemHandler crafting = this.getInventory("crafting");
+        List<JEITransferSlot> transferSlots = new ArrayList<>();
+        this.collectJEITransferSlots(transferSlots, 0, normalGroup);
+        this.collectJEITransferSlots(transferSlots, 9, crystalGroup);
+
+        List<JEITransferAssignment> assignments = this.planJEITransfer(transferSlots);
+        if (!assignments.isEmpty()) {
+            for (JEITransferAssignment assignment : assignments) {
+                this.fillJEISlot(crafting, assignment.slot, assignment.stack);
+            }
+            return;
+        }
+
+        for (JEITransferSlot transferSlot : transferSlots) {
+            ItemStack stack = this.findAvailableJEIAlternative(transferSlot.alternatives);
+            if (!stack.isEmpty()) {
+                this.fillJEISlot(crafting, transferSlot.slot, stack);
+            }
+        }
+    }
+
+    private void collectJEITransferSlots(List<JEITransferSlot> transferSlots, int startAtSlot, NBTBase ingredientGroup) {
         if (ingredientGroup == null || ingredientGroup.isEmpty()) {
             return;
         }
@@ -501,32 +550,114 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
                 continue;
             }
 
-            NBTTagCompound ingredient = alternatives.getCompoundTagAt(0);
-            ItemStack stack = new ItemStack(ingredient);
+            List<ItemStack> stacks = this.collectJEIAlternatives(alternatives);
+            if (!stacks.isEmpty()) {
+                transferSlots.add(new JEITransferSlot(slot, stacks));
+            }
+        }
+    }
+
+    private List<ItemStack> collectJEIAlternatives(NBTTagList alternatives) {
+        List<ItemStack> stacks = new ArrayList<>(alternatives.tagCount());
+        for (int alternativeIndex = 0; alternativeIndex < alternatives.tagCount(); alternativeIndex++) {
+            ItemStack stack = new ItemStack(alternatives.getCompoundTagAt(alternativeIndex));
             if (stack.isEmpty()) {
                 continue;
             }
+            stacks.add(stack);
+        }
+        return stacks;
+    }
 
-            ThELog.debug("Adding {} for {}", stack.getDisplayName(), slot);
-            ItemStack aeExtract = this.storage == null
-                    ? ItemStack.EMPTY
-                    : this.extractItem(this.storage, stack, stack.getCount(), Actionable.MODULATE);
-            if (!aeExtract.isEmpty()) {
-                crafting.insertItem(slot, aeExtract, false);
+    private List<JEITransferAssignment> planJEITransfer(List<JEITransferSlot> transferSlots) {
+        JEITransferAvailability availability = JEITransferAvailability.from(this, transferSlots);
+        List<JEITransferAssignment> assignments = new ArrayList<>(transferSlots.size());
+        if (availability.plan(transferSlots, 0, assignments)) {
+            return assignments;
+        }
+        return List.of();
+    }
+
+    private ItemStack findAvailableJEIAlternative(List<ItemStack> alternatives) {
+        for (ItemStack stack : alternatives) {
+            if (this.canSatisfyJEIAlternative(stack)) {
+                return stack;
             }
+        }
+        return ItemStack.EMPTY;
+    }
 
-            if (crafting.getStackInSlot(slot).getCount() >= stack.getCount()) {
+    private void fillJEISlot(IItemHandler crafting, int slot, ItemStack stack) {
+        ThELog.debug("Adding {} for {}", stack.getDisplayName(), slot);
+        ItemStack aeExtract = this.storage == null
+                ? ItemStack.EMPTY
+                : this.extractItem(this.storage, stack, stack.getCount(), Actionable.MODULATE);
+        if (!aeExtract.isEmpty()) {
+            crafting.insertItem(slot, aeExtract, false);
+        }
+
+        if (crafting.getStackInSlot(slot).getCount() >= stack.getCount()) {
+            return;
+        }
+
+        ThELog.debug("Failed to pull item from ae inv, trying unlocked player inventory");
+        ItemStack playerRequest = stack.copy();
+        playerRequest.shrink(crafting.getStackInSlot(slot).getCount());
+
+        ItemStack invExtract = this.extractUnlockedPlayerItem(playerRequest, false);
+        if (!invExtract.isEmpty()) {
+            crafting.insertItem(slot, invExtract, false);
+        }
+    }
+
+    private boolean canSatisfyJEIAlternative(ItemStack stack) {
+        int required = stack.getCount();
+        ItemStack aeExtract = this.storage == null
+                ? ItemStack.EMPTY
+                : this.extractItem(this.storage, stack, required, Actionable.SIMULATE);
+        required -= aeExtract.getCount();
+        if (required <= 0) {
+            return true;
+        }
+
+        ItemStack playerRequest = stack.copy();
+        playerRequest.setCount(required);
+        ItemStack playerExtract = this.extractUnlockedPlayerItem(playerRequest, true);
+        return playerExtract.getCount() >= required;
+    }
+
+    private ItemStack extractUnlockedPlayerItem(ItemStack original, boolean simulate) {
+        if (original.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack extracted = ItemStack.EMPTY;
+        List<ItemStack> playerItems = this.getPlayerInventory().mainInventory;
+        for (int slot = 0; slot < playerItems.size(); slot++) {
+            if (this.isPlayerInventorySlotLocked(slot) || extracted.getCount() >= original.getCount()) {
+                continue;
+            }
+            ItemStack inSlot = playerItems.get(slot);
+            if (inSlot.isEmpty() || !ForgeUtil.areItemStacksEqual(original, inSlot)) {
                 continue;
             }
 
-            ThELog.debug("Failed to pull item from ae inv, trying player inventory");
-            stack.shrink(crafting.getStackInSlot(slot).getCount());
-
-            ItemStack invExtract = ItemHandlerUtil.extract(playerInv, stack, false);
-            if (!invExtract.isEmpty()) {
-                crafting.insertItem(slot, invExtract, false);
+            int amount = original.getCount() - extracted.getCount();
+            ItemStack taken = inSlot.copy();
+            taken.setCount(Math.min(amount, inSlot.getCount()));
+            if (!simulate) {
+                inSlot.shrink(taken.getCount());
+                if (inSlot.isEmpty()) {
+                    this.getPlayerInventory().setInventorySlotContents(slot, ItemStack.EMPTY);
+                }
+            }
+            if (extracted.isEmpty()) {
+                extracted = taken;
+            } else {
+                extracted.grow(taken.getCount());
             }
         }
+        return extracted;
     }
 
     public void clearCraftingGrid() {
@@ -596,6 +727,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
     private boolean clearCraftingIntoNetworkForJEI() {
         if (this.storage == null) {
+            ThELog.warn("JEI recipe transfer cannot clear crafting grid into network: missing ME storage");
             return false;
         }
 
@@ -615,6 +747,8 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
                 reservations.add(new NetworkReservation(slot, reserved));
             }
             if (inserted < stack.getCount()) {
+                ThELog.warn("JEI recipe transfer cannot clear crafting slot {} into network: stack {}, inserted {}, remainder {}",
+                        slot, stack, inserted, remainder);
                 this.rollbackNetworkReservations(reservations);
                 return false;
             }
@@ -675,6 +809,122 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         private NetworkReservation(int slot, ItemStack stack) {
             this.slot = slot;
             this.stack = stack;
+        }
+    }
+
+    private static final class JEITransferSlot {
+        private final int slot;
+        private final List<ItemStack> alternatives;
+
+        private JEITransferSlot(int slot, List<ItemStack> alternatives) {
+            this.slot = slot;
+            this.alternatives = alternatives;
+        }
+    }
+
+    private static final class JEITransferAssignment {
+        private final int slot;
+        private final ItemStack stack;
+
+        private JEITransferAssignment(int slot, ItemStack stack) {
+            this.slot = slot;
+            this.stack = stack;
+        }
+    }
+
+    private static final class JEITransferAvailability {
+        private final Map<AEItemKey, Long> available = new HashMap<>();
+
+        private static JEITransferAvailability from(ContainerArcaneTerm container, List<JEITransferSlot> transferSlots) {
+            JEITransferAvailability availability = new JEITransferAvailability();
+            availability.addNetworkStacks(container, transferSlots);
+            availability.addUnlockedPlayerStacks(container);
+            return availability;
+        }
+
+        private void addNetworkStacks(ContainerArcaneTerm container, List<JEITransferSlot> transferSlots) {
+            if (container.storage == null) {
+                return;
+            }
+
+            Map<AEItemKey, Long> requested = new HashMap<>();
+            for (JEITransferSlot transferSlot : transferSlots) {
+                for (ItemStack stack : transferSlot.alternatives) {
+                    AEItemKey key = AEItemKey.of(stack);
+                    if (key != null) {
+                        requested.merge(key, (long) stack.getCount(), Long::sum);
+                    }
+                }
+            }
+
+            for (Map.Entry<AEItemKey, Long> entry : requested.entrySet()) {
+                int amount = (int) Math.min(entry.getValue(), Integer.MAX_VALUE);
+                ItemStack extracted = container.extractItem(container.storage, entry.getKey().toStack(1), amount,
+                        Actionable.SIMULATE);
+                if (!extracted.isEmpty()) {
+                    this.available.merge(entry.getKey(), (long) extracted.getCount(), Long::sum);
+                }
+            }
+        }
+
+        private void addUnlockedPlayerStacks(ContainerArcaneTerm container) {
+            List<ItemStack> playerItems = container.getPlayerInventory().mainInventory;
+            for (int slot = 0; slot < playerItems.size(); slot++) {
+                if (!container.isPlayerInventorySlotLocked(slot)) {
+                    this.add(playerItems.get(slot));
+                }
+            }
+        }
+
+        private void add(ItemStack stack) {
+            AEItemKey key = stack == null ? null : AEItemKey.of(stack);
+            if (key != null && stack.getCount() > 0) {
+                this.available.merge(key, (long) stack.getCount(), Long::sum);
+            }
+        }
+
+        private boolean plan(List<JEITransferSlot> transferSlots, int slotIndex, List<JEITransferAssignment> assignments) {
+            if (slotIndex >= transferSlots.size()) {
+                return true;
+            }
+
+            JEITransferSlot transferSlot = transferSlots.get(slotIndex);
+            for (ItemStack alternative : transferSlot.alternatives) {
+                if (!this.consume(alternative)) {
+                    continue;
+                }
+
+                assignments.add(new JEITransferAssignment(transferSlot.slot, alternative.copy()));
+                if (this.plan(transferSlots, slotIndex + 1, assignments)) {
+                    this.restore(alternative);
+                    return true;
+                }
+                assignments.remove(assignments.size() - 1);
+                this.restore(alternative);
+            }
+            return false;
+        }
+
+        private boolean consume(ItemStack stack) {
+            AEItemKey key = AEItemKey.of(stack);
+            if (key == null) {
+                return false;
+            }
+
+            long amount = this.available.getOrDefault(key, 0L);
+            int required = stack.getCount();
+            if (amount < required) {
+                return false;
+            }
+            this.available.put(key, amount - required);
+            return true;
+        }
+
+        private void restore(ItemStack stack) {
+            AEItemKey key = AEItemKey.of(stack);
+            if (key != null) {
+                this.available.merge(key, (long) stack.getCount(), Long::sum);
+            }
         }
     }
 }
