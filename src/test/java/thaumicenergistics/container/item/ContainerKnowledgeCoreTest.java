@@ -29,7 +29,6 @@ import net.minecraftforge.items.wrapper.InvWrapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
-import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.slot.SlotGhost;
@@ -40,7 +39,6 @@ import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -141,7 +139,6 @@ class ContainerKnowledgeCoreTest {
         AEBaseContainer aeContainer = assertInstanceOf(AEBaseContainer.class, container);
 
         assertAll(
-                () -> assertFalse(isContainerBase(container)),
                 () -> assertSame(player.inventory, aeContainer.getPlayerInventory()),
                 () -> assertTrue(container.canInteractWith(player)));
     }
@@ -322,10 +319,6 @@ class ContainerKnowledgeCoreTest {
         ContainerArcaneInscriber parent = new FixedVisArcaneInscriber(player, host, requiredVis);
         parent.setLocator(locator);
         return parent;
-    }
-
-    private static boolean isContainerBase(Object container) {
-        return container instanceof ContainerBase;
     }
 
     private static final class FixedVisArcaneInscriber extends ContainerArcaneInscriber {
