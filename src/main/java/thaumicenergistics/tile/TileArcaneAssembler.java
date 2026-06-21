@@ -13,9 +13,7 @@ import ae2.api.stacks.AEItemKey;
 import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
 import ae2.core.definitions.AEItems;
-import ae2.core.gui.locator.GuiHostLocators;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.MathHelper;
@@ -24,12 +22,9 @@ import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aura.AuraHelper;
 import thaumicenergistics.api.IThELangKey;
-import thaumicenergistics.client.gui.IThEGuiTile;
-import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ThEBlocks;
-import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.util.*;
 import thaumicenergistics.util.inventory.IThEInvTile;
@@ -54,7 +49,7 @@ import java.util.function.Function;
 /**
  * @author Alex811
  */
-public class TileArcaneAssembler extends ThENetworkTile implements IThEInvTile, IThEGuiTile, ICraftingProvider, IGridTickable {
+public class TileArcaneAssembler extends ThENetworkTile implements IThEInvTile, ICraftingProvider, IGridTickable {
     protected static final int BASE_STEP = 5;               // step to increase progress by / tick (not counting upgrades)
     protected ThEInternalInventory coreInv;                 // contains Knowledge Core
     protected ThEUpgradeInventory upgradeInv;
@@ -158,16 +153,6 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThEInvTile, 
         this.hasJob = data.hasKey("hasJob") && data.getBoolean("hasJob");
         this.isCrafting = data.hasKey("isCrafting") && data.getBoolean("isCrafting");
         this.progress = data.hasKey("progress") ? data.getInteger("progress") : 0;
-    }
-
-    @Override
-    public void openGUI(EntityPlayer player) {
-        ThEGuiOpener.openLocatorGui(player, this.getGUI(), GuiHostLocators.forTile(this), false);
-    }
-
-    @Override
-    public ModGUIs getGUI() {
-        return ModGUIs.ARCANE_ASSEMBLER;
     }
 
     @Override

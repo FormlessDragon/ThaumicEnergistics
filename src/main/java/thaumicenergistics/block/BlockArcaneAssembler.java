@@ -1,5 +1,6 @@
 package thaumicenergistics.block;
 
+import ae2.core.gui.locator.GuiHostLocators;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -15,6 +16,8 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.client.model.ModelLoader;
 import thaumicenergistics.client.render.IThEModel;
+import thaumicenergistics.common.gui.ThEGuiOpener;
+import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.tile.TileArcaneAssembler;
 
 import javax.annotation.Nullable;
@@ -44,7 +47,8 @@ public class BlockArcaneAssembler extends BlockNetwork implements IThEModel {
         TileEntity te = world.getTileEntity(pos);
         if (te instanceof TileArcaneAssembler) {
             TileArcaneAssembler arcAssembTE = (TileArcaneAssembler) te;
-            arcAssembTE.openGUI(player);
+            ThEGuiOpener.openLocatorGui(player, ModGUIs.ARCANE_ASSEMBLER,
+                    GuiHostLocators.forTile(arcAssembTE), false);
             return true;
         }
         return false;
