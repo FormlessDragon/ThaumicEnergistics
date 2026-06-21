@@ -1,6 +1,5 @@
 package thaumicenergistics.container.part;
 
-import ae2.api.stacks.AEItemKey;
 import ae2.api.storage.ILinkStatus;
 import ae2.api.networking.ticking.IGridTickable;
 import ae2.api.networking.IGridNode;
@@ -36,7 +35,6 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Bootstrap;
-import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -54,7 +52,6 @@ import thaumicenergistics.api.ids.ThEPartIds;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.client.gui.part.GuiArcaneTerm;
-import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
 import thaumicenergistics.core.definitions.ThEApiItems;
@@ -64,7 +61,6 @@ import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.integration.jei.ACIRecipeTransferHandler;
 import thaumicenergistics.integration.jei.ACTRecipeTransferHandler;
 import thaumicenergistics.items.ItemWirelessArcaneTerminal;
-import thaumicenergistics.network.packets.PacketUIAction;
 import thaumicenergistics.network.packets.PacketVisUpdate;
 import thaumicenergistics.part.ArcaneP2PTunnelPart;
 import thaumicenergistics.part.PartArcaneTerminal;
@@ -87,7 +83,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -334,18 +329,6 @@ class ArcaneTerminalSupergiantMigrationTest {
                 () -> assertEquals(3.25f, decoded.required),
                 () -> assertEquals(0.5f, decoded.discount),
                 () -> assertEquals(0, buffer.readableBytes(), "PacketVisUpdate should consume its payload"));
-    }
-
-    @Test
-    void packetUiActionRejectsInvalidRequestedStackArguments() {
-        AEItemKey diamond = AEItemKey.of(new ItemStack(Items.DIAMOND));
-        assertNotNull(diamond);
-
-        assertAll(
-                () -> assertThrows(IllegalArgumentException.class,
-                        () -> new PacketUIAction(ActionType.AUTO_CRAFT, diamond, -1, false)),
-                () -> assertThrows(NullPointerException.class,
-                        () -> new PacketUIAction(ActionType.AUTO_CRAFT, null, 1, false)));
     }
 
     @Test

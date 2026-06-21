@@ -16,7 +16,6 @@ import thaumicenergistics.network.packets.PacketOpenGUI;
 import thaumicenergistics.network.packets.PacketOpenLocatorGUI;
 import thaumicenergistics.network.packets.PacketPlaySound;
 import thaumicenergistics.network.packets.PacketSubscribe;
-import thaumicenergistics.network.packets.PacketUIAction;
 import thaumicenergistics.network.packets.PacketVisUpdate;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.util.ThELog;
@@ -45,7 +44,6 @@ public class PacketHandler {
         PacketHandler.INSTANCE.registerMessage(PacketPlaySound.Handler.class, PacketPlaySound.class, PacketHandler.nextID(), Side.CLIENT);
         PacketHandler.INSTANCE.registerMessage(PacketAssemblerGUIUpdate.Handler.class, PacketAssemblerGUIUpdate.class, PacketHandler.nextID(), Side.CLIENT);
 
-        PacketHandler.INSTANCE.registerMessage(PacketUIAction.Handler.class, PacketUIAction.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketOpenGUI.Handler.class, PacketOpenGUI.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketSubscribe.Handler.class, PacketSubscribe.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketAssemblerGUIUpdateRequest.Handler.class, PacketAssemblerGUIUpdateRequest.class, PacketHandler.nextID(), Side.SERVER);

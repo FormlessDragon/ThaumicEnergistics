@@ -1,20 +1,16 @@
 package thaumicenergistics.integration.jei;
 
-import ae2.api.stacks.AEItemKey;
 import mezz.jei.api.gui.IGhostIngredientHandler;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.container.slot.SlotArcaneGhostMatrix;
-import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.network.packets.PacketUIAction;
 
 import javax.annotation.Nonnull;
 import java.awt.*;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
-import static thaumicenergistics.container.ActionType.MOVE_GHOST_ITEM;
 
 public class GhostInscriberHandler implements IGhostIngredientHandler<GuiArcaneInscriber> {
 
@@ -33,6 +29,7 @@ public class GhostInscriberHandler implements IGhostIngredientHandler<GuiArcaneI
                 .map(slot -> new Target<I>() {
 
                     @Override
+                    @Nonnull
                     public Rectangle getArea() {
                         return new Rectangle(
                                 gui.getGuiLeft() + slot.xPos,
@@ -43,12 +40,12 @@ public class GhostInscriberHandler implements IGhostIngredientHandler<GuiArcaneI
                     }
 
                     @Override
-                    public void accept(I ingredient) {
-                        ItemStack itemStack = (ItemStack) ingredient;
+                    public void accept(@Nonnull I ingredient) {
+                        if (!(ingredient instanceof ItemStack itemStack)) {
+                            throw new IllegalArgumentException("Arcane Inscriber ghost ingredient must be an ItemStack");
+                        }
 
-                        PacketHandler.sendToServer(new PacketUIAction(MOVE_GHOST_ITEM,
-                                AEItemKey.of(itemStack), itemStack.getCount(), false,
-                                slot.slotNumber));
+                        gui.requestMoveGhostItem(slot.slotNumber, itemStack);
                     }
                 }).collect(toList());
     }
