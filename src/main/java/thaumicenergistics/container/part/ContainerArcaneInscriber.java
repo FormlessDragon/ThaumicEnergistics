@@ -5,9 +5,9 @@ import ae2.api.config.Actionable;
 import ae2.api.util.IConfigurableObject;
 import ae2.container.GuiIds;
 import ae2.container.SlotSemantics;
+import ae2.container.guisync.GuiSync;
 import ae2.core.network.serverbound.GuiActionPacket;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -29,9 +29,6 @@ import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.integration.jei.ArcaneInscriberGhostItemPayload;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.items.ItemKnowledgeCore;
-import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.network.packets.PacketIsArcaneUpdate;
-import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.KnowledgeCoreUtil;
 import thaumicenergistics.util.ThELog;
@@ -49,11 +46,16 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     private static final String ACTION_GHOST_ITEM_MOVE = "moveGhostItem";
     private static final int ACTION_GHOST_ITEM_MOVE_MAX_LENGTH = GuiActionPacket.MAX_JSON_PAYLOAD_LENGTH;
 
-    public boolean recipeIsArcane = false;
+    @GuiSync(103)
+    private boolean recipeIsArcane = false;
 
     public ContainerArcaneInscriber(InventoryPlayer ip, IArcaneTerminalHost host) {
         super(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, host);
         this.registerInscriberActions();
+    }
+
+    public boolean isRecipeArcane() {
+        return this.recipeIsArcane;
     }
 
     private void registerInscriberActions() {
@@ -183,22 +185,34 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     public void refreshIsArcane() {
-        if (ForgeUtil.isClient()) return;
-        boolean recipeIsArcane;
+        if (this.isClientSide()) return;
+        this.recipeIsArcane = this.hasArcaneRecipeInMatrix();
+    }
+
+    @Override
+    protected void prepareFullGuiSyncState() {
+        this.refreshIsArcane();
+        super.prepareFullGuiSyncState();
+    }
+
+    protected boolean hasArcaneRecipeInMatrix() {
         InvWrapper crafting = (InvWrapper) this.getInventory("crafting");
         if (this.recipe != null && !crafting.getInv().isEmpty())
-            recipeIsArcane = (TCCraftingManager.findArcaneRecipe(crafting, this.getPlayer()) != null);
-        else recipeIsArcane = false;
-        if (this.recipeIsArcane != recipeIsArcane) {
-            this.recipeIsArcane = recipeIsArcane;
-            PacketHandler.sendToPlayer((EntityPlayerMP) this.getPlayer(), new PacketIsArcaneUpdate(recipeIsArcane));
-        }
+            return TCCraftingManager.findArcaneRecipe(crafting, this.getPlayer()) != null;
+        return false;
     }
 
     @Override
     public void onMatrixChanged() {
         super.onMatrixChanged();
-        refreshIsArcane();
+    }
+
+    @Override
+    public void detectAndSendChanges() {
+        if (this.isServerSide() && this.hasFullGuiSyncListener()) {
+            this.refreshIsArcane();
+        }
+        super.detectAndSendChanges();
     }
 
     @Override

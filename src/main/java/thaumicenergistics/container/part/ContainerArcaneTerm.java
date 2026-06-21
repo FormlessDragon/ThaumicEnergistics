@@ -6,6 +6,7 @@ import ae2.api.storage.MEStorage;
 import ae2.api.storage.StorageHelper;
 import ae2.container.GuiIds;
 import ae2.container.SlotSemantics;
+import ae2.container.guisync.GuiSync;
 import ae2.container.me.common.ContainerMEStorage;
 import ae2.core.network.serverbound.GuiActionPacket;
 import com.google.common.collect.Lists;
@@ -46,8 +47,6 @@ import thaumicenergistics.container.slot.SlotUpgrade;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.integration.jei.ArcaneRecipeTransferPayload;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
-import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.network.packets.PacketVisUpdate;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.TCUtil;
 import thaumicenergistics.util.ThELog;
@@ -70,6 +69,8 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     protected final IInventory craftingResult;
     protected SlotArcaneResult resultSlot;
     protected IRecipe recipe;
+    @GuiSync(102)
+    private ArcaneTerminalVisState visState = ArcaneTerminalVisState.EMPTY;
     private boolean clearGridOnClose;
 
     public ContainerArcaneTerm(InventoryPlayer ip, IArcaneTerminalHost host) {
@@ -120,26 +121,44 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         return this.getRequiredVis(this.recipe, this.getPlayer());
     }
 
+    public ArcaneTerminalVisState getVisState() {
+        return this.visState;
+    }
+
     @Override
     public void addListener(IContainerListener listener) {
+        if (this.isServerSide() && listener instanceof EntityPlayerMP) {
+            this.prepareFullGuiSyncState();
+        }
         super.addListener(listener);
-        this.sendVisInfo(listener);
     }
 
     @Override
     public void detectAndSendChanges() {
-        if (this.isServerSide() && this.getPlayer() instanceof IContainerListener) {
-            this.sendVisInfo((IContainerListener) this.getPlayer());
+        if (this.isServerSide() && this.hasFullGuiSyncListener()) {
+            this.refreshVisState();
         }
         super.detectAndSendChanges();
     }
 
-    protected void sendVisInfo(IContainerListener listener) {
-        if (this.isClientSide() || !(listener instanceof EntityPlayerMP player)) {
-            return;
+    protected void prepareFullGuiSyncState() {
+        this.refreshVisState();
+    }
+
+    protected void refreshVisState() {
+        this.visState = new ArcaneTerminalVisState(
+                this.getWorldVis(),
+                this.getCurrentRequiredVis(),
+                this.getDiscount(this.getPlayer()));
+    }
+
+    protected boolean hasFullGuiSyncListener() {
+        for (IContainerListener listener : this.listeners) {
+            if (listener instanceof EntityPlayerMP) {
+                return true;
+            }
         }
-        PacketHandler.sendToPlayer(player,
-                new PacketVisUpdate(this.getWorldVis(), this.getCurrentRequiredVis(), this.getDiscount(this.getPlayer())));
+        return false;
     }
 
     @Override

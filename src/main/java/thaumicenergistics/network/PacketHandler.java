@@ -9,11 +9,9 @@ import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import thaumicenergistics.network.packets.PacketEssentiaFilter;
 import thaumicenergistics.network.packets.PacketInvHeldUpdate;
-import thaumicenergistics.network.packets.PacketIsArcaneUpdate;
 import thaumicenergistics.network.packets.PacketOpenGUI;
 import thaumicenergistics.network.packets.PacketOpenLocatorGUI;
 import thaumicenergistics.network.packets.PacketPlaySound;
-import thaumicenergistics.network.packets.PacketVisUpdate;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.util.ThELog;
 
@@ -36,8 +34,6 @@ public class PacketHandler {
 
         PacketHandler.INSTANCE.registerMessage(PacketEssentiaFilter.Handler.class, PacketEssentiaFilter.class, PacketHandler.nextID(), Side.CLIENT);
         PacketHandler.INSTANCE.registerMessage(PacketInvHeldUpdate.Handler.class, PacketInvHeldUpdate.class, PacketHandler.nextID(), Side.CLIENT);
-        PacketHandler.INSTANCE.registerMessage(PacketVisUpdate.Handler.class, PacketVisUpdate.class, PacketHandler.nextID(), Side.CLIENT);
-        PacketHandler.INSTANCE.registerMessage(PacketIsArcaneUpdate.Handler.class, PacketIsArcaneUpdate.class, PacketHandler.nextID(), Side.CLIENT);
         PacketHandler.INSTANCE.registerMessage(PacketPlaySound.Handler.class, PacketPlaySound.class, PacketHandler.nextID(), Side.CLIENT);
 
         PacketHandler.INSTANCE.registerMessage(PacketOpenGUI.Handler.class, PacketOpenGUI.class, PacketHandler.nextID(), Side.SERVER);
@@ -49,11 +45,9 @@ public class PacketHandler {
     }
 
     public static void sendToAll(IMessage message) {
-        if (!(message instanceof PacketVisUpdate)) {
-            ByteBuf buf = Unpooled.buffer();
-            message.toBytes(buf);
-            ThELog.trace("sendToAll readableBytes {} | read {} | write {} | message {}", buf.readableBytes(), buf.readerIndex(), buf.writerIndex(), message.getClass().getSimpleName());
-        }
+        ByteBuf buf = Unpooled.buffer();
+        message.toBytes(buf);
+        ThELog.trace("sendToAll readableBytes {} | read {} | write {} | message {}", buf.readableBytes(), buf.readerIndex(), buf.writerIndex(), message.getClass().getSimpleName());
         PacketHandler.INSTANCE.sendToAll(message);
     }
 }

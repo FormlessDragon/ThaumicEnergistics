@@ -30,8 +30,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Bootstrap;
@@ -61,7 +59,6 @@ import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.integration.jei.ACIRecipeTransferHandler;
 import thaumicenergistics.integration.jei.ACTRecipeTransferHandler;
 import thaumicenergistics.items.ItemWirelessArcaneTerminal;
-import thaumicenergistics.network.packets.PacketVisUpdate;
 import thaumicenergistics.part.ArcaneP2PTunnelPart;
 import thaumicenergistics.part.PartArcaneTerminal;
 import thaumicenergistics.test.FakeMinecraft;
@@ -316,22 +313,6 @@ class ArcaneTerminalSupergiantMigrationTest {
     }
 
     @Test
-    void packetVisUpdatePreservesValuesAcrossByteBufRoundTrip() {
-        PacketVisUpdate original = new PacketVisUpdate(12.5f, 3.25f, 0.5f);
-        ByteBuf buffer = Unpooled.buffer();
-
-        original.toBytes(buffer);
-        PacketVisUpdate decoded = new PacketVisUpdate();
-        decoded.fromBytes(buffer);
-
-        assertAll(
-                () -> assertEquals(12.5f, decoded.vis),
-                () -> assertEquals(3.25f, decoded.required),
-                () -> assertEquals(0.5f, decoded.discount),
-                () -> assertEquals(0, buffer.readableBytes(), "PacketVisUpdate should consume its payload"));
-    }
-
-    @Test
     void arcaneTerminalUsesDedicatedCrystalAndArmorSlotSemantics() throws IOException {
         SlotSemantic arcaneCrystal = ThESlotSemantics.ARCANE_CRYSTAL;
         SlotSemantic playerArmor = ThESlotSemantics.PLAYER_ARMOR;
@@ -496,7 +477,7 @@ class ArcaneTerminalSupergiantMigrationTest {
     }
 
     private static <T extends IPart> void assertPartItem(ItemDefinition<PartItem<T>> definition, ResourceLocation id,
-                                                          Class<T> partClass) {
+                                                         Class<T> partClass) {
         PartItem<T> item = definition.item();
 
         assertAll(

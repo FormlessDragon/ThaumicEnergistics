@@ -63,10 +63,6 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
         super.actionPerformed(button);
     }
 
-    public void setIsArcane(boolean isArcane) {
-        this.inscriberContainer.recipeIsArcane = isArcane;
-    }
-
     public void requestMoveGhostItem(int slotNumber, ItemStack stack) {
         this.inscriberContainer.requestMoveGhostItem(slotNumber, stack);
     }
@@ -79,8 +75,9 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
 
     @Override
     protected void drawVisInfo() {
+        float visRequired = this.inscriberContainer.getVisState().getVisRequired();
         this.fontRenderer.drawString(
-                ThEFeatures.instance().lang().guiVisRequired().getLocalizedKey(this.getVisIfSet(this.visRequired)),
+                ThEFeatures.instance().lang().guiVisRequired().getLocalizedKey(this.getVisIfSet(visRequired)),
                 60,
                 this.ySize - 168,
                 4210752);
@@ -88,7 +85,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
 
     private void updateKnowledgeCoreButtons(int mouseX, int mouseY) {
         ItemStack knowledgeCore = this.inscriberContainer.getInventory("upgrades").getStackInSlot(0);
-        boolean hasArcaneRecipe = this.inscriberContainer.recipeIsArcane;
+        boolean hasArcaneRecipe = this.inscriberContainer.isRecipeArcane();
         ItemStack result = this.inscriberContainer.getInventory("result").getStackInSlot(0);
         boolean hasRecipe = !result.isEmpty();
         boolean recipeExists = hasRecipe && KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem());
@@ -126,7 +123,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
         ItemStack result = this.inscriberContainer.getInventory("result").getStackInSlot(0);
         return !knowledgeCore.isEmpty()
                 && !result.isEmpty()
-                && this.inscriberContainer.recipeIsArcane
+                && this.inscriberContainer.isRecipeArcane()
                 && !KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem());
     }
 
