@@ -1,0 +1,32 @@
+{
+  "$schema": "schema.json",
+  "includes": ["common/common.json"],
+  "background": {
+    "texture": "thaumicenergistics:textures/gui/knowledge_core.png",
+    "srcRect": [0, 0, 176, 40]
+  },
+  "slots": {
+    "THE_KNOWLEDGE_CORE": {
+      "left": 8,
+      "top": 15,
+      "grid": "HORIZONTAL"
+    }
+  },
+  "widgets": {
+    "knowledgeCoreAction": {
+      "left": 154,
+      "top": 0
+    }
+  },
+  "text": {
+    "dialog_title": {
+      "text": {
+        "translate": "gui.thaumicenergistics.knowledge_core"
+      },
+      "position": {
+        "left": 8,
+        "top": 5
+      }
+    }
+  }
+}

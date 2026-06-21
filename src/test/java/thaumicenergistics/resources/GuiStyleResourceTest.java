@@ -18,6 +18,8 @@ class GuiStyleResourceTest {
 
     private static final String ARCANE_TERMINAL_STYLE =
             "/screens/terminals/thaumicenergistics_arcane_terminal.json";
+    private static final String KNOWLEDGE_CORE_STYLE =
+            "/screens/thaumicenergistics_knowledge_core.json";
 
     @BeforeEach
     void initializeSupergiantStyleLoader() {
@@ -50,9 +52,29 @@ class GuiStyleResourceTest {
     }
 
     @Test
+    void supergiantLoaderParsesKnowledgeCoreStyle() {
+        GuiStyle style = GuiStyleManager.loadStyleDoc(KNOWLEDGE_CORE_STYLE);
+
+        assertAll(
+                () -> style.validate(),
+                () -> assertBackground(style, 176, 40),
+                () -> assertSlotTop(style, "THE_KNOWLEDGE_CORE", 8, 15, SlotGridLayout.HORIZONTAL),
+                () -> assertText(style, "dialog_title", 8, 5),
+                () -> assertWidgetTop(style, "knowledgeCoreAction", 154, 0));
+    }
+
+    @Test
     void supergiantLoaderFailsFastForMissingStylePath() {
         assertThrows(RuntimeException.class,
                 () -> GuiStyleManager.loadStyleDoc("/screens/terminals/missing_thaumicenergistics_style.json"));
+    }
+
+    private static void assertBackground(GuiStyle style, int width, int height) {
+        var background = style.getBackground();
+
+        assertNotNull(background, "Style should define a background");
+        assertEquals(width, background.getSrcWidth(), "background width");
+        assertEquals(height, background.getSrcHeight(), "background height");
     }
 
     private static void assertSlot(GuiStyle style, String id, int left, int bottom, SlotGridLayout grid) {
@@ -64,10 +86,35 @@ class GuiStyleResourceTest {
         assertEquals(grid, slot.getGrid(), id + " grid");
     }
 
+    private static void assertSlotTop(GuiStyle style, String id, int left, int top, SlotGridLayout grid) {
+        var slot = style.getSlots().get(id);
+
+        assertNotNull(slot, "Style should define slot " + id);
+        assertEquals(left, slot.getLeft(), id + " left");
+        assertEquals(top, slot.getTop(), id + " top");
+        assertEquals(grid, slot.getGrid(), id + " grid");
+    }
+
+    private static void assertText(GuiStyle style, String id, int left, int top) {
+        var text = style.getText().get(id);
+
+        assertNotNull(text, "Style should define text " + id);
+        assertNotNull(text.getPosition(), id + " position");
+        assertEquals(left, text.getPosition().getLeft(), id + " left");
+        assertEquals(top, text.getPosition().getTop(), id + " top");
+    }
+
     private static void assertWidget(GuiStyle style, String id, int left, int bottom) {
         var widget = style.getWidget(id);
 
         assertEquals(left, widget.getLeft(), id + " left");
         assertEquals(bottom, widget.getBottom(), id + " bottom");
+    }
+
+    private static void assertWidgetTop(GuiStyle style, String id, int left, int top) {
+        var widget = style.getWidget(id);
+
+        assertEquals(left, widget.getLeft(), id + " left");
+        assertEquals(top, widget.getTop(), id + " top");
     }
 }

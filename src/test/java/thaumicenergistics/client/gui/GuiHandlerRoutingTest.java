@@ -60,6 +60,7 @@ class GuiHandlerRoutingTest {
         if (!Bootstrap.isRegistered()) {
             Bootstrap.register();
         }
+        ThEClientGuiOpenerTest.initializeGuiStyles();
     }
 
     @Test

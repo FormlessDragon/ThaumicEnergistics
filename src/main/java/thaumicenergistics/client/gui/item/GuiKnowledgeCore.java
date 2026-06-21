@@ -1,34 +1,33 @@
 package thaumicenergistics.client.gui.item;
 
-import net.minecraft.client.gui.inventory.GuiContainer;
+import ae2.client.Point;
+import ae2.client.gui.AEBaseGui;
+import ae2.client.gui.Icon;
+import ae2.client.gui.style.GuiStyleManager;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Slot;
-import net.minecraft.util.ResourceLocation;
-import thaumicenergistics.thaumicenergistics.Reference;
+import net.minecraft.util.text.TextComponentString;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
 import thaumicenergistics.core.ThEFeatures;
-import thaumicenergistics.init.ModGlobals;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.Nullable;
+import java.util.Objects;
 
 /**
  * @author Alex811
  */
-public class GuiKnowledgeCore extends GuiContainer {
-    private static final ResourceLocation STATES = new ResourceLocation(ModGlobals.MOD_ID_AE2, "textures/guis/states.png");
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Reference.MOD_ID, "textures/gui/knowledge_core.png");
-    private static final int WIDTH = 176;
-    private static final int HEIGHT = 40;
-    private final ContainerKnowledgeCore container;
+public class GuiKnowledgeCore extends AEBaseGui<ContainerKnowledgeCore> {
+    private static final String STYLE_PATH = "/screens/thaumicenergistics_knowledge_core.json";
+    private static final String ACTION_WIDGET_ID = "knowledgeCoreAction";
 
     public GuiKnowledgeCore(ContainerKnowledgeCore container) {
-        super(container);
-        this.container = container;
+        super(container, container.getPlayerInventory(), GuiStyleManager.loadStyleDoc(STYLE_PATH));
+        this.setTextContent(AEBaseGui.TEXT_ID_DIALOG_TITLE,
+                new TextComponentString(ThEFeatures.instance().lang().itemKnowledgeCore().getLocalizedKey()));
     }
 
     @Override
-    @ParametersAreNonnullByDefault
-    protected void handleMouseClick(Slot slot, int slotId, int mouseButton, ClickType type) {
+    protected void handleMouseClick(@Nullable Slot slot, int slotId, int mouseButton, ClickType type) {
         // Send to server for processing
         switch (container.getGUIAction()) {
             case KNOWLEDGE_CORE_ADD:
@@ -46,39 +45,25 @@ public class GuiKnowledgeCore extends GuiContainer {
     }
 
     @Override
-    public void initGui() {
-        this.xSize = WIDTH;
-        this.ySize = HEIGHT;
-        super.initGui();
-    }
-
-    @Override
-    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        this.drawDefaultBackground();
-        super.drawScreen(mouseX, mouseY, partialTicks);
-        this.renderHoveredToolTip(mouseX, mouseY);
-    }
-
-    @Override
-    protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-        mc.getTextureManager().bindTexture(STATES);
-        switch (container.getGUIAction()) {
+    public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
+        super.drawFG(offsetX, offsetY, mouseX, mouseY);
+        switch (this.container.getGUIAction()) {
             case KNOWLEDGE_CORE_ADD:
-                this.drawTexturedModalRect(this.xSize - 22, 0, 0, 9 * 16, 16, 16);
+                this.blitActionIcon(Icon.ARROW_DOWN);
                 break;
             case KNOWLEDGE_CORE_DEL:
-                this.drawTexturedModalRect(this.xSize - 22, 0, 0, 7 * 16, 16, 16);
+                this.blitActionIcon(Icon.CLEAR);
                 break;
             case KNOWLEDGE_CORE_VIEW:
-                this.drawTexturedModalRect(this.xSize - 22, 0, 16, 9 * 16, 16, 16);
+                this.blitActionIcon(Icon.VIEW_MODE_STORED);
                 break;
         }
-        this.fontRenderer.drawString(ThEFeatures.instance().lang().itemKnowledgeCore().getLocalizedKey(), 8, 5, 4210752);
     }
 
-    @Override
-    protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY1) {
-        this.mc.getTextureManager().bindTexture(TEXTURE);
-        drawModalRectWithCustomSizedTexture(this.guiLeft, this.guiTop, 0, 0, this.xSize, this.ySize, this.xSize, this.ySize);
+    private void blitActionIcon(Icon icon) {
+        Point position = Objects.requireNonNull(this.style, "style")
+                .getWidget(ACTION_WIDGET_ID)
+                .resolve(this.getBounds(false));
+        icon.getBlitter().dest(position.x(), position.y()).blit();
     }
 }

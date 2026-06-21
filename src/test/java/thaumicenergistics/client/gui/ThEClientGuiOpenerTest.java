@@ -11,7 +11,9 @@ import ae2.core.gui.locator.GuiHostLocator;
 import ae2.core.gui.locator.ItemGuiHostLocator;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.LanguageManager;
 import net.minecraft.client.resources.data.IMetadataSection;
+import net.minecraft.client.resources.data.MetadataSerializer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
@@ -72,7 +74,13 @@ class ThEClientGuiOpenerTest {
         if (!Bootstrap.isRegistered()) {
             Bootstrap.register();
         }
-        GuiStyleManager.initialize(new TestResourceManager());
+        initializeGuiStyles();
+    }
+
+    static void initializeGuiStyles() {
+        TestResourceManager resourceManager = new TestResourceManager();
+        new LanguageManager(new MetadataSerializer(), "en_us").onResourceManagerReload(resourceManager);
+        GuiStyleManager.initialize(resourceManager);
     }
 
     @Test
@@ -630,7 +638,7 @@ class ThEClientGuiOpenerTest {
 
         @Override
         public Set<String> getResourceDomains() {
-            return Set.of("ae2");
+            return Set.of("ae2", "thaumicenergistics");
         }
 
         @Override
