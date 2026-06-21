@@ -10,7 +10,6 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import thaumicenergistics.container.ActionType;
-import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.util.ThELog;
 
@@ -106,11 +105,6 @@ public class PacketUIAction implements IMessage {
                 if (message.action == ActionType.MOVE_GHOST_ITEM
                         && player.openContainer instanceof ContainerArcaneInscriber) {
                     ((ContainerArcaneInscriber) player.openContainer).onAction(message);
-                    return;
-                }
-
-                if (message.action != null && player.openContainer instanceof ContainerBase) {
-                    ((ContainerBase) player.openContainer).onAction(player, message);
                 }
             });
             return null;

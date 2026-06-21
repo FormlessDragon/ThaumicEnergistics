@@ -17,9 +17,5 @@ public enum ActionType {
 
     CLEAR_GRID,
 
-    KNOWLEDGE_CORE_ADD,
-    KNOWLEDGE_CORE_DEL,
-    KNOWLEDGE_CORE_VIEW,
-
     MOVE_GHOST_ITEM,
 }

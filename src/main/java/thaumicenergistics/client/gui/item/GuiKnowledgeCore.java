@@ -5,12 +5,9 @@ import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Slot;
 import net.minecraft.util.ResourceLocation;
 import thaumicenergistics.thaumicenergistics.Reference;
-import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
 import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.init.ModGlobals;
-import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.network.packets.PacketUIAction;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -36,14 +33,14 @@ public class GuiKnowledgeCore extends GuiContainer {
         switch (container.getGUIAction()) {
             case KNOWLEDGE_CORE_ADD:
                 if (slotId > -1) container.playWriteSound(mc.player);
-                PacketHandler.sendToServer(new PacketUIAction(ActionType.KNOWLEDGE_CORE_ADD, slotId));
+                container.requestAddRecipe(slotId);
                 break;
             case KNOWLEDGE_CORE_DEL:
                 if (slotId > -1) container.playWriteSound(mc.player);
-                PacketHandler.sendToServer(new PacketUIAction(ActionType.KNOWLEDGE_CORE_DEL, slotId));
+                container.requestDeleteRecipe(slotId);
                 break;
             case KNOWLEDGE_CORE_VIEW:
-                PacketHandler.sendToServer(new PacketUIAction(ActionType.KNOWLEDGE_CORE_VIEW, slotId));
+                container.requestViewRecipe(slotId);
                 break;
         }
     }

@@ -3,13 +3,11 @@ package thaumicenergistics.container.item;
 import ae2.container.ISubGui;
 import ae2.core.gui.locator.GuiHostLocator;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
-import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
@@ -17,8 +15,6 @@ import thaumicenergistics.container.slot.SlotGhost;
 import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.network.packets.PacketUIAction;
-import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.KnowledgeCoreUtil;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 
@@ -28,6 +24,9 @@ import java.util.Optional;
  * @author Alex811
  */
 public class ContainerKnowledgeCore extends ContainerBase implements ISubGui {
+    public static final String ACTION_ADD_RECIPE = "knowledgeCoreAdd";
+    public static final String ACTION_DELETE_RECIPE = "knowledgeCoreDelete";
+    public static final String ACTION_VIEW_RECIPE = "knowledgeCoreView";
     private static final int SLOT_NUM = 9;
     private final ModGUIs GUIAction;
     private final ContainerArcaneInscriber parentContainer;
@@ -70,6 +69,9 @@ public class ContainerKnowledgeCore extends ContainerBase implements ISubGui {
         this.knowledgeCoreStack = this.parentContainer.getInventory("upgrades").getStackInSlot(0);
         initInv();
         addSlots(8, 15);
+        registerClientAction(ACTION_ADD_RECIPE, Integer.class, this::handleAddRecipe);
+        registerClientAction(ACTION_DELETE_RECIPE, Integer.class, this::handleDeleteRecipe);
+        registerClientAction(ACTION_VIEW_RECIPE, Integer.class, this::handleViewRecipe);
     }
 
     private static void validateKnowledgeCoreGui(ModGUIs guiAction) {
@@ -96,30 +98,47 @@ public class ContainerKnowledgeCore extends ContainerBase implements ISubGui {
         }
     }
 
-    @Override
-    public void onAction(EntityPlayerMP player, PacketUIAction packet) {
-        if (ForgeUtil.isServer()) {
-            this.handleServerAction(player, packet);
-        }
+    public void requestAddRecipe(int slotId) {
+        this.sendClientAction(ACTION_ADD_RECIPE, slotId);
     }
 
-    void handleServerAction(EntityPlayer player, PacketUIAction packet) {
-        validateKnowledgeCoreAction(packet.action);
-        validateKnowledgeCoreIndex(packet.action, packet.index);
-        if (packet.index > -1) {
-            switch (packet.action) {
-                case KNOWLEDGE_CORE_ADD -> {
+    public void requestDeleteRecipe(int slotId) {
+        this.sendClientAction(ACTION_DELETE_RECIPE, slotId);
+    }
+
+    public void requestViewRecipe(int slotId) {
+        this.sendClientAction(ACTION_VIEW_RECIPE, slotId);
+    }
+
+    private void handleAddRecipe(int slotId) {
+        this.handleClientAction(ACTION_ADD_RECIPE, slotId);
+    }
+
+    private void handleDeleteRecipe(int slotId) {
+        this.handleClientAction(ACTION_DELETE_RECIPE, slotId);
+    }
+
+    private void handleViewRecipe(int slotId) {
+        this.handleClientAction(ACTION_VIEW_RECIPE, slotId);
+    }
+
+    private void handleClientAction(String actionName, int slotId) {
+        validateKnowledgeCoreIndex(actionName, slotId);
+        if (slotId > -1) {
+            switch (actionName) {
+                case ACTION_ADD_RECIPE -> {
                     this.playWriteSound(player);
                     ThEInternalInventory ingredients = (ThEInternalInventory) ((InvWrapper) parentContainer.getInventory("crafting")).getInv();
                     ItemStack result = parentContainer.getInventory("result").getStackInSlot(0);
-                    KnowledgeCoreUtil.setRecipe(knowledgeCoreStack, packet.index, new KnowledgeCoreUtil.Recipe(ingredients, result, parentContainer.getCurrentRequiredVis()));
+                    KnowledgeCoreUtil.setRecipe(knowledgeCoreStack, slotId, new KnowledgeCoreUtil.Recipe(ingredients, result, parentContainer.getCurrentRequiredVis()));
                 }
-                case KNOWLEDGE_CORE_DEL -> {
+                case ACTION_DELETE_RECIPE -> {
                     this.playWriteSound(player);
-                    KnowledgeCoreUtil.setRecipe(knowledgeCoreStack, packet.index, null);
+                    KnowledgeCoreUtil.setRecipe(knowledgeCoreStack, slotId, null);
                 }
-                case KNOWLEDGE_CORE_VIEW -> {
+                case ACTION_VIEW_RECIPE -> {
                 }
+                default -> throw new IllegalArgumentException("Unsupported Knowledge Core client action: " + actionName);
             }
         }
         if (KnowledgeCoreUtil.isEmpty(knowledgeCoreStack))
@@ -127,21 +146,13 @@ public class ContainerKnowledgeCore extends ContainerBase implements ISubGui {
         parentHost.returnToMainContainer(player, this);
     }
 
-    private static void validateKnowledgeCoreIndex(ActionType action, int index) {
-        if (index == -1 && action == ActionType.KNOWLEDGE_CORE_VIEW) {
+    private static void validateKnowledgeCoreIndex(String actionName, int index) {
+        if (index == -1 && ACTION_VIEW_RECIPE.equals(actionName)) {
             return;
         }
         if (index < 0 || index >= SLOT_NUM) {
             throw new IllegalArgumentException("Invalid Knowledge Core recipe index " + index
-                    + " for packet action " + action + "; expected 0-" + (SLOT_NUM - 1));
-        }
-    }
-
-    private static void validateKnowledgeCoreAction(ActionType action) {
-        if (action != ActionType.KNOWLEDGE_CORE_ADD
-                && action != ActionType.KNOWLEDGE_CORE_DEL
-                && action != ActionType.KNOWLEDGE_CORE_VIEW) {
-            throw new IllegalArgumentException("Unsupported Knowledge Core packet action: " + action);
+                    + " for client action " + actionName + "; expected 0-" + (SLOT_NUM - 1));
         }
     }
 

@@ -14,7 +14,9 @@ import ae2.container.ISubGui;
 import ae2.core.gui.locator.GuiHostLocator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Bootstrap;
+import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -26,13 +28,12 @@ import net.minecraftforge.items.wrapper.InvWrapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
-import thaumicenergistics.container.ActionType;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.slot.SlotGhost;
 import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.network.packets.PacketUIAction;
 import thaumicenergistics.test.FakeMinecraft;
+import thaumicenergistics.util.KnowledgeCoreUtil;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -43,6 +44,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ContainerKnowledgeCoreTest {
+
+    private static final String CLIENT_ACTION_KNOWLEDGE_CORE_ADD = "knowledgeCoreAdd";
+    private static final String CLIENT_ACTION_KNOWLEDGE_CORE_DELETE = "knowledgeCoreDelete";
+    private static final String CLIENT_ACTION_KNOWLEDGE_CORE_VIEW = "knowledgeCoreView";
 
     @BeforeAll
     static void bootstrapMinecraft() {
@@ -143,7 +148,7 @@ class ContainerKnowledgeCoreTest {
     }
 
     @Test
-    void onActionReturnsToParentHostMainContainer() {
+    void supergiantClientActionViewSlotMinusOneReturnsToParentHostMainContainer() {
         FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
         RecordingArcaneHost host = new RecordingArcaneHost();
         GuiHostLocator locator = new FixedArcaneHostLocator(host);
@@ -151,7 +156,7 @@ class ContainerKnowledgeCoreTest {
         ContainerKnowledgeCore container = new ContainerKnowledgeCore(
                 player, ModGUIs.KNOWLEDGE_CORE_VIEW, parent, locator);
 
-        container.handleServerAction(player, new PacketUIAction(ActionType.KNOWLEDGE_CORE_VIEW, -1));
+        container.receiveClientAction(CLIENT_ACTION_KNOWLEDGE_CORE_VIEW, "-1");
 
         assertAll(
                 () -> assertEquals(1, host.returnCalls),
@@ -160,22 +165,7 @@ class ContainerKnowledgeCoreTest {
     }
 
     @Test
-    void handleServerActionRejectsNonKnowledgeCorePacketAction() {
-        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
-        RecordingArcaneHost host = new RecordingArcaneHost();
-        GuiHostLocator locator = new FixedArcaneHostLocator(host);
-        ContainerArcaneInscriber parent = newParent(player, host, locator);
-        ContainerKnowledgeCore container = new ContainerKnowledgeCore(
-                player, ModGUIs.KNOWLEDGE_CORE_VIEW, parent, locator);
-
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
-                () -> container.handleServerAction(player, new PacketUIAction(ActionType.CLEAR_GRID, 0)));
-
-        assertTrue(error.getMessage().contains(ActionType.CLEAR_GRID.name()), error.getMessage());
-    }
-
-    @Test
-    void handleServerActionRejectsRecipeIndexAboveKnowledgeCoreSlotsBeforeReturningToParent() {
+    void supergiantClientActionDeleteRejectsRecipeIndexAboveKnowledgeCoreSlotsBeforeReturningToParent() {
         FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
         RecordingArcaneHost host = new RecordingArcaneHost();
         GuiHostLocator locator = new FixedArcaneHostLocator(host);
@@ -185,19 +175,19 @@ class ContainerKnowledgeCoreTest {
         int invalidIndex = 9;
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
-                () -> container.handleServerAction(player,
-                        new PacketUIAction(ActionType.KNOWLEDGE_CORE_DEL, invalidIndex)));
+                () -> container.receiveClientAction(CLIENT_ACTION_KNOWLEDGE_CORE_DELETE,
+                        Integer.toString(invalidIndex)));
 
         assertAll(
                 () -> assertTrue(error.getMessage().contains(Integer.toString(invalidIndex)),
                         error.getMessage()),
-                () -> assertTrue(error.getMessage().contains(ActionType.KNOWLEDGE_CORE_DEL.name()),
+                () -> assertTrue(error.getMessage().contains(CLIENT_ACTION_KNOWLEDGE_CORE_DELETE),
                         error.getMessage()),
                 () -> assertEquals(0, host.returnCalls));
     }
 
     @Test
-    void handleServerActionRejectsInvalidNegativeRecipeIndexBeforeReturningToParent() {
+    void supergiantClientActionViewRejectsInvalidNegativeRecipeIndexBeforeReturningToParent() {
         FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
         RecordingArcaneHost host = new RecordingArcaneHost();
         GuiHostLocator locator = new FixedArcaneHostLocator(host);
@@ -207,23 +197,102 @@ class ContainerKnowledgeCoreTest {
         int invalidIndex = -2;
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
-                () -> container.handleServerAction(player,
-                        new PacketUIAction(ActionType.KNOWLEDGE_CORE_VIEW, invalidIndex)));
+                () -> container.receiveClientAction(CLIENT_ACTION_KNOWLEDGE_CORE_VIEW,
+                        Integer.toString(invalidIndex)));
 
         assertAll(
                 () -> assertTrue(error.getMessage().contains(Integer.toString(invalidIndex)),
                         error.getMessage()),
-                () -> assertTrue(error.getMessage().contains(ActionType.KNOWLEDGE_CORE_VIEW.name()),
+                () -> assertTrue(error.getMessage().contains(CLIENT_ACTION_KNOWLEDGE_CORE_VIEW),
                         error.getMessage()),
                 () -> assertEquals(0, host.returnCalls));
     }
 
+    @Test
+    void supergiantClientActionAddStoresCurrentArcaneInscriberRecipeAndReturnsToParent() {
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
+        RecordingArcaneHost host = new RecordingArcaneHost();
+        GuiHostLocator locator = new FixedArcaneHostLocator(host);
+        float requiredVis = 37.5f;
+        ContainerArcaneInscriber parent = newParent(player, host, locator, requiredVis);
+        ItemStack knowledgeCore = new ItemStack(Items.PAPER);
+        ItemStack ingredient = new ItemStack(Items.GOLD_INGOT, 3);
+        ItemStack result = new ItemStack(Items.DIAMOND, 2);
+        host.upgradeInventory.setInventorySlotContents(0, knowledgeCore);
+        host.craftingInventory.setInventorySlotContents(0, ingredient);
+        parent.getInventory("result").insertItem(0, result.copy(), false);
+        ContainerKnowledgeCore container = new ContainerKnowledgeCore(
+                player, ModGUIs.KNOWLEDGE_CORE_ADD, parent, locator);
+
+        container.receiveClientAction(CLIENT_ACTION_KNOWLEDGE_CORE_ADD, "2");
+        ItemStack storedKnowledgeCore = host.upgradeInventory.getStackInSlot(0);
+        KnowledgeCoreUtil.Recipe recipe = KnowledgeCoreUtil.getRecipe(storedKnowledgeCore, 2);
+
+        assertAll(
+                () -> assertEquals(1, host.returnCalls),
+                () -> assertSame(player, host.returnedPlayer),
+                () -> assertSame(container, host.returnedSubGui),
+                () -> assertEquals(result.getItem(), recipe.result().getItem()),
+                () -> assertEquals(result.getCount(), recipe.result().getCount()),
+                () -> assertEquals(ingredient.getItem(), recipe.ingredients().getStackInSlot(0).getItem()),
+                () -> assertEquals(ingredient.getCount(), recipe.ingredients().getStackInSlot(0).getCount()),
+                () -> assertEquals(requiredVis, recipe.visCost(), 0.0001f));
+    }
+
+    @Test
+    void supergiantClientActionDeleteClearsStoredRecipeAndReturnsToParent() {
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
+        RecordingArcaneHost host = new RecordingArcaneHost();
+        GuiHostLocator locator = new FixedArcaneHostLocator(host);
+        ContainerArcaneInscriber parent = newParent(player, host, locator);
+        ItemStack knowledgeCore = new ItemStack(Items.PAPER);
+        ThEInternalInventory ingredients = new ThEInternalInventory("ingredients", 15, 64);
+        KnowledgeCoreUtil.setRecipe(knowledgeCore, 3,
+                new KnowledgeCoreUtil.Recipe(ingredients, new ItemStack(Items.DIAMOND), 0));
+        host.upgradeInventory.setInventorySlotContents(0, knowledgeCore);
+        ContainerKnowledgeCore container = new ContainerKnowledgeCore(
+                player, ModGUIs.KNOWLEDGE_CORE_DEL, parent, locator);
+
+        container.receiveClientAction(CLIENT_ACTION_KNOWLEDGE_CORE_DELETE, "3");
+
+        assertAll(
+                () -> assertEquals(1, host.returnCalls),
+                () -> assertSame(container, host.returnedSubGui),
+                () -> assertTrue(KnowledgeCoreUtil.isEmpty(host.upgradeInventory.getStackInSlot(0))));
+    }
+
     private static ContainerArcaneInscriber newParent(FakeMinecraft.FakePlayer player,
-                                                      RecordingArcaneHost host,
-                                                      GuiHostLocator locator) {
+                                                       RecordingArcaneHost host,
+                                                       GuiHostLocator locator) {
         ContainerArcaneInscriber parent = new ContainerArcaneInscriber(player.inventory, host);
         parent.setLocator(locator);
         return parent;
+    }
+
+    private static ContainerArcaneInscriber newParent(FakeMinecraft.FakePlayer player,
+                                                       RecordingArcaneHost host,
+                                                       GuiHostLocator locator,
+                                                       float requiredVis) {
+        ContainerArcaneInscriber parent = new FixedVisArcaneInscriber(player, host, requiredVis);
+        parent.setLocator(locator);
+        return parent;
+    }
+
+    private static final class FixedVisArcaneInscriber extends ContainerArcaneInscriber {
+
+        private final float requiredVis;
+
+        private FixedVisArcaneInscriber(FakeMinecraft.FakePlayer player,
+                                        IArcaneTerminalHost host,
+                                        float requiredVis) {
+            super(player.inventory, host);
+            this.requiredVis = requiredVis;
+        }
+
+        @Override
+        protected float getRequiredVis(IRecipe recipe, EntityPlayer player) {
+            return this.requiredVis;
+        }
     }
 
     private static final class FixedArcaneHostLocator implements GuiHostLocator {

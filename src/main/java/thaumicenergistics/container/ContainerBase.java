@@ -19,7 +19,6 @@ import thaumicenergistics.container.slot.ThEGhostSlot;
 import thaumicenergistics.container.slot.ThESlot;
 import thaumicenergistics.network.PacketHandler;
 import thaumicenergistics.network.packets.PacketInvHeldUpdate;
-import thaumicenergistics.network.packets.PacketUIAction;
 import thaumicenergistics.util.EssentiaFilter;
 import thaumicenergistics.util.ForgeUtil;
 
@@ -152,15 +151,6 @@ public abstract class ContainerBase extends AEBaseContainer {
             this.addSlot(new ThESlot(player, i, offsetX + 8 + 18 * i, offsetY + 60),
                     SlotSemantics.PLAYER_HOTBAR);
         }
-    }
-
-    /**
-     * Called when a PacketUIAction is received by the server
-     *
-     * @param player Player that sent the action
-     * @param packet Packet from client
-     */
-    public void onAction(EntityPlayerMP player, PacketUIAction packet) {
     }
 
     public EssentiaFilter getEssentiaFilter() {
