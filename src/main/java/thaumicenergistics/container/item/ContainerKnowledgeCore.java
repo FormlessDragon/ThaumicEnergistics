@@ -1,14 +1,16 @@
 package thaumicenergistics.container.item;
 
+import ae2.container.AEBaseContainer;
 import ae2.container.ISubGui;
 import ae2.core.gui.locator.GuiHostLocator;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.ClickType;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
-import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.slot.SlotGhost;
@@ -18,12 +20,13 @@ import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.util.KnowledgeCoreUtil;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * @author Alex811
  */
-public class ContainerKnowledgeCore extends ContainerBase implements ISubGui {
+public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
     public static final String ACTION_ADD_RECIPE = "knowledgeCoreAdd";
     public static final String ACTION_DELETE_RECIPE = "knowledgeCoreDelete";
     public static final String ACTION_VIEW_RECIPE = "knowledgeCoreView";
@@ -37,7 +40,7 @@ public class ContainerKnowledgeCore extends ContainerBase implements ISubGui {
 
     public ContainerKnowledgeCore(EntityPlayer player, ModGUIs GUIAction, ContainerArcaneInscriber parent,
                                   GuiHostLocator parentLocator) {
-        super(player);
+        super(Objects.requireNonNull(player, "player").inventory, null);
         validateKnowledgeCoreGui(GUIAction);
         if (parent == null) {
             throw new IllegalArgumentException("parent cannot be null for Knowledge Core gui " + GUIAction
@@ -124,6 +127,7 @@ public class ContainerKnowledgeCore extends ContainerBase implements ISubGui {
 
     private void handleClientAction(String actionName, int slotId) {
         validateKnowledgeCoreIndex(actionName, slotId);
+        EntityPlayer player = this.getPlayer();
         if (slotId > -1) {
             switch (actionName) {
                 case ACTION_ADD_RECIPE -> {
@@ -138,12 +142,29 @@ public class ContainerKnowledgeCore extends ContainerBase implements ISubGui {
                 }
                 case ACTION_VIEW_RECIPE -> {
                 }
-                default -> throw new IllegalArgumentException("Unsupported Knowledge Core client action: " + actionName);
+                default ->
+                        throw new IllegalArgumentException("Unsupported Knowledge Core client action: " + actionName);
             }
         }
         if (KnowledgeCoreUtil.isEmpty(knowledgeCoreStack))
             Optional.of(ThEItems.BLANK_KNOWLEDGE_CORE.stack(1)).ifPresent(blank -> ((InvWrapper) parentContainer.getInventory("upgrades")).getInv().setInventorySlotContents(0, blank));
         parentHost.returnToMainContainer(player, this);
+    }
+
+    @Override
+    public ItemStack slotClick(int slotID, int dragType, ClickType clickType, EntityPlayer player) {
+        if (slotID >= 0 && slotID < this.inventorySlots.size()) {
+            Slot slot = this.getSlot(slotID);
+            if (this.getSlotSemantic(slot) == ThESlotSemantics.KNOWLEDGE_CORE) {
+                return ItemStack.EMPTY;
+            }
+        }
+        return super.slotClick(slotID, dragType, clickType, player);
+    }
+
+    @Override
+    public boolean canInteractWith(EntityPlayer player) {
+        return true;
     }
 
     private static void validateKnowledgeCoreIndex(String actionName, int index) {

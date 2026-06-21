@@ -15,6 +15,7 @@ import ae2.core.gui.locator.GuiHostLocator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Bootstrap;
 import net.minecraft.init.Items;
+import net.minecraft.inventory.ClickType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.tileentity.TileEntity;
@@ -28,6 +29,7 @@ import net.minecraftforge.items.wrapper.InvWrapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
+import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.slot.SlotGhost;
@@ -38,6 +40,7 @@ import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -127,6 +130,23 @@ class ContainerKnowledgeCoreTest {
     }
 
     @Test
+    void usesSupergiantBaseContainerContractDirectly() {
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
+        RecordingArcaneHost host = new RecordingArcaneHost();
+        GuiHostLocator locator = new FixedArcaneHostLocator(host);
+        ContainerArcaneInscriber parent = newParent(player, host, locator);
+
+        ContainerKnowledgeCore container = new ContainerKnowledgeCore(
+                player, ModGUIs.KNOWLEDGE_CORE_VIEW, parent, locator);
+        AEBaseContainer aeContainer = assertInstanceOf(AEBaseContainer.class, container);
+
+        assertAll(
+                () -> assertFalse(isContainerBase(container)),
+                () -> assertSame(player.inventory, aeContainer.getPlayerInventory()),
+                () -> assertTrue(container.canInteractWith(player)));
+    }
+
+    @Test
     void registersKnowledgeCoreGhostSlotsWithSupergiantSlotSemantics() {
         FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
         RecordingArcaneHost host = new RecordingArcaneHost();
@@ -145,6 +165,32 @@ class ContainerKnowledgeCoreTest {
                         .allMatch(slot -> slot instanceof SlotGhost)),
                 () -> assertTrue(aeContainer.getSlots(ThESlotSemantics.KNOWLEDGE_CORE).stream()
                         .allMatch(slot -> aeContainer.getSlotSemantic(slot) == ThESlotSemantics.KNOWLEDGE_CORE)));
+    }
+
+    @Test
+    void bareClickDisplayGhostSlotDoesNotReplaceRecipeResultWithCarriedStack() {
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
+        RecordingArcaneHost host = new RecordingArcaneHost();
+        GuiHostLocator locator = new FixedArcaneHostLocator(host);
+        ContainerArcaneInscriber parent = newParent(player, host, locator);
+        ItemStack knowledgeCore = new ItemStack(Items.PAPER);
+        ThEInternalInventory ingredients = new ThEInternalInventory("ingredients", 15, 64);
+        ItemStack displayedResult = new ItemStack(Items.DIAMOND);
+        KnowledgeCoreUtil.setRecipe(knowledgeCore, 0,
+                new KnowledgeCoreUtil.Recipe(ingredients, displayedResult, 0));
+        host.upgradeInventory.setInventorySlotContents(0, knowledgeCore);
+        ContainerKnowledgeCore container = new ContainerKnowledgeCore(
+                player, ModGUIs.KNOWLEDGE_CORE_VIEW, parent, locator);
+        player.inventory.setItemStack(new ItemStack(Items.GOLD_INGOT, 4));
+
+        container.slotClick(0, 0, ClickType.PICKUP, player);
+
+        ItemStack slotStack = container.getSlot(0).getStack();
+        assertAll(
+                () -> assertEquals(Items.DIAMOND, slotStack.getItem()),
+                () -> assertEquals(1, slotStack.getCount()),
+                () -> assertEquals(Items.GOLD_INGOT, player.inventory.getItemStack().getItem()),
+                () -> assertEquals(4, player.inventory.getItemStack().getCount()));
     }
 
     @Test
@@ -262,20 +308,24 @@ class ContainerKnowledgeCoreTest {
     }
 
     private static ContainerArcaneInscriber newParent(FakeMinecraft.FakePlayer player,
-                                                       RecordingArcaneHost host,
-                                                       GuiHostLocator locator) {
+                                                      RecordingArcaneHost host,
+                                                      GuiHostLocator locator) {
         ContainerArcaneInscriber parent = new ContainerArcaneInscriber(player.inventory, host);
         parent.setLocator(locator);
         return parent;
     }
 
     private static ContainerArcaneInscriber newParent(FakeMinecraft.FakePlayer player,
-                                                       RecordingArcaneHost host,
-                                                       GuiHostLocator locator,
-                                                       float requiredVis) {
+                                                      RecordingArcaneHost host,
+                                                      GuiHostLocator locator,
+                                                      float requiredVis) {
         ContainerArcaneInscriber parent = new FixedVisArcaneInscriber(player, host, requiredVis);
         parent.setLocator(locator);
         return parent;
+    }
+
+    private static boolean isContainerBase(Object container) {
+        return container instanceof ContainerBase;
     }
 
     private static final class FixedVisArcaneInscriber extends ContainerArcaneInscriber {
