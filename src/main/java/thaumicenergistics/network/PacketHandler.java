@@ -7,10 +7,7 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
-import thaumicenergistics.network.packets.PacketEssentiaFilter;
-import thaumicenergistics.network.packets.PacketOpenGUI;
 import thaumicenergistics.network.packets.PacketOpenLocatorGUI;
-import thaumicenergistics.network.packets.PacketPlaySound;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.util.ThELog;
 
@@ -31,10 +28,6 @@ public class PacketHandler {
             return;
         PacketHandler.INSTANCE = NetworkRegistry.INSTANCE.newSimpleChannel(Reference.MOD_ID);
 
-        PacketHandler.INSTANCE.registerMessage(PacketEssentiaFilter.Handler.class, PacketEssentiaFilter.class, PacketHandler.nextID(), Side.CLIENT);
-        PacketHandler.INSTANCE.registerMessage(PacketPlaySound.Handler.class, PacketPlaySound.class, PacketHandler.nextID(), Side.CLIENT);
-
-        PacketHandler.INSTANCE.registerMessage(PacketOpenGUI.Handler.class, PacketOpenGUI.class, PacketHandler.nextID(), Side.SERVER);
         PacketHandler.INSTANCE.registerMessage(PacketOpenLocatorGUI.Handler.class, PacketOpenLocatorGUI.class, PacketHandler.nextID(), Side.CLIENT);
     }
 

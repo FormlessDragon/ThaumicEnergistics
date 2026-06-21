@@ -3,12 +3,12 @@ package thaumicenergistics.container.block;
 import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.items.IItemHandler;
@@ -18,10 +18,9 @@ import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
 import thaumicenergistics.container.slot.SlotUpgrade;
 import thaumicenergistics.core.ThEFeatures;
-import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.network.packets.PacketPlaySound;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.ForgeUtil;
+import thaumicenergistics.util.ThELog;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -69,13 +68,20 @@ public class ContainerArcaneAssembler extends ContainerBase {
     }
 
     public void playCoreSound(EntityPlayer player) { // plays the right sound, when the Knowledge Core gets removed or placed in the slot
-        if (this.getInventory("cores").getStackInSlot(0).isEmpty()) {
-            player.world.playSound(player, TE.getPos(), new SoundEvent(ThEFeatures.instance().sounds().knowledgeCorePowerDown()), SoundCategory.BLOCKS, 1, 1);
-            PacketHandler.sendToPlayer((EntityPlayerMP) player, new PacketPlaySound(TE.getPos(), ThEFeatures.instance().sounds().knowledgeCorePowerDown(), SoundCategory.BLOCKS, 1, 1));
-        } else {
-            player.world.playSound(player, TE.getPos(), new SoundEvent(ThEFeatures.instance().sounds().knowledgeCorePowerUp()), SoundCategory.BLOCKS, 1, 1);
-            PacketHandler.sendToPlayer((EntityPlayerMP) player, new PacketPlaySound(TE.getPos(), ThEFeatures.instance().sounds().knowledgeCorePowerUp(), SoundCategory.BLOCKS, 1, 1));
+        ResourceLocation sound = this.getInventory("cores").getStackInSlot(0).isEmpty()
+                ? ThEFeatures.instance().sounds().knowledgeCorePowerDown()
+                : ThEFeatures.instance().sounds().knowledgeCorePowerUp();
+        SoundEvent soundEvent = this.resolveCoreSound(sound);
+        player.world.playSound(null, TE.getPos(), soundEvent, SoundCategory.BLOCKS, 1, 1);
+    }
+
+    protected SoundEvent resolveCoreSound(ResourceLocation sound) {
+        SoundEvent soundEvent = SoundEvent.REGISTRY.getObject(sound);
+        if (soundEvent == null) {
+            ThELog.error("Arcane Assembler core sound is not registered: {}", sound);
+            throw new IllegalStateException("Arcane Assembler core sound is not registered: " + sound);
         }
+        return soundEvent;
     }
 
     private class KnowledgeCoreSlotListener implements IContainerListener {
