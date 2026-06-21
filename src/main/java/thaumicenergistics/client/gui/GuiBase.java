@@ -1,8 +1,5 @@
 package thaumicenergistics.client.gui;
 
-import ae2.api.config.Setting;
-import ae2.api.util.IConfigManager;
-import ae2.api.util.IConfigurableObject;
 import ae2.client.gui.widgets.ITooltip;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
@@ -16,7 +13,6 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.opengl.GL11;
-import thaumicenergistics.client.gui.helpers.GuiScrollBar;
 import thaumicenergistics.container.ContainerBase;
 import thaumicenergistics.container.slot.ISlotOptional;
 import thaumicenergistics.container.slot.SlotGhostEssentia;
@@ -134,36 +130,6 @@ public abstract class GuiBase extends GuiContainer {
         return mouseX >= x && mouseX < x + 16 && mouseY >= y && mouseY < y + 16;
     }
 
-    /**
-     * Called when a PacketSettingChange is received (Client and Server)
-     *
-     * @param setting Setting changed
-     * @param value   New Value
-     */
-    public void updateSetting(Setting<?> setting, Enum<?> value) {
-        if (this.inventorySlots instanceof IConfigurableObject) {
-            IConfigManager configManager = ((IConfigurableObject) this.inventorySlots).getConfigManager();
-            putSetting(configManager, setting, value);
-        }
-    }
-
-    public boolean hasConfigSetting(Setting<?> setting) {
-        return this.inventorySlots instanceof IConfigurableObject
-                && ((IConfigurableObject) this.inventorySlots).getConfigManager().getSettings().contains(setting);
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static void putSetting(IConfigManager configManager, Setting<?> setting, Enum<?> value) {
-        putSettingUnchecked(configManager, (Setting) setting, value);
-    }
-
-    private static <T extends Enum<T>> void putSettingUnchecked(IConfigManager configManager, Setting<T> setting, Enum<?> value) {
-        if (value == null) {
-            throw new IllegalArgumentException("Cannot set config setting " + setting.getName() + " to null");
-        }
-        configManager.putSetting(setting, setting.getEnumClass().cast(value));
-    }
-
     protected abstract ResourceLocation getGuiBackground();
 
     protected void drawTexturedModelRectColor(int x, int y, int textureX, int textureY, int width, int height, Color color) {
@@ -218,10 +184,6 @@ public abstract class GuiBase extends GuiContainer {
      */
     protected boolean mouseWithin() {
         return mouseWithin(0, 0, xSize, ySize, true);
-    }
-
-    protected boolean mouseWithin(GuiScrollBar scrollBar) {
-        return mouseWithin(scrollBar.getX(), scrollBar.getY(), 15, scrollBar.getHeight(), true);
     }
 
     protected boolean mouseWithin(GuiTextField textField) {
