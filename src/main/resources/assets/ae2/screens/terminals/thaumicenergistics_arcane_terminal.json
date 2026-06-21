@@ -68,6 +68,18 @@
     "clearCraftingGrid": {
       "left": 81,
       "bottom": 159
+    },
+    "knowledgeCoreAdd": {
+      "left": 87,
+      "bottom": 100
+    },
+    "knowledgeCoreDelete": {
+      "left": 104,
+      "bottom": 100
+    },
+    "knowledgeCoreView": {
+      "left": 121,
+      "bottom": 100
     }
   }
 }
