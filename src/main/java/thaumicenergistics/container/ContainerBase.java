@@ -17,8 +17,6 @@ import thaumicenergistics.container.slot.SlotGhost;
 import thaumicenergistics.container.slot.SlotGhostEssentia;
 import thaumicenergistics.container.slot.ThEGhostSlot;
 import thaumicenergistics.container.slot.ThESlot;
-import thaumicenergistics.network.PacketHandler;
-import thaumicenergistics.network.packets.PacketInvHeldUpdate;
 import thaumicenergistics.util.EssentiaFilter;
 import thaumicenergistics.util.ForgeUtil;
 
@@ -110,13 +108,19 @@ public abstract class ContainerBase extends AEBaseContainer {
                         ItemStack newHeld = craftingContainer.onCraft(toCraft);
                         newHeld.grow(held.getCount());
                         player.inventory.setItemStack(newHeld);
-                        PacketHandler.sendToPlayer((EntityPlayerMP) player, new PacketInvHeldUpdate(newHeld));
+                        this.syncCarriedStack(player);
                     }
                 }
             }
             return ItemStack.EMPTY;
         }
         return super.slotClick(slotID, dragType, clickType, player);
+    }
+
+    protected void syncCarriedStack(EntityPlayer player) {
+        if (player instanceof EntityPlayerMP serverPlayer && serverPlayer.openContainer == this) {
+            this.syncInventoryActionState(serverPlayer);
+        }
     }
 
     @Override

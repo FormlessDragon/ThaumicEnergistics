@@ -9,6 +9,7 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.fml.common.thread.SidedThreadGroups;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.wrapper.PlayerMainInvWrapper;
@@ -26,6 +27,8 @@ import thaumicenergistics.test.FakeMinecraft;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.EssentiaFilter;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -35,6 +38,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ContainerBaseQuickMoveTest {
+
+    private static final long SERVER_THREAD_TIMEOUT_MILLIS = 5000L;
 
     @BeforeAll
     static void bootstrapMinecraft() {
@@ -139,12 +144,105 @@ class ContainerBaseQuickMoveTest {
                 () -> assertEquals(9, aeContainer.getSlots(SlotSemantics.PLAYER_HOTBAR).size()));
     }
 
+    @Test
+    void normalClickArcaneResultCraftsIntoCarriedStackWithoutLocalPacket() throws Throwable {
+        FakeMinecraft.FakePlayer emptyHandedPlayer = FakeMinecraft.player(FakeMinecraft.serverWorld());
+        QuickMoveContainer emptyHandedContainer = QuickMoveContainer.withArcaneResult(emptyHandedPlayer);
+        emptyHandedContainer.craftingResult.setStackInSlot(0, new ItemStack(Items.DIAMOND));
+        emptyHandedContainer.craftableAmount = 1;
+
+        runOnServerThread(() -> emptyHandedContainer.slotClick(0, 0, ClickType.PICKUP, emptyHandedPlayer));
+
+        ItemStack emptyHandedHeld = emptyHandedPlayer.inventory.getItemStack();
+        assertAll(
+                () -> assertEquals(1, emptyHandedContainer.tryCraftCalls),
+                () -> assertEquals(1, emptyHandedContainer.lastTryCraftAmount),
+                () -> assertEquals(1, emptyHandedContainer.onCraftCalls),
+                () -> assertEquals(Items.DIAMOND, emptyHandedContainer.lastOnCraftInput.getItem()),
+                () -> assertEquals(1, emptyHandedContainer.lastOnCraftInput.getCount()),
+                () -> assertEquals(Items.DIAMOND, emptyHandedHeld.getItem()),
+                () -> assertEquals(1, emptyHandedHeld.getCount()),
+                () -> assertEquals(1, emptyHandedContainer.syncCarriedStackCalls),
+                () -> assertSame(emptyHandedPlayer, emptyHandedContainer.lastSyncCarriedStackPlayer));
+
+        FakeMinecraft.FakePlayer carryingPlayer = FakeMinecraft.player(FakeMinecraft.serverWorld());
+        QuickMoveContainer carryingContainer = QuickMoveContainer.withArcaneResult(carryingPlayer);
+        carryingContainer.craftingResult.setStackInSlot(0, new ItemStack(Items.DIAMOND));
+        carryingContainer.craftableAmount = 1;
+        carryingPlayer.inventory.setItemStack(new ItemStack(Items.DIAMOND, 3));
+
+        runOnServerThread(() -> carryingContainer.slotClick(0, 0, ClickType.PICKUP, carryingPlayer));
+
+        ItemStack carryingHeld = carryingPlayer.inventory.getItemStack();
+        assertAll(
+                () -> assertEquals(1, carryingContainer.tryCraftCalls),
+                () -> assertEquals(1, carryingContainer.lastTryCraftAmount),
+                () -> assertEquals(1, carryingContainer.onCraftCalls),
+                () -> assertEquals(Items.DIAMOND, carryingContainer.lastOnCraftInput.getItem()),
+                () -> assertEquals(1, carryingContainer.lastOnCraftInput.getCount()),
+                () -> assertEquals(Items.DIAMOND, carryingHeld.getItem()),
+                () -> assertEquals(4, carryingHeld.getCount()),
+                () -> assertEquals(1, carryingContainer.syncCarriedStackCalls),
+                () -> assertSame(carryingPlayer, carryingContainer.lastSyncCarriedStackPlayer));
+    }
+
+    @Test
+    void normalClickArcaneResultDefaultSyncHookIgnoresFakePlayerWithoutLocalPacket() throws Throwable {
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
+        DefaultSyncHookContainer container = DefaultSyncHookContainer.withArcaneResult(player);
+        container.craftingResult.setStackInSlot(0, new ItemStack(Items.EMERALD));
+        container.craftableAmount = 1;
+
+        runOnServerThread(() -> container.slotClick(0, 0, ClickType.PICKUP, player));
+
+        ItemStack held = player.inventory.getItemStack();
+        assertAll(
+                () -> assertEquals(1, container.tryCraftCalls),
+                () -> assertEquals(1, container.onCraftCalls),
+                () -> assertEquals(Items.EMERALD, held.getItem()),
+                () -> assertEquals(1, held.getCount()));
+    }
+
+    private static void runOnServerThread(ThrowingRunnable action) throws Throwable {
+        AtomicReference<Throwable> thrown = new AtomicReference<>();
+        Thread serverThread = SidedThreadGroups.SERVER.newThread(() -> {
+            try {
+                action.run();
+            } catch (Throwable throwable) {
+                thrown.set(throwable);
+            }
+        });
+        serverThread.setDaemon(true);
+        serverThread.start();
+        serverThread.join(SERVER_THREAD_TIMEOUT_MILLIS);
+        if (serverThread.isAlive()) {
+            serverThread.interrupt();
+            throw new AssertionError("Server-side test action did not finish within "
+                    + SERVER_THREAD_TIMEOUT_MILLIS + " ms");
+        }
+        if (thrown.get() != null) {
+            throw thrown.get();
+        }
+    }
+
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+        void run() throws Throwable;
+    }
+
     private static final class QuickMoveContainer extends ContainerBase implements ICraftingContainer {
         private final ItemStackHandler storage = new ItemStackHandler(1);
         private final InventoryBasic ghostInventory = new InventoryBasic("ghost", false, 1);
         private final ItemStackHandler ghostHandler = new ItemStackHandler(1);
         private final InventoryBasic essentiaGhostInventory = new InventoryBasic("essentiaGhost", false, 1);
         private final ItemStackHandler craftingResult = new ItemStackHandler(1);
+        private int craftableAmount;
+        private int tryCraftCalls;
+        private int lastTryCraftAmount = -1;
+        private int onCraftCalls;
+        private ItemStack lastOnCraftInput = ItemStack.EMPTY;
+        private int syncCarriedStackCalls;
+        private EntityPlayer lastSyncCarriedStackPlayer;
 
         private QuickMoveContainer(EntityPlayer player) {
             super(player);
@@ -169,6 +267,12 @@ class ContainerBaseQuickMoveTest {
             return container;
         }
 
+        private static QuickMoveContainer withArcaneResult(EntityPlayer player) {
+            QuickMoveContainer container = new QuickMoveContainer(player);
+            container.addSlotToContainer(new SlotArcaneResult(container, player, 0, 0, 0));
+            return container;
+        }
+
         private static QuickMoveContainer withPlayerBindings(EntityPlayer player) {
             QuickMoveContainer container = new QuickMoveContainer(player);
             container.bindPlayerInventory(new PlayerMainInvWrapper(player.inventory), 0, 0);
@@ -182,12 +286,70 @@ class ContainerBaseQuickMoveTest {
 
         @Override
         public int tryCraft(int amount) {
-            return 0;
+            this.tryCraftCalls++;
+            this.lastTryCraftAmount = amount;
+            return this.craftableAmount;
         }
 
         @Override
         public ItemStack onCraft(ItemStack crafted) {
-            return crafted;
+            this.onCraftCalls++;
+            this.lastOnCraftInput = crafted.copy();
+            return crafted.copy();
+        }
+
+        @Override
+        protected void syncCarriedStack(EntityPlayer player) {
+            this.syncCarriedStackCalls++;
+            this.lastSyncCarriedStackPlayer = player;
+        }
+
+        @Override
+        public IItemHandler getInventory(String name) {
+            if ("result".equals(name)) {
+                return this.craftingResult;
+            }
+            throw new IllegalArgumentException("Unknown test inventory: " + name);
+        }
+    }
+
+    private static final class DefaultSyncHookContainer extends CraftingResultContainer {
+
+        private DefaultSyncHookContainer(EntityPlayer player) {
+            super(player);
+        }
+
+        private static DefaultSyncHookContainer withArcaneResult(EntityPlayer player) {
+            DefaultSyncHookContainer container = new DefaultSyncHookContainer(player);
+            container.addSlotToContainer(new SlotArcaneResult(container, player, 0, 0, 0));
+            return container;
+        }
+    }
+
+    private abstract static class CraftingResultContainer extends ContainerBase implements ICraftingContainer {
+        protected final ItemStackHandler craftingResult = new ItemStackHandler(1);
+        protected int craftableAmount;
+        protected int tryCraftCalls;
+        protected int onCraftCalls;
+
+        private CraftingResultContainer(EntityPlayer player) {
+            super(player);
+        }
+
+        @Override
+        public void onMatrixChanged() {
+        }
+
+        @Override
+        public int tryCraft(int amount) {
+            this.tryCraftCalls++;
+            return this.craftableAmount;
+        }
+
+        @Override
+        public ItemStack onCraft(ItemStack crafted) {
+            this.onCraftCalls++;
+            return crafted.copy();
         }
 
         @Override
