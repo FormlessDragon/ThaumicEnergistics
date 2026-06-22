@@ -53,6 +53,7 @@ import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.test.FakeMinecraft;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
+import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
 import javax.annotation.Nullable;
 import java.awt.Color;
@@ -382,7 +383,8 @@ class ArcaneRecipeTransferMigrationTest {
     private static final class TestArcaneTerminalHost implements IArcaneTerminalHost, IPart, IEnergySource {
 
         private final ItemStackHandler crafting = new ItemStackHandler(15);
-        private final ItemStackHandler upgrades = new ItemStackHandler(1);
+        private final ThEUpgradeInventory upgrades =
+                new ThEUpgradeInventory("upgrades", 1, 1, new ItemStack(Items.STICK));
         private final ThEInternalInventory aeUpgrades = new ThEInternalInventory("Test upgrades", 0, 64);
         private final TestStorage storage = new TestStorage();
 
@@ -418,9 +420,14 @@ class ArcaneRecipeTransferMigrationTest {
         public IItemHandler getInventoryByName(String name) {
             return switch (name.toLowerCase(java.util.Locale.ROOT)) {
                 case "crafting" -> this.crafting;
-                case "upgrades" -> this.upgrades;
+                case "upgrades" -> this.upgrades.toItemHandler();
                 default -> null;
             };
+        }
+
+        @Override
+        public ae2.api.upgrades.IUpgradeInventory getArcaneUpgradeInventory() {
+            return this.upgrades;
         }
 
         @Override

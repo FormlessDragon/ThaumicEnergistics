@@ -33,8 +33,6 @@ import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.KnowledgeCoreUtil;
 import thaumicenergistics.util.ThELog;
 
-import java.util.Optional;
-
 /**
  * @author Alex811
  */
@@ -106,8 +104,7 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
 
         boolean currentIsBlank = ((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
         if (currentIsBlank) {
-            Optional.of(ThEItems.KNOWLEDGE_CORE.stack(1)).ifPresent(newCore ->
-                    ((InvWrapper) this.getInventory("upgrades")).getInv().setInventorySlotContents(0, newCore));
+            this.getArcaneHost().getArcaneUpgradeInventory().setItemDirect(0, ThEItems.KNOWLEDGE_CORE.stack(1));
         } else if (KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem())) {
             return;
         }

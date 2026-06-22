@@ -62,6 +62,7 @@ import thaumicenergistics.items.ItemWirelessArcaneTerminal;
 import thaumicenergistics.part.ArcaneP2PTunnelPart;
 import thaumicenergistics.part.PartArcaneTerminal;
 import thaumicenergistics.test.FakeMinecraft;
+import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -498,6 +499,9 @@ class ArcaneTerminalSupergiantMigrationTest {
 
     private static final class TestArcaneTerminalHost implements IArcaneTerminalHost, IPart {
 
+        private final ThEUpgradeInventory arcaneUpgradeInventory =
+                new ThEUpgradeInventory("upgrades", 1, 1, new ItemStack(net.minecraft.init.Items.STICK));
+
         @Override
         public IPartItem<?> getPartItem() {
             return null;
@@ -528,7 +532,15 @@ class ArcaneTerminalSupergiantMigrationTest {
 
         @Override
         public IItemHandler getInventoryByName(String name) {
+            if ("upgrades".equals(name)) {
+                return this.arcaneUpgradeInventory.toItemHandler();
+            }
             return null;
+        }
+
+        @Override
+        public ae2.api.upgrades.IUpgradeInventory getArcaneUpgradeInventory() {
+            return this.arcaneUpgradeInventory;
         }
 
         @Override

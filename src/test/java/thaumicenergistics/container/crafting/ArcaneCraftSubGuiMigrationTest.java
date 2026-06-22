@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.test.FakeMinecraft;
+import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -71,6 +72,9 @@ class ArcaneCraftSubGuiMigrationTest {
 
     private static final class TestArcaneTerminalHost implements IArcaneTerminalHost, IPart {
 
+        private final ThEUpgradeInventory arcaneUpgradeInventory =
+                new ThEUpgradeInventory("upgrades", 1, 1, new ItemStack(net.minecraft.init.Items.STICK));
+
         @Override
         public IPartItem<?> getPartItem() {
             return null;
@@ -101,7 +105,15 @@ class ArcaneCraftSubGuiMigrationTest {
 
         @Override
         public IItemHandler getInventoryByName(String name) {
+            if ("upgrades".equals(name)) {
+                return this.arcaneUpgradeInventory.toItemHandler();
+            }
             return null;
+        }
+
+        @Override
+        public ae2.api.upgrades.IUpgradeInventory getArcaneUpgradeInventory() {
+            return this.arcaneUpgradeInventory;
         }
 
         @Override

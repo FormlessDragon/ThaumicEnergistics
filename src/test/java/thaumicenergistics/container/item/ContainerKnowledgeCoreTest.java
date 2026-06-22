@@ -36,6 +36,7 @@ import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.test.FakeMinecraft;
 import thaumicenergistics.util.KnowledgeCoreUtil;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
+import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -358,7 +359,8 @@ class ContainerKnowledgeCoreTest {
     private static final class RecordingArcaneHost implements IArcaneTerminalHost, IPart {
 
         private final ThEInternalInventory craftingInventory = new ThEInternalInventory("crafting", 15, 64);
-        private final ThEInternalInventory upgradeInventory = new ThEInternalInventory("upgrades", 1, 1);
+        private final ThEKnowledgeCoreInventory upgradeInventory =
+                new ThEKnowledgeCoreInventory("upgrades", 1, 1, new ItemStack(net.minecraft.init.Items.STICK));
         private int returnCalls;
         private EntityPlayer returnedPlayer;
         private ISubGui returnedSubGui;
@@ -395,9 +397,14 @@ class ContainerKnowledgeCoreTest {
         public IItemHandler getInventoryByName(String name) {
             return switch (name) {
                 case "crafting" -> new InvWrapper(this.craftingInventory);
-                case "upgrades" -> new InvWrapper(this.upgradeInventory);
+                case "upgrades" -> this.upgradeInventory.toItemHandler();
                 default -> null;
             };
+        }
+
+        @Override
+        public ae2.api.upgrades.IUpgradeInventory getArcaneUpgradeInventory() {
+            return this.upgradeInventory;
         }
 
         @Override

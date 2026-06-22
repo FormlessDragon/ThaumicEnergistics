@@ -21,7 +21,6 @@ import thaumicenergistics.util.KnowledgeCoreUtil;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * @author Alex811
@@ -146,8 +145,9 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
                         throw new IllegalArgumentException("Unsupported Knowledge Core client action: " + actionName);
             }
         }
-        if (KnowledgeCoreUtil.isEmpty(knowledgeCoreStack))
-            Optional.of(ThEItems.BLANK_KNOWLEDGE_CORE.stack(1)).ifPresent(blank -> ((InvWrapper) parentContainer.getInventory("upgrades")).getInv().setInventorySlotContents(0, blank));
+        if (KnowledgeCoreUtil.isEmpty(knowledgeCoreStack)) {
+            parentHost.getArcaneUpgradeInventory().setItemDirect(0, ThEItems.BLANK_KNOWLEDGE_CORE.stack(1));
+        }
         parentHost.returnToMainContainer(player, this);
     }
 

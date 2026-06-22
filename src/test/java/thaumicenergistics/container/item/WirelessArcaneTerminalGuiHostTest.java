@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 class WirelessArcaneTerminalGuiHostTest {
@@ -45,6 +47,26 @@ class WirelessArcaneTerminalGuiHostTest {
         assertAll(
                 () -> assertEquals(1, callbackCalls.get()),
                 () -> assertEquals(0, locator.slotQueries));
+    }
+
+    @Test
+    void arcaneUpgradeInventoryIsSeparateFromInheritedGenericUpgrades() {
+        ItemWirelessArcaneTerminal terminal = new ItemWirelessArcaneTerminal("wireless_arcane_terminal_arcane_upgrades_test");
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
+        SlotQueryRejectingLocator locator = new SlotQueryRejectingLocator(new ItemStack(terminal));
+        WirelessArcaneTerminalGuiHost host = new TestWirelessArcaneTerminalGuiHost(
+                terminal, terminal, player, locator, (callbackPlayer, callbackSubGui) -> {
+            assertSame(player, callbackPlayer);
+            assertNotNull(callbackSubGui);
+        });
+        Object arcaneUpgradeInventory = host.getArcaneUpgradeInventory();
+        Object genericUpgradeInventory = host.getUpgrades();
+
+        assertAll(
+                () -> assertNotNull(arcaneUpgradeInventory),
+                () -> assertNotNull(genericUpgradeInventory),
+                () -> assertSame(arcaneUpgradeInventory, host.getArcaneUpgradeInventory()),
+                () -> assertNotSame(genericUpgradeInventory, arcaneUpgradeInventory));
     }
 
     private static final class SlotQueryRejectingLocator implements ItemGuiHostLocator {

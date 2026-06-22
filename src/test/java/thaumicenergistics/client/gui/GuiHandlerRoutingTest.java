@@ -42,6 +42,7 @@ import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.test.FakeMinecraft;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
+import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
 import java.util.List;
 
@@ -768,7 +769,8 @@ class GuiHandlerRoutingTest {
     private static final class ArcaneTerminalPart implements IPart, IArcaneTerminalHost {
 
         private final ThEInternalInventory craftingInventory = new ThEInternalInventory("crafting", 15, 64);
-        private final ThEInternalInventory upgradeInventory = new ThEInternalInventory("upgrades", 1, 1);
+        private final ThEUpgradeInventory upgradeInventory =
+                new ThEUpgradeInventory("upgrades", 1, 1, new ItemStack(net.minecraft.init.Items.STICK));
 
         @Override
         public ae2.api.parts.IPartItem<?> getPartItem() {
@@ -802,9 +804,14 @@ class GuiHandlerRoutingTest {
         public IItemHandler getInventoryByName(String name) {
             return switch (name) {
                 case "crafting" -> new InvWrapper(this.craftingInventory);
-                case "upgrades" -> new InvWrapper(this.upgradeInventory);
+                case "upgrades" -> this.upgradeInventory.toItemHandler();
                 default -> null;
             };
+        }
+
+        @Override
+        public ae2.api.upgrades.IUpgradeInventory getArcaneUpgradeInventory() {
+            return this.upgradeInventory;
         }
 
         @Override

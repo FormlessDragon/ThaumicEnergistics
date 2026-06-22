@@ -100,6 +100,11 @@ public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<Wirel
     }
 
     @Override
+    public ThEUpgradeInventory getArcaneUpgradeInventory() {
+        return this.upgradeInventory;
+    }
+
+    @Override
     public boolean hasVisSource() {
         return this.getLinkedPosition() != null && this.getLinkStatus().connected();
     }

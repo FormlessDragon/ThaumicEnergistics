@@ -17,7 +17,6 @@ import net.minecraft.init.Bootstrap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.wrapper.InvWrapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
@@ -26,6 +25,7 @@ import thaumicenergistics.core.definitions.ThEParts;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.tile.TileInfusionProvider;
+import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
@@ -82,6 +82,38 @@ class SupergiantPartApiTest {
                 () -> assertSame(terminalItem, terminalIcon.getItem()),
                 () -> assertEquals(1, terminalIcon.getCount()),
                 () -> assertUpgradeInventoryUsesPartItemStack(terminal));
+    }
+
+    @Test
+    void arcaneTerminalHostReturnsArcaneUpgradeInventory() {
+        PartArcaneTerminal terminal = ThEParts.ARCANE_TERMINAL.item().createPart();
+        IArcaneTerminalHost host = terminal;
+        IUpgradeInventory upgrades = host.getArcaneUpgradeInventory();
+        IItemHandler upgradeHandler = upgrades.toItemHandler();
+
+        assertAll(
+                () -> assertEquals(1, upgradeHandler.getSlots()),
+                () -> assertSame(upgrades, host.getArcaneUpgradeInventory()),
+                () -> assertInstanceOf(ThEUpgradeInventory.class, upgrades),
+                () -> assertSame(upgradeHandler, terminal.getInventoryByName("upgrades")),
+                () -> assertFalse(((ThEUpgradeInventory) upgrades).isKnowledgeCoreSlot()));
+    }
+
+    @Test
+    void arcaneInscriberHostReturnsKnowledgeCoreInventory() {
+        PartArcaneInscriber inscriber = ThEParts.ARCANE_INSCRIBER.item().createPart();
+        IArcaneTerminalHost host = inscriber;
+        IUpgradeInventory upgrades = host.getArcaneUpgradeInventory();
+        IItemHandler upgradeHandler = upgrades.toItemHandler();
+
+        assertAll(
+                () -> assertEquals(1, upgradeHandler.getSlots()),
+                () -> assertSame(upgrades, host.getArcaneUpgradeInventory()),
+                () -> assertInstanceOf(ThEKnowledgeCoreInventory.class, upgrades),
+                () -> assertSame(upgradeHandler, inscriber.getInventoryByName("upgrades")),
+                () -> assertTrue(((ThEKnowledgeCoreInventory) upgrades).isKnowledgeCoreSlot()),
+                () -> assertTrue(upgradeHandler.isItemValid(0, ThEItems.KNOWLEDGE_CORE.stack(1))),
+                () -> assertFalse(upgradeHandler.isItemValid(0, ThEItems.UPGRADE_ARCANE.stack(1))));
     }
 
     @Test
@@ -158,15 +190,15 @@ class SupergiantPartApiTest {
     }
 
     private static void assertUpgradeInventoryUsesPartItemStack(PartArcaneTerminal terminal) {
+        IUpgradeInventory arcaneUpgrades = terminal.getArcaneUpgradeInventory();
         IItemHandler upgrades = terminal.getInventoryByName("upgrades");
         ItemStack arcaneUpgrade = ThEItems.UPGRADE_ARCANE.stack(1);
 
         assertAll(
                 () -> assertEquals(1, upgrades.getSlots()),
-                () -> assertInstanceOf(InvWrapper.class, upgrades),
-                () -> assertInstanceOf(ThEUpgradeInventory.class, ((InvWrapper) upgrades).getInv()),
-                () -> assertInstanceOf(ThEInternalInventory.class, ((InvWrapper) upgrades).getInv()),
-                () -> assertInstanceOf(IUpgradeInventory.class, ((InvWrapper) upgrades).getInv()),
+                () -> assertSame(arcaneUpgrades.toItemHandler(), upgrades),
+                () -> assertInstanceOf(ThEUpgradeInventory.class, arcaneUpgrades),
+                () -> assertInstanceOf(ThEInternalInventory.class, arcaneUpgrades),
                 () -> assertTrue(upgrades.isItemValid(0, arcaneUpgrade)),
                 () -> assertTrue(upgrades.insertItem(0, arcaneUpgrade.copy(), true).isEmpty()),
                 () -> assertEquals(0, upgrades.getStackInSlot(0).getCount()));

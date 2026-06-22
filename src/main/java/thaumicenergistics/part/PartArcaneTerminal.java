@@ -2,6 +2,7 @@ package thaumicenergistics.part;
 
 import ae2.api.parts.IPartItem;
 import ae2.api.parts.IPartModel;
+import ae2.api.upgrades.IUpgradeInventory;
 import ae2.container.ISubGui;
 import ae2.core.gui.locator.GuiHostLocators;
 import ae2.items.parts.PartModels;
@@ -55,7 +56,7 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
             new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_has_channel"));
 
     protected final ThEInternalInventory craftingInventory;
-    protected ThEInternalInventory upgradeInventory;
+    protected IUpgradeInventory upgradeInventory;
     private final ModGUIs gui;
 
     public PartArcaneTerminal(IPartItem<?> item) {
@@ -92,9 +93,14 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
             return new InvWrapper(this.craftingInventory);
         }
         if (name.equalsIgnoreCase("upgrades")) {
-            return new InvWrapper(this.upgradeInventory);
+            return this.getArcaneUpgradeInventory().toItemHandler();
         }
         return null;
+    }
+
+    @Override
+    public IUpgradeInventory getArcaneUpgradeInventory() {
+        return this.upgradeInventory;
     }
 
     @Override
@@ -116,7 +122,7 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
             this.craftingInventory.deserializeNBT(tag.getTagList("crafting", 10));
         }
         if (tag.hasKey("upgrades")) {
-            this.upgradeInventory.deserializeNBT(tag.getTagList("upgrades", 10));
+            this.upgradeInventory.readFromNBT(tag, "upgrades");
         }
     }
 
@@ -124,7 +130,7 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
     public void writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
         tag.setTag("crafting", this.craftingInventory.serializeNBT());
-        tag.setTag("upgrades", this.upgradeInventory.serializeNBT());
+        this.upgradeInventory.writeToNBT(tag, "upgrades");
     }
 
     @Override
@@ -135,7 +141,7 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
 
     protected void addArcaneDrops(List<ItemStack> drops) {
         drops.addAll(ItemHandlerUtil.getInventoryAsList(this.getInventoryByName("crafting")));
-        drops.addAll(ItemHandlerUtil.getInventoryAsList(this.getInventoryByName("upgrades")));
+        drops.addAll(ItemHandlerUtil.getInventoryAsList(this.getArcaneUpgradeInventory().toItemHandler()));
     }
 
     @Override
