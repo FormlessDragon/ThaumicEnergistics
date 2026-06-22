@@ -8,6 +8,8 @@ import ae2.container.GuiIds;
 import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
 import ae2.container.me.common.ContainerMEStorage;
+import ae2.container.slot.AppEngSlot;
+import ae2.container.slot.SlotBackgroundIcon;
 import ae2.core.network.serverbound.GuiActionPacket;
 import ae2.api.upgrades.IUpgradeInventory;
 import com.google.common.collect.Lists;
@@ -44,7 +46,6 @@ import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotArmor;
 import thaumicenergistics.container.slot.SlotArcaneMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
-import thaumicenergistics.container.slot.SlotUpgrade;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.integration.jei.ArcaneRecipeTransferPayload;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
@@ -168,7 +169,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             case "crafting":
                 return this.host.getInventoryByName(name);
             case "upgrades":
-                return this.getArcaneUpgradeInventory().toItemHandler();
+                return this.getTypedArcaneUpgradeInventory().toItemHandler();
             case "result":
                 return new InvWrapper(this.craftingResult);
             case "player":
@@ -433,12 +434,18 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         return vis;
     }
 
-    IUpgradeInventory getArcaneUpgradeInventory() {
-        return this.host.getArcaneUpgradeInventory();
+    protected final IUpgradeInventory getTypedArcaneUpgradeInventory() {
+        IUpgradeInventory inventory = this.host.getArcaneUpgradeInventory();
+        if (inventory == null) {
+            ThELog.error("Arcane terminal host returned null arcane upgrade inventory: {}",
+                    this.host.getClass().getName());
+            throw new NullPointerException("arcane upgrade inventory");
+        }
+        return inventory;
     }
 
     boolean hasArcaneVisRangeUpgrade() {
-        return !this.getArcaneUpgradeInventory().getStackInSlot(0).isEmpty();
+        return !this.getTypedArcaneUpgradeInventory().getStackInSlot(0).isEmpty();
     }
 
     protected float getRequiredVis(IRecipe recipe, EntityPlayer player) {
@@ -828,8 +835,9 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
     @SuppressWarnings("SameParameterValue")
     protected void addUpgradeSlots(int offsetX, int offsetY) {
-        this.addSlot(new SlotUpgrade(this.getArcaneUpgradeInventory().toItemHandler(), 0, offsetX, offsetY),
-                SlotSemantics.UPGRADE);
+        AppEngSlot upgradeSlot = new AppEngSlot(this.getTypedArcaneUpgradeInventory(), 0, offsetX, offsetY);
+        upgradeSlot.setBackgroundIcon(SlotBackgroundIcon.UPGRADE);
+        this.addSlot(upgradeSlot, SlotSemantics.UPGRADE);
     }
 
     private static final class NetworkReservation {

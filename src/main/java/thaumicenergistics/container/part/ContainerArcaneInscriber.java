@@ -92,7 +92,7 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     private void openKnowledgeCoreAdd() {
-        ItemStack knowledgeCore = this.getArcaneUpgradeItems().getStackInSlot(0);
+        ItemStack knowledgeCore = this.getTypedArcaneUpgradeInventory().getStackInSlot(0);
         ItemStack result = this.getInventory("result").getStackInSlot(0);
         if (knowledgeCore.isEmpty() || result.isEmpty() || !this.recipeIsArcane) {
             return;
@@ -113,14 +113,14 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     private void openKnowledgeCoreDel() {
-        ItemStack knowledgeCore = this.getArcaneUpgradeItems().getStackInSlot(0);
+        ItemStack knowledgeCore = this.getTypedArcaneUpgradeInventory().getStackInSlot(0);
         if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
             ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_DEL, this.getLocator(), false);
         }
     }
 
     private void openKnowledgeCoreView() {
-        ItemStack knowledgeCore = this.getArcaneUpgradeItems().getStackInSlot(0);
+        ItemStack knowledgeCore = this.getTypedArcaneUpgradeInventory().getStackInSlot(0);
         if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
             ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_VIEW, this.getLocator(), false);
         }
@@ -328,11 +328,8 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
 
     @Override
     protected void addUpgradeSlots(int offsetX, int offsetY) {
-        this.addSlot(new SlotKnowledgeCore(this.getArcaneUpgradeItems(), 0, offsetX, offsetY), SlotSemantics.UPGRADE);
-    }
-
-    private IItemHandler getArcaneUpgradeItems() {
-        return this.getArcaneHost().getArcaneUpgradeInventory().toItemHandler();
+        this.addSlot(new SlotKnowledgeCore(this.getTypedArcaneUpgradeInventory(), 0, offsetX, offsetY),
+                SlotSemantics.UPGRADE);
     }
 
     @Override

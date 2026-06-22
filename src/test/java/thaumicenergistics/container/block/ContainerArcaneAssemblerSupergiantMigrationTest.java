@@ -17,7 +17,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
-import thaumicenergistics.container.slot.SlotUpgrade;
 import thaumicenergistics.container.slot.ThESlot;
 import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.test.FakeMinecraft;
@@ -101,13 +100,14 @@ class ContainerArcaneAssemblerSupergiantMigrationTest {
         assertAll(
                 () -> assertSame(ThESlotSemantics.KNOWLEDGE_CORE, aeContainer.getSlotSemantic(container.getSlot(0))),
                 () -> assertInstanceOf(SlotKnowledgeCore.class, container.getSlot(0)),
+                () -> assertInstanceOf(AppEngSlot.class, container.getSlot(0)),
                 () -> assertEquals(List.of(container.getSlot(0)), aeContainer.getSlots(ThESlotSemantics.KNOWLEDGE_CORE)),
                 () -> assertEquals(5, upgradeSlots.size()),
-                () -> assertFalse(upgradeSlots.stream().anyMatch(SlotUpgrade.class::isInstance)),
-                () -> assertFalse(upgradeSlots.stream().anyMatch(ThESlot.class::isInstance)),
                 () -> assertTrue(upgradeSlots.stream().allMatch(RestrictedInputSlot.class::isInstance)),
+                () -> assertFalse(upgradeSlots.stream().anyMatch(ThESlot.class::isInstance)),
                 () -> assertTrue(upgradeSlots.stream()
                         .allMatch(slot -> aeContainer.getSlotSemantic(slot) == SlotSemantics.UPGRADE)),
+                () -> assertFalse(upgradeSlots.contains(container.getSlot(0))),
                 () -> assertEquals(27, mainSlots.size()),
                 () -> assertTrue(mainSlots.stream()
                         .allMatch(slot -> aeContainer.getSlotSemantic(slot) == SlotSemantics.PLAYER_INVENTORY)),

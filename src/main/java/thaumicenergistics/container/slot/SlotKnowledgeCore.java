@@ -1,6 +1,6 @@
 package thaumicenergistics.container.slot;
 
-import net.minecraftforge.items.IItemHandler;
+import ae2.api.inventories.InternalInventory;
 import thaumicenergistics.core.ThEFeatures;
 
 import javax.annotation.Nullable;
@@ -8,9 +8,9 @@ import javax.annotation.Nullable;
 /**
  * @author Alex811
  */
-public class SlotKnowledgeCore extends ThESlot {
-    public SlotKnowledgeCore(IItemHandler handler, int index, int xPosition, int yPosition) {
-        super(handler, index, xPosition, yPosition);
+public class SlotKnowledgeCore extends ThEAppEngSlot {
+    public SlotKnowledgeCore(InternalInventory inventory, int index, int xPosition, int yPosition) {
+        super(inventory, index, xPosition, yPosition);
     }
 
     @Nullable

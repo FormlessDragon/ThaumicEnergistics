@@ -20,8 +20,11 @@ import ae2.container.implementations.ContainerCraftAmount;
 import ae2.container.implementations.ContainerCraftConfirm;
 import ae2.container.implementations.ContainerCraftingStatus;
 import ae2.container.me.common.ContainerMEStorage;
+import ae2.container.slot.AppEngSlot;
+import ae2.container.slot.SlotBackgroundIcon;
 import ae2.core.gui.locator.ItemGuiHostLocator;
 import ae2.core.definitions.ItemDefinition;
+import ae2.api.upgrades.Upgrades;
 import ae2.items.parts.PartItem;
 import ae2.items.tools.powered.WirelessTerminalItem;
 import ae2.parts.p2p.P2PTunnelPart;
@@ -54,7 +57,6 @@ import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.client.gui.part.GuiArcaneTerm;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
-import thaumicenergistics.container.slot.SlotUpgrade;
 import thaumicenergistics.core.definitions.ThEApiItems;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.core.definitions.ThEParts;
@@ -65,6 +67,7 @@ import thaumicenergistics.items.ItemWirelessArcaneTerminal;
 import thaumicenergistics.part.ArcaneP2PTunnelPart;
 import thaumicenergistics.part.PartArcaneTerminal;
 import thaumicenergistics.test.FakeMinecraft;
+import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
 import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
 import java.io.BufferedReader;
@@ -95,6 +98,8 @@ class ArcaneTerminalSupergiantMigrationTest {
         if (!Bootstrap.isRegistered()) {
             Bootstrap.register();
         }
+
+        Upgrades.add(ThEItems.UPGRADE_ARCANE.item(), ThEParts.ARCANE_TERMINAL.item(), 1);
     }
 
     @Test
@@ -185,25 +190,82 @@ class ArcaneTerminalSupergiantMigrationTest {
     void arcaneTerminalUpgradeConsumerReadsTypedArcaneUpgradeInventory() {
         TestArcaneTerminalHost host = new TestArcaneTerminalHost();
         FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.clientWorld());
-        host.arcaneUpgradeInventory.setItemDirect(0, new ItemStack(Items.DIAMOND));
+        host.arcaneUpgradeInventory.setItemDirect(0, ThEItems.UPGRADE_ARCANE.stack(1));
 
         ContainerArcaneTerm terminal = new ContainerArcaneTerm(player.inventory, host);
         IItemHandler upgradeHandler = terminal.getInventory("upgrades");
-        SlotUpgrade upgradeSlot = assertInstanceOf(SlotUpgrade.class,
+        AppEngSlot upgradeSlot = assertInstanceOf(AppEngSlot.class,
                 terminal.inventorySlots.stream()
-                        .filter(slot -> slot instanceof SlotUpgrade)
+                        .filter(slot -> slot instanceof AppEngSlot
+                                && terminal.getSlotSemantic(slot) == SlotSemantics.UPGRADE)
                         .findFirst()
                         .orElseThrow(() -> new AssertionError("Arcane terminal upgrade slot is missing")));
-        host.arcaneUpgradeInventory.setItemDirect(0, new ItemStack(Items.EMERALD));
+        host.arcaneUpgradeInventory.setItemDirect(0, ThEItems.UPGRADE_ARCANE.stack(1));
         ItemStack typedUpgradeStack = host.arcaneUpgradeInventory.getStackInSlot(0);
 
         assertAll(
-                () -> assertSame(host.arcaneUpgradeInventory, terminal.getArcaneUpgradeInventory()),
+                () -> assertSame(host.arcaneUpgradeInventory, terminal.getArcaneHost().getArcaneUpgradeInventory()),
+                () -> assertSame(host.arcaneUpgradeInventory, upgradeSlot.getInventory()),
                 () -> assertTrue(ItemStack.areItemStacksEqual(typedUpgradeStack, upgradeHandler.getStackInSlot(0))),
                 () -> assertTrue(ItemStack.areItemStacksEqual(typedUpgradeStack, upgradeSlot.getStack())),
+                () -> assertEquals(SlotBackgroundIcon.UPGRADE, upgradeSlot.getBackgroundIcon()),
                 () -> assertTrue(terminal.hasArcaneVisRangeUpgrade()),
                 () -> assertEquals(0, host.namedUpgradeLookupCount,
                         "Arcane terminal must not consume host named upgrades inventory"));
+    }
+
+    @Test
+    void arcaneTerminalUpgradeSlotValidatesThroughTypedArcaneUpgradeInventory() {
+        TestArcaneTerminalHost host = new TestArcaneTerminalHost();
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.clientWorld());
+        ContainerArcaneTerm terminal = new ContainerArcaneTerm(player.inventory, host);
+        AppEngSlot upgradeSlot = assertInstanceOf(AppEngSlot.class,
+                terminal.inventorySlots.stream()
+                        .filter(slot -> slot instanceof AppEngSlot
+                                && terminal.getSlotSemantic(slot) == SlotSemantics.UPGRADE)
+                        .findFirst()
+                        .orElseThrow(() -> new AssertionError("Arcane terminal upgrade slot is missing")));
+
+        ItemStack validArcaneUpgrade = ThEItems.UPGRADE_ARCANE.stack(1);
+        ItemStack invalidItem = new ItemStack(Items.DIAMOND);
+
+        assertAll(
+                () -> assertTrue(host.arcaneUpgradeInventory.isItemValid(0, validArcaneUpgrade)),
+                () -> assertTrue(upgradeSlot.isItemValid(validArcaneUpgrade)),
+                () -> assertTrue(host.arcaneUpgradeInventory.insertItem(0, validArcaneUpgrade, true).isEmpty()),
+                () -> assertFalse(host.arcaneUpgradeInventory.isItemValid(0, invalidItem)),
+                () -> assertFalse(upgradeSlot.isItemValid(invalidItem)),
+                () -> assertSame(invalidItem, host.arcaneUpgradeInventory.insertItem(0, invalidItem, true)),
+                () -> assertEquals(0, host.namedUpgradeLookupCount,
+                        "Upgrade slot validation must not consume host named upgrades inventory"));
+    }
+
+    @Test
+    void supergiantAppEngSlotPreservesKnowledgeCoreInventoryValidation() {
+        ThEKnowledgeCoreInventory inventory = new ThEKnowledgeCoreInventory(
+                "knowledgeCore",
+                1,
+                1,
+                ThEParts.ARCANE_INSCRIBER.stack(1));
+        AppEngSlot slot = new AppEngSlot(inventory, 0, 0, 0);
+        ItemStack blankCore = ThEItems.BLANK_KNOWLEDGE_CORE.stack(1);
+        ItemStack knowledgeCore = ThEItems.KNOWLEDGE_CORE.stack(1);
+        ItemStack invalidArcaneUpgrade = ThEItems.UPGRADE_ARCANE.stack(1);
+        ItemStack invalidOrdinaryItem = new ItemStack(Items.DIAMOND);
+
+        assertAll(
+                () -> assertTrue(inventory.isItemValid(0, blankCore)),
+                () -> assertTrue(slot.isItemValid(blankCore)),
+                () -> assertTrue(inventory.insertItem(0, blankCore, true).isEmpty()),
+                () -> assertTrue(inventory.isItemValid(0, knowledgeCore)),
+                () -> assertTrue(slot.isItemValid(knowledgeCore)),
+                () -> assertTrue(inventory.insertItem(0, knowledgeCore, true).isEmpty()),
+                () -> assertFalse(inventory.isItemValid(0, invalidArcaneUpgrade)),
+                () -> assertFalse(slot.isItemValid(invalidArcaneUpgrade)),
+                () -> assertSame(invalidArcaneUpgrade, inventory.insertItem(0, invalidArcaneUpgrade, true)),
+                () -> assertFalse(inventory.isItemValid(0, invalidOrdinaryItem)),
+                () -> assertFalse(slot.isItemValid(invalidOrdinaryItem)),
+                () -> assertSame(invalidOrdinaryItem, inventory.insertItem(0, invalidOrdinaryItem, true)));
     }
 
     @Test
@@ -545,7 +607,7 @@ class ArcaneTerminalSupergiantMigrationTest {
 
         private final ItemStackHandler craftingInventory = new ItemStackHandler(15);
         private final ThEUpgradeInventory arcaneUpgradeInventory =
-                new ThEUpgradeInventory("upgrades", 1, 1, new ItemStack(Items.STICK));
+                new ThEUpgradeInventory("upgrades", 1, 1, ThEParts.ARCANE_TERMINAL.stack(1));
         private int namedUpgradeLookupCount;
 
         @Override

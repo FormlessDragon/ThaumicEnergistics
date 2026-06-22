@@ -14,6 +14,7 @@ import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
 import ae2.core.definitions.AEItems;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.MathHelper;
@@ -166,6 +167,22 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThEInvTile, 
 
     public ThEUpgradeInventory getUpgradeInventory() {
         return this.upgradeInv;
+    }
+
+    public ThEInternalInventory getCoreInventory() {
+        IItemHandler inventory = this.getInventoryByName("cores");
+        if (!(inventory instanceof InvWrapper wrapper)) {
+            ThELog.error("Arcane Assembler knowledge-core inventory is not an InvWrapper: {}",
+                    inventory == null ? "null" : inventory.getClass().getName());
+            throw new IllegalStateException("Arcane Assembler knowledge-core inventory is not initialized");
+        }
+        IInventory wrappedInventory = wrapper.getInv();
+        if (!(wrappedInventory instanceof ThEInternalInventory internalInventory)) {
+            ThELog.error("Arcane Assembler knowledge-core inventory is not a ThEInternalInventory: {}",
+                    wrappedInventory == null ? "null" : wrappedInventory.getClass().getName());
+            throw new IllegalStateException("Arcane Assembler knowledge-core inventory is not typed");
+        }
+        return internalInventory;
     }
 
     @Override

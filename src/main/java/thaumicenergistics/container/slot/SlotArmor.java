@@ -8,11 +8,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 
 /**
  * @author BrockWS
  */
-public class SlotArmor extends ThESlot {
+public class SlotArmor extends ThEAppEngSlot {
 
     private final EntityPlayer player;
 
@@ -22,7 +23,7 @@ public class SlotArmor extends ThESlot {
 
     public SlotArmor(EntityPlayer player, IItemHandler handler, int index, int xPosition, int yPosition, boolean affectedBySlotCount) {
         super(handler, index, xPosition, yPosition, affectedBySlotCount);
-        this.player = player;
+        this.player = Objects.requireNonNull(player, "player");
     }
 
     @Override

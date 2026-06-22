@@ -10,12 +10,14 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.wrapper.InvWrapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.test.FakeMinecraft;
 import thaumicenergistics.tile.TileArcaneAssembler;
+import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -69,7 +71,7 @@ class ContainerArcaneAssemblerSoundTest {
         RecordingSoundWorld world = new RecordingSoundWorld();
         FakeMinecraft.FakePlayer player = FakeMinecraft.player(world);
         TestArcaneAssemblerTile tile = new TestArcaneAssemblerTile();
-        tile.coreInventory.setStackInSlot(0, new ItemStack(Items.DIAMOND));
+        tile.coreInventory.setInventorySlotContents(0, new ItemStack(Items.DIAMOND));
         BlockPos pos = new BlockPos(-7, 70, 22);
         world.setTileEntity(pos, tile);
         TestArcaneAssemblerContainer container = new TestArcaneAssemblerContainer(player, tile);
@@ -142,13 +144,13 @@ class ContainerArcaneAssemblerSoundTest {
 
     private static final class TestArcaneAssemblerTile extends TileArcaneAssembler {
 
-        private final ItemStackHandler coreInventory = new ItemStackHandler(1);
+        private final ThEInternalInventory coreInventory = new ThEInternalInventory("cores", 1, 64);
         private final ItemStackHandler upgradeInventory = new ItemStackHandler(5);
 
         @Override
         public IItemHandler getInventoryByName(String name) {
             return switch (name) {
-                case "cores" -> this.coreInventory;
+                case "cores" -> new InvWrapper(this.coreInventory);
                 case "upgrades" -> this.upgradeInventory;
                 default -> throw new IllegalArgumentException("Unknown test inventory: " + name);
             };

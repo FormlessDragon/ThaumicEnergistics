@@ -36,7 +36,7 @@ public class ContainerArcaneAssembler extends AEBaseContainer {
     public ContainerArcaneAssembler(EntityPlayer player, TileArcaneAssembler TE) {
         super(Objects.requireNonNull(player, "player").inventory, null);
         this.TE = Objects.requireNonNull(TE, "TE");
-        this.addSlot(new SlotKnowledgeCore(this.getInventory("cores"), 0, 81, 66), ThESlotSemantics.KNOWLEDGE_CORE);
+        this.addSlot(new SlotKnowledgeCore(this.TE.getCoreInventory(), 0, 81, 66), ThESlotSemantics.KNOWLEDGE_CORE);
         var typedUpgradeInventory = this.TE.getUpgradeInventory();
         for (int i = 0; i < typedUpgradeInventory.size(); i++)
             this.addSlot(new RestrictedInputSlot(RestrictedInputSlot.PlacableItemType.UPGRADES,
