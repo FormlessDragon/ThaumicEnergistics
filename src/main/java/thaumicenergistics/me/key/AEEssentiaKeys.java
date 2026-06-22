@@ -5,7 +5,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
 import thaumicenergistics.ThaumicEnergistics;
-import thaumicenergistics.lang.GuiText;
+import thaumicenergistics.core.definitions.GuiText;
 
 import java.util.Objects;
 

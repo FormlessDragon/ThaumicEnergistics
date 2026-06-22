@@ -10,7 +10,6 @@ import thaumicenergistics.api.storage.EssentiaStorageCell;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.items.CreativeEssentiaCell;
 import thaumicenergistics.items.ItemKnowledgeCore;
-import thaumicenergistics.items.ItemMaterial;
 import thaumicenergistics.items.ItemWirelessArcaneTerminal;
 
 public final class ThEItems {
@@ -37,15 +36,15 @@ public final class ThEItems {
     public static final ItemDefinition<ItemWirelessArcaneTerminal> WIRELESS_ARCANE_TERMINAL = new ItemDefinition<>(ThEItemIds.WIRELESS_ARCANE_TERMINAL,
             new ItemWirelessArcaneTerminal("wireless_arcane_terminal"), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<ItemKnowledgeCore> BLANK_KNOWLEDGE_CORE = new ItemDefinition<>(ThEItemIds.BLANK_KNOWLEDGE_CORE,
-            new ItemKnowledgeCore("blank_knowledge_core", true), ModGlobals.CREATIVE_TAB);
+            new ItemKnowledgeCore(true), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<ItemKnowledgeCore> KNOWLEDGE_CORE = new ItemDefinition<>(ThEItemIds.KNOWLEDGE_CORE,
-            new ItemKnowledgeCore("knowledge_core", false), ModGlobals.CREATIVE_TAB);
-    public static final ItemDefinition<ItemMaterial> UPGRADE_ARCANE = new ItemDefinition<>(ThEItemIds.UPGRADE_ARCANE,
-            new ItemMaterial("upgrade_arcane"), ModGlobals.CREATIVE_TAB);
-    public static final ItemDefinition<ItemMaterial> DIFFUSION_CORE = new ItemDefinition<>(ThEItemIds.DIFFUSION_CORE,
-            new ItemMaterial("diffusion_core"), ModGlobals.CREATIVE_TAB);
-    public static final ItemDefinition<ItemMaterial> COALESCENCE_CORE = new ItemDefinition<>(ThEItemIds.COALESCENCE_CORE,
-            new ItemMaterial("coalescence_core"), ModGlobals.CREATIVE_TAB);
+            new ItemKnowledgeCore(false), ModGlobals.CREATIVE_TAB);
+    public static final ItemDefinition<Item> UPGRADE_ARCANE = new ItemDefinition<>(ThEItemIds.UPGRADE_ARCANE,
+            new Item(), ModGlobals.CREATIVE_TAB);
+    public static final ItemDefinition<Item> DIFFUSION_CORE = new ItemDefinition<>(ThEItemIds.DIFFUSION_CORE,
+            new Item(), ModGlobals.CREATIVE_TAB);
+    public static final ItemDefinition<Item> COALESCENCE_CORE = new ItemDefinition<>(ThEItemIds.COALESCENCE_CORE,
+            new Item(), ModGlobals.CREATIVE_TAB);
 
     private static final ItemDefinition<?>[] ITEMS = {
             CREATIVE_ESSENTIA_CELL,
@@ -65,6 +64,8 @@ public final class ThEItems {
             DIFFUSION_CORE,
             COALESCENCE_CORE
     };
+
+    private ThEItems() {}
 
     public static void register(RegistryEvent.Register<Item> event) {
         for(ItemDefinition<?> definition : ITEMS) {

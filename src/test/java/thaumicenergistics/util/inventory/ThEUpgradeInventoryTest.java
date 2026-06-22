@@ -11,7 +11,7 @@ import net.minecraft.nbt.NBTTagString;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.core.definitions.ThEItems;
-import thaumicenergistics.init.ThEBlocks;
+import thaumicenergistics.core.definitions.ThEBlocks;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;

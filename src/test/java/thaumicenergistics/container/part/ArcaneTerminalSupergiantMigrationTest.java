@@ -47,8 +47,6 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.items.IItemHandler;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import thaumicenergistics.ThaumicEnergisticsApi;
-import thaumicenergistics.api.IThEItems;
 import thaumicenergistics.api.ids.ThEItemIds;
 import thaumicenergistics.api.ids.ThEPartIds;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
@@ -56,7 +54,6 @@ import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.client.gui.part.GuiArcaneTerm;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
-import thaumicenergistics.core.definitions.ThEApiItems;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.core.definitions.ThEParts;
 import thaumicenergistics.init.ModGUIs;
@@ -90,7 +87,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-@SuppressWarnings("deprecation")
 class ArcaneTerminalSupergiantMigrationTest {
 
     @BeforeAll
@@ -304,9 +300,7 @@ class ArcaneTerminalSupergiantMigrationTest {
                 () -> assertEquals(ThEItemIds.WIRELESS_ARCANE_TERMINAL, ThEItems.WIRELESS_ARCANE_TERMINAL.id()),
                 () -> assertEquals("wireless_arcane_terminal", ThEItems.WIRELESS_ARCANE_TERMINAL.id().getPath()),
                 () -> assertSame(ThEItems.WIRELESS_ARCANE_TERMINAL.item(), wirelessArcaneTerminal),
-                () -> assertSame(wirelessArcaneTerminal, wirelessTerminal),
-                () -> assertInstanceOf(IThEItems.class, ThaumicEnergisticsApi.instance().items()),
-                () -> assertInstanceOf(ThEApiItems.class, ThaumicEnergisticsApi.instance().items()));
+                () -> assertSame(wirelessArcaneTerminal, wirelessTerminal));
     }
 
     @Test

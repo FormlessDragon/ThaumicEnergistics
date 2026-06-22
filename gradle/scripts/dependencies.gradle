@@ -16,6 +16,10 @@ repositories {
         url = 'https://api.modrinth.com/maven'
     }
     mavenCentral()
+    maven {
+        name = 'jitpack'
+        url = 'https://jitpack.io'
+    }
     mavenLocal() // Must be last for caching to work
 }
 
@@ -31,12 +35,8 @@ dependencies {
     modImplementation 'curse.maven:hwyla-253449:2568753'
     modImplementation 'curse.maven:thaumic-jei-285492:5646810'
 
-    compileOnly("io.github.formlessdragon:AppliedEnergistics2-Supergiant:${ae2_version}:dev") {
-        transitive = false
-    }
-    modRuntimeOnly("io.github.formlessdragon:AppliedEnergistics2-Supergiant:${ae2_version}:dev") {
-        transitive = false
-    }
+    compileOnly("com.github.FormlessDragon:Applied-Energistics-2-Supergiant:v${ae2_version}:dev")
+    modRuntimeOnly("com.github.FormlessDragon:Applied-Energistics-2-Supergiant:v${ae2_version}:dev")
 
     modImplementation "curse.maven:baubles-227083:2518667"
     modImplementation "curse.maven:thaumcraft-223628:2629023"

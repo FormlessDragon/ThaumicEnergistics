@@ -11,7 +11,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentTranslation;
 import thaumicenergistics.container.part.ArcaneTerminalVisState;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
-import thaumicenergistics.core.ThEFeatures;
+import thaumicenergistics.core.definitions.GuiText;
 
 public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
     public static final String STYLE_PATH = "/screens/terminals/thaumicenergistics_arcane_terminal.json";
@@ -53,7 +53,7 @@ public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
         ArcaneTerminalVisState visState = this.container.getVisState();
         if (visState.getDiscount() > 0f) {
             this.fontRenderer.drawString(
-                    ThEFeatures.instance().lang().guiVisDiscount().getLocalizedKey((int) (visState.getDiscount() * 100)),
+                    GuiText.vis_discount.getLocal((int) (visState.getDiscount() * 100)),
                     90,
                     this.ySize - 94,
                     4210752);
@@ -63,13 +63,10 @@ public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
     protected void drawVisInfo() {
         ArcaneTerminalVisState visState = this.container.getVisState();
         this.fontRenderer.drawString(
-                ThEFeatures.instance()
-                        .lang()
-                        .guiVisRequiredOutOf()
-                        .getLocalizedKey(
-                                getVisIfSet(visState.getVisRequired()),
-                                (int) getVisIfSet(visState.getVisAvailable())
-                        ),
+                GuiText.vis_required_out_of.getLocal(
+                    getVisIfSet(visState.getVisRequired()),
+                    (int) getVisIfSet(visState.getVisAvailable())
+                ),
                 35,
                 this.ySize - 168,
                 visState.getVisRequired() > visState.getVisAvailable() ? 0xFF0000 : 4210752);

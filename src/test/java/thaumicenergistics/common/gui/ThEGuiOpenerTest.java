@@ -4,7 +4,6 @@ import ae2.api.inventories.InternalInventory;
 import ae2.api.storage.ILinkStatus;
 import ae2.api.storage.MEStorage;
 import ae2.api.util.IConfigManager;
-import ae2.container.AEBaseContainer;
 import ae2.core.gui.locator.GuiHostLocator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Bootstrap;

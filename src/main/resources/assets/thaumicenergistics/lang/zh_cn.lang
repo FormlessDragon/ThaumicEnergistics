@@ -47,10 +47,6 @@ tooltip.thaumicenergistics.arcane_assembler.no_vis=错误：缺少Vis
 
 # GUI
 gui.the.Essentias=源质
-gui.thaumicenergistics.essentia_import_bus=ME源质输入总线
-gui.thaumicenergistics.essentia_export_bus=ME源质输出总线
-gui.thaumicenergistics.essentia_storage_bus=ME源质存储总线
-gui.thaumicenergistics.essentia_terminal=源质终端
 gui.thaumicenergistics.arcane_terminal=奥术合成终端
 gui.thaumicenergistics.arcane_inscriber=奥术记录仪
 

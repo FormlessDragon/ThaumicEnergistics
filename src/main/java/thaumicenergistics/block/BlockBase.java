@@ -1,70 +1,41 @@
 package thaumicenergistics.block;
 
-import ae2.tile.AEBaseTile;
-import net.minecraft.block.Block;
+import ae2.block.AEBaseTileBlock;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import thaumicenergistics.thaumicenergistics.Reference;
-import thaumicenergistics.init.ModGlobals;
-import thaumicenergistics.tile.TileBase;
-import thaumicenergistics.util.ForgeUtil;
+import thaumicenergistics.tile.ThENetworkTile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+public class BlockBase<T extends ThENetworkTile> extends AEBaseTileBlock<T> {
 
-/**
- * @author BrockWS
- * @author Alex811
- */
-public abstract class BlockBase extends Block {
-    private static final Random rand = new Random();
+    public static final PropertyBool ACTIVE = PropertyBool.create("active");
 
-    public BlockBase(String id) {
-        this(id, Material.IRON);
-    }
-
-    public BlockBase(String id, Material material) {
-        super(material);
-        this.setTranslationKey(Reference.MOD_ID + "." + id);
-        this.setCreativeTab(ModGlobals.CREATIVE_TAB);
-        this.setHardness(1f);
-    }
-
-    private static double randCoordOffset(int coord) {
-        return (rand.nextInt() % 32 - 16) / 82.0 + 0.5 + coord;
-    }
-
-    public static void spawnDrops(World world, BlockPos pos, List<ItemStack> drops) {
-        if (ForgeUtil.isClient()) return;
-        drops.parallelStream()
-                .filter(is -> !is.isEmpty())
-                .forEach(is -> world.spawnEntity(new EntityItem(world, randCoordOffset(pos.getX()), randCoordOffset(pos.getY()), randCoordOffset(pos.getZ()), is)));
+    public BlockBase(Class<T> tileClass) {
+        super(Material.IRON);
+        this.setTileEntity(tileClass);
+        this.setDefaultState(this.blockState.getBaseState()
+                .withProperty(ACTIVE, Boolean.FALSE));
     }
 
     @Override
-    public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-        TileEntity te = worldIn.getTileEntity(pos);
-        ArrayList<ItemStack> drops = new ArrayList<>();
-        if (te instanceof TileBase) {
-            ((TileBase) te).getDrops(worldIn, pos, drops);
-        }
-        if (te instanceof AEBaseTile) {
-            ((AEBaseTile) te).addAdditionalDrops(drops);
-        }
-        if (!drops.isEmpty()) {
-            spawnDrops(worldIn, pos, drops);
-        }
-        super.breakBlock(worldIn, pos, state);
+    protected BlockStateContainer createBlockState() {
+        return createBlockState(ACTIVE);
     }
 
     @Override
     public int getMetaFromState(IBlockState state) {
-        return 0;
+        return state.getValue(ACTIVE) ? 1 : 0;
     }
+
+    @Override
+    public IBlockState getStateFromMeta(int meta) {
+        return this.getDefaultState().withProperty(ACTIVE, meta != 0);
+    }
+
+    @Override
+    protected IBlockState updateBlockStateFromTileEntity(IBlockState currentState, T tileEntity) {
+        return currentState.withProperty(ACTIVE, tileEntity.isActive());
+    }
+
 }

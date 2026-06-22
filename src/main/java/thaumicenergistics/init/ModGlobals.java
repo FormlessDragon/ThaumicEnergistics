@@ -4,7 +4,6 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.thaumicenergistics.Reference;
-import thaumicenergistics.api.ThEApi;
 
 /**
  * Contains useful constant values

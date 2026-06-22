@@ -6,9 +6,8 @@ import ae2.client.gui.Icon;
 import ae2.client.gui.style.GuiStyleManager;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Slot;
-import net.minecraft.util.text.TextComponentString;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
-import thaumicenergistics.core.ThEFeatures;
+import thaumicenergistics.core.definitions.ThEItems;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -23,7 +22,7 @@ public class GuiKnowledgeCore extends AEBaseGui<ContainerKnowledgeCore> {
     public GuiKnowledgeCore(ContainerKnowledgeCore container) {
         super(container, container.getPlayerInventory(), GuiStyleManager.loadStyleDoc(STYLE_PATH));
         this.setTextContent(AEBaseGui.TEXT_ID_DIALOG_TITLE,
-                new TextComponentString(ThEFeatures.instance().lang().itemKnowledgeCore().getLocalizedKey()));
+                ThEItems.KNOWLEDGE_CORE.stack(1).getTextComponent());
     }
 
     @Override

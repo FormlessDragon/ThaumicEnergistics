@@ -27,6 +27,7 @@ import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.init.internal.InitUpgrades;
 import thaumicenergistics.integration.ThEIntegrationLoader;
 import thaumicenergistics.network.ThENetwork;
+import thaumicenergistics.util.ThELog;
 
 /**
  * <strong>Thaumic Energistics</strong>
@@ -66,8 +67,8 @@ public class ThaumicEnergistics {
      */
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        LOGGER.info("{} preInit", Reference.MOD_NAME);
-        LOGGER.debug("Initialized feature access through {}", bootstrapFeatures().getClass().getName());
+        ThELog.info("{} preInit", Reference.MOD_NAME);
+        ThELog.debug("Initialized feature access through {}", bootstrapFeatures().getClass().getName());
         MinecraftForge.EVENT_BUS.register(this);
         ThENetwork.register();
 
@@ -88,9 +89,6 @@ public class ThaumicEnergistics {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         NetworkRegistry.INSTANCE.registerGuiHandler(ThaumicEnergistics.INSTANCE, new GuiHandler());
-        /*if (ForgeUtil.isClient()) {
-            ThEItemColors.registerItemColors();
-        }*/
 
         InitUpgrades.init();
 

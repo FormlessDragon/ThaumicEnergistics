@@ -16,20 +16,6 @@ import net.minecraft.util.math.BlockPos;
  */
 public class AEUtil {
 
-    private static KeyBinding focusKeyBinding;
-
-    public static String getDisplayName(Object o) {
-        if (o instanceof ItemStack)
-            return ((ItemStack) o).getDisplayName();
-        if (o instanceof EntityItem)
-            return AEUtil.getDisplayName(((EntityItem) o).getItem());
-        if (o instanceof Item)
-            return new ItemStack((Item) o).getDisplayName();
-        if (o instanceof Block)
-            return ((Block) o).getLocalizedName();
-        return "NAMENOTFOUND";
-    }
-
     public static String getModID(Object o) {
         ResourceLocation rl = null;
         if (o instanceof ItemStack)
@@ -44,21 +30,10 @@ public class AEUtil {
         return rl != null ? rl.getNamespace() : "MODIDNOTFOUND";
     }
 
-    public static KeyBinding getFocusKeyBinding() {
-        if (AEUtil.focusKeyBinding == null) {
-            for (KeyBinding key : Minecraft.getMinecraft().gameSettings.keyBindings)
-                if (key.getKeyCategory().equalsIgnoreCase("key.appliedenergistics2.category") &&
-                        key.getKeyDescription().equalsIgnoreCase("key.toggle_focus.desc")) {
-                    AEUtil.focusKeyBinding = key;
-                    break;
-                }
-        }
-        return AEUtil.focusKeyBinding;
-    }
-
     public static boolean isWrench(ItemStack stack, EntityPlayer player, BlockPos pos) {
         if (stack.isEmpty())
             return false;
         return InteractionUtil.canWrenchRotate(player, stack, pos);
     }
+
 }

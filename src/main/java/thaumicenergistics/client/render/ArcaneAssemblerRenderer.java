@@ -15,7 +15,6 @@ import thaumicenergistics.tile.TileArcaneAssembler;
 /**
  * @author Alex811
  */
-@Deprecated
 @SideOnly(Side.CLIENT)
 public class ArcaneAssemblerRenderer extends TileEntitySpecialRenderer<TileArcaneAssembler> {
     private final double particleMultiplier = ThEFeatures.instance().config().arcaneAssemblerParticleMultiplier();

@@ -1,12 +1,9 @@
 package thaumicenergistics.config;
 
-import ae2.api.config.TerminalStyle;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.api.IThEConfig;
-import thaumicenergistics.api.config.PrefixSetting;
-import thaumicenergistics.api.config.SearchBoxMode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,24 +33,6 @@ public class ThEConfig implements IThEConfig {
 
     public static class Client {
 
-        @Name("Terminal Style")
-        public TerminalStyle terminalStyle = TerminalStyle.TALL;
-
-        @Name("Search Box Mode")
-        public SearchBoxMode searchBoxMode = SearchBoxMode.AUTOSEARCH;
-
-        @Name("Mod Search Prefix")
-        public String modSearchPrefix = "@";
-
-        @Name("Mod Search Setting")
-        public PrefixSetting modSearchSetting = PrefixSetting.REQUIRE_PREFIX;
-
-        @Name("Aspect Search Prefix")
-        public String aspectSearchPrefix = "#";
-
-        @Name("Aspect Search Setting")
-        public PrefixSetting aspectSearchSetting = PrefixSetting.REQUIRE_PREFIX;
-
         @Name("Arcane Assembler Particle Multiplier")
         public double arcaneAssemblerParticleMultiplier = 1.0;
 
@@ -67,16 +46,6 @@ public class ThEConfig implements IThEConfig {
         public int tickTimeEssentiaImportBusMin = 5;
         @Name("Essentia Import Bus Max")
         public int tickTimeEssentiaImportBusMax = 40;
-
-        @Name("Essentia Export Bus Min")
-        public int tickTimeEssentiaExportBusMin = 5;
-        @Name("Essentia Export Bus Max")
-        public int tickTimeEssentiaExportBusMax = 60;
-
-        @Name("Essentia Storage Bus Min")
-        public int tickTimeEssentiaStorageBusMin = 5;
-        @Name("Essentia Storage Bus Max")
-        public int tickTimeEssentiaStorageBusMax = 60;
 
         @Name("Arcane Assembler Min")
         public int tickTimeArcaneAssemblerMin = 2;
@@ -104,36 +73,6 @@ public class ThEConfig implements IThEConfig {
     }
 
     @Override
-    public int tickTimeEssentiaImportBusMin() {
-        return tickRates.tickTimeEssentiaImportBusMin;
-    }
-
-    @Override
-    public int tickTimeEssentiaImportBusMax() {
-        return tickRates.tickTimeEssentiaImportBusMax;
-    }
-
-    @Override
-    public int tickTimeEssentiaExportBusMin() {
-        return tickRates.tickTimeEssentiaExportBusMin;
-    }
-
-    @Override
-    public int tickTimeEssentiaExportBusMax() {
-        return tickRates.tickTimeEssentiaExportBusMax;
-    }
-
-    @Override
-    public int tickTimeEssentiaStorageBusMin() {
-        return tickRates.tickTimeEssentiaStorageBusMin;
-    }
-
-    @Override
-    public int tickTimeEssentiaStorageBusMax() {
-        return tickRates.tickTimeEssentiaStorageBusMax;
-    }
-
-    @Override
     public int tickTimeArcaneAssemblerMin() {
         return tickRates.tickTimeArcaneAssemblerMin;
     }
@@ -141,36 +80,6 @@ public class ThEConfig implements IThEConfig {
     @Override
     public int tickTimeArcaneAssemblerMax() {
         return tickRates.tickTimeArcaneAssemblerMax;
-    }
-
-    @Override
-    public TerminalStyle terminalStyle() {
-        return client.terminalStyle;
-    }
-
-    @Override
-    public SearchBoxMode searchBoxMode() {
-        return client.searchBoxMode;
-    }
-
-    @Override
-    public String modSearchPrefix() {
-        return client.modSearchPrefix;
-    }
-
-    @Override
-    public PrefixSetting modSearchSetting() {
-        return client.modSearchSetting;
-    }
-
-    @Override
-    public String aspectSearchPrefix() {
-        return client.aspectSearchPrefix;
-    }
-
-    @Override
-    public PrefixSetting aspectSearchSetting() {
-        return client.aspectSearchSetting;
     }
 
     @Override

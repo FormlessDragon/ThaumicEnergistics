@@ -9,7 +9,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
-import thaumicenergistics.core.ThEFeatures;
+import thaumicenergistics.core.definitions.GuiText;
 import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.util.KnowledgeCoreUtil;
 
@@ -57,7 +57,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     protected void drawVisInfo() {
         float visRequired = this.inscriberContainer.getVisState().getVisRequired();
         this.fontRenderer.drawString(
-                ThEFeatures.instance().lang().guiVisRequired().getLocalizedKey(this.getVisIfSet(visRequired)),
+                GuiText.vis_required.getLocal(this.getVisIfSet(visRequired)),
                 60,
                 this.ySize - 168,
                 4210752);
@@ -72,9 +72,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
         boolean currentIsBlank = this.isKnowledgeCoreBlank(knowledgeCore);
 
         if (knowledgeCore.isEmpty()) {
-            ITextComponent insertKnowledgeCore = this.tooltip(ThEFeatures.instance().lang()
-                    .guiInsertKnowledgeCore()
-                    .getLocalizedKey());
+            ITextComponent insertKnowledgeCore = GuiText.insert_knowledge_core.text();
             this.setKnowledgeCoreButtonState(this.coreAddButton, false, insertKnowledgeCore);
             this.setKnowledgeCoreButtonState(this.coreDelButton, false, insertKnowledgeCore);
             this.setKnowledgeCoreButtonState(this.coreViewButton, false, insertKnowledgeCore);
@@ -87,9 +85,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
                 this.getAddKnowledgeCoreTooltip(hasRecipe, hasArcaneRecipe, recipeExists));
 
         if (currentIsBlank) {
-            ITextComponent blankKnowledgeCore = this.tooltip(ThEFeatures.instance().lang()
-                    .guiKnowledgeCoreBlank()
-                    .getLocalizedKey());
+            ITextComponent blankKnowledgeCore = GuiText.knowledge_core_is_blank.text();
             this.setKnowledgeCoreButtonState(this.coreDelButton, false, blankKnowledgeCore);
             this.setKnowledgeCoreButtonState(this.coreViewButton, false, blankKnowledgeCore);
             return;
@@ -101,15 +97,15 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
 
     private ITextComponent getAddKnowledgeCoreTooltip(boolean hasRecipe, boolean hasArcaneRecipe, boolean recipeExists) {
         if (!hasRecipe) {
-            return this.tooltip(ThEFeatures.instance().lang().guiNoRecipe().getLocalizedKey());
+            return GuiText.no_recipe.text();
         }
 
         if (!hasArcaneRecipe) {
-            return this.tooltip(ThEFeatures.instance().lang().guiRecipeNotArcane().getLocalizedKey());
+            return GuiText.recipe_not_arcane.text();
         }
 
         if (recipeExists) {
-            return this.tooltip(ThEFeatures.instance().lang().guiRecipeAlreadyStored().getLocalizedKey());
+            return GuiText.recipe_already_stored.text();
         }
 
         return null;

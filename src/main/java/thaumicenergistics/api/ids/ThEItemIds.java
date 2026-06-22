@@ -33,4 +33,5 @@ public final class ThEItemIds {
     public static final ResourceLocation DIFFUSION_CORE = id("diffusion_core");
     public static final ResourceLocation COALESCENCE_CORE = id("coalescence_core");
 
+    private ThEItemIds() {}
 }

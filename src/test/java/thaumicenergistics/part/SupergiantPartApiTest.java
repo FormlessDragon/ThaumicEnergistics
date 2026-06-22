@@ -24,7 +24,7 @@ import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.core.definitions.ThEParts;
 import thaumicenergistics.init.ModGlobals;
-import thaumicenergistics.init.ThEBlocks;
+import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.tile.TileInfusionProvider;
 import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
 import thaumicenergistics.util.inventory.ThEInternalInventory;

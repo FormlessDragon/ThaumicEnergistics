@@ -1,5 +1,6 @@
 package thaumicenergistics.tile;
 
+import ae2.api.implementations.IPowerChannelState;
 import ae2.api.networking.IGrid;
 import ae2.api.networking.IGridNodeListener;
 import ae2.api.networking.security.IActionSource;
@@ -8,16 +9,11 @@ import ae2.api.util.DimensionalBlockPos;
 import ae2.tile.grid.AENetworkedTile;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.NBTTagCompound;
-import thaumicenergistics.api.IThELangKey;
-import thaumicenergistics.core.ThEFeatures;
-
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Base tile for Thaumic Energistics machines that connect directly through Supergiant's managed grid node lifecycle.
  */
-public abstract class ThENetworkTile extends AENetworkedTile implements ThENetworkPowerState {
+public abstract class ThENetworkTile extends AENetworkedTile implements IPowerChannelState {
     private static final String TAG_POWERED = "powered";
     private static final String TAG_ONLINE = "online";
     private static final String TAG_ACTIVE = "active";
@@ -86,10 +82,6 @@ public abstract class ThENetworkTile extends AENetworkedTile implements ThENetwo
         return new DimensionalBlockPos(this);
     }
 
-    public void securityBreak() {
-        this.getWorld().destroyBlock(this.getPos(), true);
-    }
-
     @Override
     public boolean isPowered() {
         if (this.world != null && !this.world.isRemote) {
@@ -106,18 +98,6 @@ public abstract class ThENetworkTile extends AENetworkedTile implements ThENetwo
         return this.active;
     }
 
-    public void withPowerStateText(Consumer<String> consumer, Function<IThELangKey, String> localizationMapper) {
-        if (this.isPowered()) {
-            if (this.isVisuallyOnline()) {
-                consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().deviceOnline()));
-            } else {
-                consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().deviceMissingChannel()));
-            }
-        } else {
-            consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().deviceOffline()));
-        }
-    }
-
     protected MEStorage getNetworkStorage() {
         IGrid grid = this.getMainNode().getGrid();
         if (grid == null || grid.getStorageService() == null) {
@@ -128,13 +108,6 @@ public abstract class ThENetworkTile extends AENetworkedTile implements ThENetwo
 
     private boolean getCurrentPoweredState() {
         return this.getMainNode().isPowered();
-    }
-
-    private boolean isVisuallyOnline() {
-        if (this.world != null && !this.world.isRemote) {
-            return this.getCurrentOnlineState();
-        }
-        return this.online;
     }
 
     private boolean getCurrentOnlineState() {

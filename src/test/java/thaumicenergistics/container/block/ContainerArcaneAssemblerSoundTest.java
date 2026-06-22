@@ -12,7 +12,7 @@ import net.minecraftforge.items.IItemHandler;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.core.ThEFeatures;
-import thaumicenergistics.init.ThEBlocks;
+import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.test.FakeMinecraft;
 import thaumicenergistics.tile.TileArcaneAssembler;

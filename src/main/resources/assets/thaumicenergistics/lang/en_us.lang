@@ -47,11 +47,6 @@ tooltip.thaumicenergistics.arcane_assembler.no_vis=Error: out of Vis
 
 # GUI
 gui.the.Essentias=Essentias
-
-gui.thaumicenergistics.essentia_import_bus=ME Essentia Import Bus
-gui.thaumicenergistics.essentia_export_bus=ME Essentia Export Bus
-gui.thaumicenergistics.essentia_storage_bus=ME Essentia Storage Bus
-gui.thaumicenergistics.essentia_terminal=Essentia Terminal
 gui.thaumicenergistics.arcane_terminal=Arcane Terminal
 gui.thaumicenergistics.arcane_inscriber=Arcane Inscriber
 

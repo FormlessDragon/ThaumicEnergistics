@@ -4,7 +4,7 @@ import ae2.api.upgrades.Upgrades;
 import ae2.core.definitions.AEItems;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.core.definitions.ThEParts;
-import thaumicenergistics.init.ThEBlocks;
+import thaumicenergistics.core.definitions.ThEBlocks;
 
 public final class InitUpgrades {
 

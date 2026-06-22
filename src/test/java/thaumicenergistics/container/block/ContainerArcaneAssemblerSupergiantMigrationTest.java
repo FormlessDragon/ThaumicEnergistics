@@ -16,7 +16,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
-import thaumicenergistics.init.ThEBlocks;
+import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.test.FakeMinecraft;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.inventory.ThEInternalInventory;

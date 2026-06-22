@@ -1,5 +1,6 @@
 package thaumicenergistics.items;
 
+import net.minecraft.item.Item;
 import thaumicenergistics.util.KnowledgeCoreUtil;
 
 /**
@@ -8,12 +9,11 @@ import thaumicenergistics.util.KnowledgeCoreUtil;
  *
  * @author Alex811
  */
-public class ItemKnowledgeCore extends ItemMaterial {
+public class ItemKnowledgeCore extends Item {
 
     boolean isBlank;
 
-    public ItemKnowledgeCore(String id, boolean isBlank) {
-        super(id, 1);
+    public ItemKnowledgeCore(boolean isBlank) {
         this.isBlank = isBlank;
     }
 

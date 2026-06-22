@@ -20,10 +20,9 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.items.IItemHandler;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aura.AuraHelper;
-import thaumicenergistics.api.IThELangKey;
 import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.core.definitions.ThEItems;
-import thaumicenergistics.init.ThEBlocks;
+import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.util.*;
 import thaumicenergistics.util.inventory.IThEInvTile;
@@ -42,8 +41,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * @author Alex811
@@ -59,7 +56,7 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThEInvTile, 
     protected AtomicBoolean missingAspect = new AtomicBoolean(false);
     protected boolean hasJob = false;
     protected boolean isCrafting = false;
-    protected boolean noPushFlag = false; // true if an AE tick passed where AE didn't try to push a pattern and we ticked having a job but without something to craft, used to check for aborted jobs
+    protected boolean noPushFlag = false; // true if an AE tick passed where AE didn't try to push a pattern, and we ticked having a job but without something to craft, used to check for aborted jobs
 
     public TileArcaneAssembler() {
         super();
@@ -235,7 +232,7 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThEInvTile, 
                 requiredAspects.merge(crystalAspect, amount, Long::sum);
                 long required = requiredAspects.get(crystalAspect);
                 AEEssentiaKey key = AEEssentiaKey.of(crystalAspect);
-                long canExtractAmount = key == null || required <= 0
+                long canExtractAmount = required <= 0
                         ? 0
                         : inventory.extract(key, required, Actionable.SIMULATE, source);
                 this.aspectExists.put(aspectName, canExtractAmount >= required);
@@ -399,24 +396,6 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThEInvTile, 
 
     public boolean isCrafting() {
         return this.isCrafting;
-    }
-
-    public void withInfoText(Consumer<String> consumer, Function<IThELangKey, String> localizationMapper) {
-        if (this.isActive()) {
-            if (this.hasJob()) {
-                if (this.isCrafting()) {
-                    consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerBusy()));
-                    consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerProgress()) + " " + this.getProgress() + "%");
-                } else {
-                    consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerPrep()));
-                    if (this.isMissingAspect())
-                        consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerNoAspect()));
-                    if (!this.getHasEnoughVis())
-                        consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerNoVis()));
-                }
-            } else
-                consumer.accept(localizationMapper.apply(ThEFeatures.instance().lang().arcaneAssemblerIdle()));
-        }
     }
 
     protected int getStep() {

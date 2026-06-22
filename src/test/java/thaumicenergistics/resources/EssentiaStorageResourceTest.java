@@ -6,7 +6,6 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.core.definitions.ThEItems;
-import thaumicenergistics.lang.ThELang;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -77,20 +76,6 @@ class EssentiaStorageResourceTest {
             readRecipeResource("thaumicenergistics:cells/essentia_cell_" + size);
             readRecipeResource("thaumicenergistics:component2cell/essentia_cell_" + size);
         }
-    }
-
-    @Test
-    void langUsesSupergiantStorageCellTranslationKeys() {
-        ThELang lang = new ThELang();
-
-        assertEquals("item.thaumicenergistics.essentia_storage_cell_1k.name",
-                lang.itemEssentia1kCell().getUnlocalizedKey());
-        assertEquals("item.thaumicenergistics.essentia_storage_cell_4k.name",
-                lang.itemEssentia4kCell().getUnlocalizedKey());
-        assertEquals("item.thaumicenergistics.essentia_storage_cell_16k.name",
-                lang.itemEssentia16kCell().getUnlocalizedKey());
-        assertEquals("item.thaumicenergistics.essentia_storage_cell_64k.name",
-                lang.itemEssentia64kCell().getUnlocalizedKey());
     }
 
     @Test

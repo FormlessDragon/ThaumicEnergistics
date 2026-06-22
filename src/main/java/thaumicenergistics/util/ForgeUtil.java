@@ -3,7 +3,6 @@ package thaumicenergistics.util;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.registry.GameRegistry;
@@ -11,9 +10,6 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.items.wrapper.PlayerMainInvWrapper;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Contains both Minecraft and Forge utility functions
@@ -56,24 +52,4 @@ public class ForgeUtil {
         return a == b || (a.isEmpty() && b.isEmpty()) || (a.isEmpty() != b.isEmpty()) || a.equals(b);
     }
 
-    /**
-     * Merges list b into a
-     *
-     * @param a Merged into
-     * @param b List to be merged
-     * @return a with the contents of b
-     */
-    public static NBTTagList mergeTagLists(NBTTagList a, NBTTagList b) {
-        b.forEach(a::appendTag);
-        return a;
-    }
-
-    public static List<NBTBase> toArrayList(NBTTagList tags) {
-        return ForgeUtil.toList(tags, new ArrayList<>());
-    }
-
-    public static List<NBTBase> toList(NBTTagList tags, List<NBTBase> list) {
-        tags.forEach(list::add);
-        return list;
-    }
 }

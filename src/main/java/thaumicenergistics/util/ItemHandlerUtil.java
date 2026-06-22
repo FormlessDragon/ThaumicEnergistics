@@ -1,35 +1,21 @@
 package thaumicenergistics.util;
 
-import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * @author BrockWS
  * @author Alex811
  */
 public class ItemHandlerUtil {
-    public static void setStackInSlot(IItemHandler handler, int slot, ItemStack stack) {
-        if (handler instanceof IItemHandlerModifiable) {
-            ((IItemHandlerModifiable) handler).setStackInSlot(slot, stack);
-        }
-    }
 
     @Nonnull
     public static ItemStack insert(IItemHandler handler, ItemStack stack) {
         return ItemHandlerUtil.insert(handler, stack, false);
-    }
-
-    @Nonnull
-    public static ItemStack insertSim(IItemHandler handler, ItemStack stack) {
-        return ItemHandlerUtil.insert(handler, stack, true);
     }
 
     @Nonnull
@@ -43,28 +29,8 @@ public class ItemHandlerUtil {
     }
 
     @Nonnull
-    public static ItemStack extractSim(IItemHandler handler, ItemStack stack) {
-        return ItemHandlerUtil.extract(handler, stack, true);
-    }
-
-    @Nonnull
     public static ItemStack extract(IItemHandler handler, ItemStack stack, boolean simulate) {
         return ItemHandlerUtil.extract(handler, stack, simulate, 0, handler.getSlots());
-    }
-
-    @Nonnull
-    public static ItemStack quickMoveSlot(IItemHandler handler, Slot slot) {
-        return quickMoveSlot(handler, slot, false);
-    }
-
-    @Nonnull
-    public static ItemStack quickMoveSlotSim(IItemHandler handler, Slot slot) {
-        return quickMoveSlot(handler, slot, true);
-    }
-
-    @Nonnull
-    public static ItemStack quickMoveSlot(IItemHandler handler, Slot slot, boolean simulate) {
-        return quickMoveSlot(handler, slot, simulate, false);
     }
 
     @Nonnull
@@ -120,37 +86,4 @@ public class ItemHandlerUtil {
         return extracted == null || extracted.isEmpty() ? ItemStack.EMPTY : extracted;
     }
 
-    /**
-     * Perform a quick-move.
-     *
-     * @param handler        destination inventory's handler
-     * @param slot           source slot
-     * @param simulate       true to simulate instead of actually moving
-     * @param skipArmorSlots true to disallow quick-moving into an armor slot, meant for player inventories (destination)
-     * @return the leftover stack, will be an empty stack if everything was moved
-     */
-    @Nonnull
-    public static ItemStack quickMoveSlot(IItemHandler handler, Slot slot, boolean simulate, boolean skipArmorSlots) {
-        ItemStack left = ItemHandlerUtil.insert(handler, slot.getStack(), simulate, 0, skipArmorSlots ? 36 : handler.getSlots());
-        if (!simulate)
-            slot.putStack(left);
-        return left;
-    }
-
-    /**
-     * Get all the stacks in the inventory, <b>except empty ones</b>!
-     *
-     * @param handler inventory's handler
-     * @return inventory's non-empty stacks
-     */
-    @Nonnull
-    public static List<ItemStack> getInventoryAsList(IItemHandler handler) {
-        if (handler == null)
-            return new ArrayList<>();
-        return IntStream.range(0, handler.getSlots()).parallel()
-                .boxed()
-                .map(handler::getStackInSlot)
-                .filter(is -> !is.isEmpty())
-                .collect(Collectors.toList());
-    }
 }

@@ -1,9 +1,6 @@
 package thaumicenergistics.core;
 
-import thaumicenergistics.api.IThEBlocks;
 import thaumicenergistics.api.IThEConfig;
-import thaumicenergistics.api.IThEItems;
-import thaumicenergistics.api.IThELang;
 import thaumicenergistics.api.IThESounds;
 import thaumicenergistics.api.IThETextures;
 
@@ -15,28 +12,7 @@ import thaumicenergistics.api.IThETextures;
  * objects carry registration data, localization keys, configuration values, and client resource locations needed by
  * the mod itself.
  */
-@SuppressWarnings("deprecation")
 public interface ThEFeatureAccess {
-
-    /**
-     * Supplies item definitions.
-     * <p>
-     * The item group is exposed here because legacy API item definitions still participate in startup ordering and
-     * external adapters must keep returning the same object graph.
-     *
-     * @return item definition access
-     */
-    IThEItems items();
-
-    /**
-     * Supplies block and tile definitions.
-     * <p>
-     * The block group is exposed here because block recipes and registries need the local definitions without going
-     * through the deprecated public facade.
-     *
-     * @return block and tile definition access
-     */
-    IThEBlocks blocks();
 
     /**
      * Supplies configuration values.
@@ -47,16 +23,6 @@ public interface ThEFeatureAccess {
      * @return configuration access
      */
     IThEConfig config();
-
-    /**
-     * Supplies language keys.
-     * <p>
-     * The language group is exposed here because tooltips, GUI labels, and tile status text need shared translation
-     * keys without depending on deprecated API bootstrap.
-     *
-     * @return language key access
-     */
-    IThELang lang();
 
     /**
      * Supplies texture locations.

@@ -37,10 +37,6 @@ tooltip.thaumicenergistics.device_missing_channel=У устройства отс
 
 # GUI
 gui.the.Essentias=Эссенция
-gui.thaumicenergistics.essentia_import_bus=МЭ Шина импорта эссенции
-gui.thaumicenergistics.essentia_export_bus=МЭ Шина экспорта эссенции
-gui.thaumicenergistics.essentia_storage_bus=МЭ Шина хранения эссенции
-gui.thaumicenergistics.essentia_terminal=Терминал эссенции
 gui.thaumicenergistics.arcane_terminal=Мистический терминал
 
 gui.thaumicenergistics.vis_required=Вис стоимость: %s

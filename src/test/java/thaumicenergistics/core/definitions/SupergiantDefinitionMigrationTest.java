@@ -11,7 +11,6 @@ import thaumicenergistics.ThaumicEnergistics;
 import thaumicenergistics.api.ids.ThEBlockIds;
 import thaumicenergistics.block.BlockArcaneAssembler;
 import thaumicenergistics.block.BlockInfusionProvider;
-import thaumicenergistics.init.ThEBlocks;
 
 import java.util.Arrays;
 

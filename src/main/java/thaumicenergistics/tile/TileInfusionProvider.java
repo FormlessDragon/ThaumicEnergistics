@@ -15,7 +15,7 @@ import net.minecraftforge.fml.common.network.ByteBufUtils;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectSource;
-import thaumicenergistics.init.ThEBlocks;
+import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.me.key.AEEssentiaKey;
 import thaumicenergistics.util.ForgeUtil;
 

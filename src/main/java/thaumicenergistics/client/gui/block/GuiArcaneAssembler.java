@@ -6,11 +6,11 @@ import ae2.client.gui.style.GuiStyleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 import org.lwjgl.opengl.GL11;
 import thaumcraft.codechicken.lib.math.MathHelper;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
-import thaumicenergistics.core.ThEFeatures;
+import thaumicenergistics.core.definitions.GuiText;
 import thaumicenergistics.thaumicenergistics.Reference;
 
 import java.awt.Color;
@@ -32,7 +32,7 @@ public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
         this.coreInventory = container.getCoreInventory();
         this.enAlpha = this.coreInventory.getStackInSlot(0).isEmpty() ? 0.0F : 1.0F;
         this.setTextContent(AEBaseGui.TEXT_ID_DIALOG_TITLE,
-                new TextComponentString(ThEFeatures.instance().lang().tileArcaneAssembler().getLocalizedKey()));
+                new TextComponentTranslation("tile.thaumicenergistics.arcane_assembler.name"));
     }
 
     @Override
@@ -40,9 +40,9 @@ public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
         super.drawFG(offsetX, offsetY, mouseX, mouseY);
         if (!this.coreInventory.getStackInSlot(0).isEmpty()) {
             if (this.container.getGuiState().getAspectExists().containsValue(false))
-                this.fontRenderer.drawString(ThEFeatures.instance().lang().guiOutOfAspect().getLocalizedKey(), 100, this.getYSize() - 92, Color.RED.getRGB());
+                this.fontRenderer.drawString(GuiText.out_of_aspect.getLocal(), 100, this.getYSize() - 92, Color.RED.getRGB());
             if (!this.container.getGuiState().hasEnoughVis())
-                this.fontRenderer.drawString(ThEFeatures.instance().lang().guiOutOfVis().getLocalizedKey(), 115, 3, Color.RED.getRGB());
+                this.fontRenderer.drawString(GuiText.out_of_vis.getLocal(), 115, 3, Color.RED.getRGB());
         }
     }
 
