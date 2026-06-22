@@ -9,15 +9,9 @@ import thaumicenergistics.me.cell.CreativeEssentiaCellHandler;
  */
 public class ThEAppliedEnergistics implements IThEIntegration {
 
-    private static final CreativeEssentiaCellHandler CREATIVE_ESSENTIA_CELL_HANDLER = new CreativeEssentiaCellHandler();
-    private static boolean cellHandlerRegistered;
-
     @Override
     public void init() {
-        if (!cellHandlerRegistered) {
-            StorageCells.addCellHandler(CREATIVE_ESSENTIA_CELL_HANDLER);
-            cellHandlerRegistered = true;
-        }
+        StorageCells.addCellHandler(CreativeEssentiaCellHandler.INSTANCE);
     }
 
     @Override

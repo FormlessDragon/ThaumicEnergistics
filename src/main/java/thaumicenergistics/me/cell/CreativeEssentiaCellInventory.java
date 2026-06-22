@@ -12,7 +12,6 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
 import thaumicenergistics.me.key.AEEssentiaKey;
-import thaumcraft.api.aspects.Aspect;
 import thaumicenergistics.me.key.AEEssentiaKeys;
 
 import java.util.Collections;
@@ -33,28 +32,25 @@ public class CreativeEssentiaCellInventory extends CreativeCellInventory {
 
     @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
+        if (what == null || amount <= 0) {
+            return 0;
+        }
         return this.configured.contains(what) ? amount : 0;
     }
 
     @Override
     public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
+        if (what == null || amount <= 0) {
+            return 0;
+        }
         return this.configured.contains(what) ? amount : 0;
     }
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        if(this.configured.isEmpty()) {
-            for(Aspect aspect : Aspect.aspects.values()) {
-                AEEssentiaKey key = AEEssentiaKey.of(aspect);
-                if (key != null) {
-                    out.add(key, Long.MAX_VALUE);
-                }
-            }
-        }else {
-            for(AEKey key : this.configured) {
-                if(key instanceof AEEssentiaKey) {
-                    out.add(key, Long.MAX_VALUE);
-                }
+        for (AEKey key : this.configured) {
+            if (key instanceof AEEssentiaKey) {
+                out.add(key, Long.MAX_VALUE);
             }
         }
     }
@@ -66,7 +62,7 @@ public class CreativeEssentiaCellInventory extends CreativeCellInventory {
 
     @Override
     public boolean canFitInsideCell() {
-        return false;
+        return this.configured.isEmpty();
     }
 
     @Override

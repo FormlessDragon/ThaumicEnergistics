@@ -9,14 +9,11 @@ import ae2.core.localization.Tooltips;
 import ae2.items.AEBaseItem;
 import ae2.items.contents.CellConfig;
 import ae2.items.storage.StorageCellTooltipComponent;
-import ae2.me.cells.CreativeCellInventory;
 import ae2.util.ConfigInventory;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
-import thaumicenergistics.client.render.IThEModel;
 import thaumicenergistics.me.cell.CreativeEssentiaCellHandler;
 import thaumicenergistics.me.cell.CreativeEssentiaCellInventory;
 import thaumicenergistics.me.key.AEEssentiaKeys;
@@ -52,6 +49,12 @@ public class CreativeEssentiaCell extends AEBaseItem implements ICellWorkbenchIt
     @Override
     public Optional<StorageCellTooltipComponent> getStackTooltipData(ItemStack stack) {
         return CreativeEssentiaCellHandler.INSTANCE.getTooltipData(stack);
+    }
+
+    @Override
+    protected void addCheckedInformation(final ItemStack stack, final World world, final List<String> lines,
+                                         final ITooltipFlag advancedTooltips) {
+        addToTooltip(stack, lines);
     }
 
     @Override
