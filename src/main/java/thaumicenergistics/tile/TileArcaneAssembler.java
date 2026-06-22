@@ -14,12 +14,10 @@ import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
 import ae2.core.definitions.AEItems;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aura.AuraHelper;
 import thaumicenergistics.api.IThELangKey;
@@ -159,30 +157,28 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThEInvTile, 
     @Override
     public IItemHandler getInventoryByName(String name) {
         return switch (name) {
-            case "cores" -> new InvWrapper(this.coreInv);
-            case "upgrades" -> new InvWrapper(this.upgradeInv);
+            case "cores" -> this.getCoreInventoryItemHandlerBridge();
+            case "upgrades" -> this.getUpgradeInventoryItemHandlerBridge();
             default -> null;
         };
     }
 
+    @Override
     public ThEUpgradeInventory getUpgradeInventory() {
         return this.upgradeInv;
     }
 
+    @Override
     public ThEInternalInventory getCoreInventory() {
-        IItemHandler inventory = this.getInventoryByName("cores");
-        if (!(inventory instanceof InvWrapper wrapper)) {
-            ThELog.error("Arcane Assembler knowledge-core inventory is not an InvWrapper: {}",
-                    inventory == null ? "null" : inventory.getClass().getName());
-            throw new IllegalStateException("Arcane Assembler knowledge-core inventory is not initialized");
-        }
-        IInventory wrappedInventory = wrapper.getInv();
-        if (!(wrappedInventory instanceof ThEInternalInventory internalInventory)) {
-            ThELog.error("Arcane Assembler knowledge-core inventory is not a ThEInternalInventory: {}",
-                    wrappedInventory == null ? "null" : wrappedInventory.getClass().getName());
-            throw new IllegalStateException("Arcane Assembler knowledge-core inventory is not typed");
-        }
-        return internalInventory;
+        return this.coreInv;
+    }
+
+    private IItemHandler getCoreInventoryItemHandlerBridge() {
+        return this.getCoreInventory().toItemHandler();
+    }
+
+    private IItemHandler getUpgradeInventoryItemHandlerBridge() {
+        return this.getUpgradeInventory().toItemHandler();
     }
 
     @Override

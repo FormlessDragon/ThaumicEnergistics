@@ -25,7 +25,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
@@ -249,7 +248,7 @@ class ArcaneTerminalGuiSyncTest {
     private static final class TestArcaneTerminalHost implements IArcaneTerminalHost, IPart, IEnergySource {
 
         private final ModGUIs gui;
-        private final ItemStackHandler crafting = new ItemStackHandler(15);
+        private final ThEInternalInventory crafting = new ThEInternalInventory("crafting", 15, 64);
         private final ThEUpgradeInventory upgrades =
                 new ThEUpgradeInventory("upgrades", 1, 1, new ItemStack(Items.STICK));
         private final ThEInternalInventory aeUpgrades = new ThEInternalInventory("Test upgrades", 0, 64);
@@ -303,10 +302,15 @@ class ArcaneTerminalGuiSyncTest {
         @Override
         public IItemHandler getInventoryByName(String name) {
             return switch (name.toLowerCase(java.util.Locale.ROOT)) {
-                case "crafting" -> this.crafting;
+                case "crafting" -> this.getArcaneCraftingInventory().toItemHandler();
                 case "upgrades" -> this.upgrades.toItemHandler();
                 default -> null;
             };
+        }
+
+        @Override
+        public ThEInternalInventory getArcaneCraftingInventory() {
+            return this.crafting;
         }
 
         @Override

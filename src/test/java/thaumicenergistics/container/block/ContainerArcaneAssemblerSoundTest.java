@@ -9,15 +9,15 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.wrapper.InvWrapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.core.ThEFeatures;
+import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.test.FakeMinecraft;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
+import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -145,15 +145,26 @@ class ContainerArcaneAssemblerSoundTest {
     private static final class TestArcaneAssemblerTile extends TileArcaneAssembler {
 
         private final ThEInternalInventory coreInventory = new ThEInternalInventory("cores", 1, 64);
-        private final ItemStackHandler upgradeInventory = new ItemStackHandler(5);
+        private final ThEUpgradeInventory upgradeInventory = new ThEUpgradeInventory(
+                "upgrades", 5, 1, ThEBlocks.ARCANE_ASSEMBLER.stack(1));
 
         @Override
         public IItemHandler getInventoryByName(String name) {
             return switch (name) {
-                case "cores" -> new InvWrapper(this.coreInventory);
-                case "upgrades" -> this.upgradeInventory;
+                case "cores" -> this.getCoreInventory().toItemHandler();
+                case "upgrades" -> this.getUpgradeInventory().toItemHandler();
                 default -> throw new IllegalArgumentException("Unknown test inventory: " + name);
             };
+        }
+
+        @Override
+        public ThEInternalInventory getCoreInventory() {
+            return this.coreInventory;
+        }
+
+        @Override
+        public ThEUpgradeInventory getUpgradeInventory() {
+            return this.upgradeInventory;
         }
     }
 
@@ -173,7 +184,7 @@ class ContainerArcaneAssemblerSoundTest {
 
         @Override
         public void playSound(EntityPlayer player, BlockPos pos, SoundEvent soundIn, SoundCategory category,
-                float volume, float pitch) {
+                              float volume, float pitch) {
             this.playSoundCalls++;
             this.excludedPlayer = player;
             this.pos = pos;

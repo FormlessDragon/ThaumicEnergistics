@@ -9,8 +9,12 @@ import ae2.api.config.StorageFilter;
 import ae2.api.config.ViewItems;
 import ae2.api.util.IConfigManager;
 import ae2.api.util.UnsupportedSettingException;
+import net.minecraft.init.Bootstrap;
 import net.minecraft.nbt.NBTTagCompound;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import thaumicenergistics.core.definitions.ThEParts;
+import thaumicenergistics.part.PartArcaneTerminal;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,6 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SupergiantConfigManagerMigrationTest {
+
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        if (!Bootstrap.isRegistered()) {
+            Bootstrap.register();
+        }
+    }
 
     @Test
     void arcaneTerminalDefaultsAreRegisteredOnSupergiantConfigManager() {
@@ -101,6 +112,23 @@ class SupergiantConfigManagerMigrationTest {
         assertAll(
                 () -> assertTrue(result.changed()),
                 () -> assertTrue(result.failures().isEmpty()),
+                () -> assertEquals(SortOrder.AMOUNT, manager.getSetting(Settings.SORT_BY)),
+                () -> assertEquals(ViewItems.CRAFTABLE, manager.getSetting(Settings.VIEW_MODE)),
+                () -> assertEquals(SortDir.DESCENDING, manager.getSetting(Settings.SORT_DIRECTION)));
+    }
+
+    @Test
+    void arcaneTerminalReadFromNbtImportsLegacyUppercaseSettingsFromOldSaves() {
+        PartArcaneTerminal terminal = ThEParts.ARCANE_TERMINAL.item().createPart();
+        NBTTagCompound tag = new NBTTagCompound();
+        tag.setString("SORT_BY", "AMOUNT");
+        tag.setString("VIEW_MODE", "CRAFTABLE");
+        tag.setString("SORT_DIRECTION", "DESCENDING");
+
+        terminal.readFromNBT(tag);
+
+        IConfigManager manager = terminal.getConfigManager();
+        assertAll(
                 () -> assertEquals(SortOrder.AMOUNT, manager.getSetting(Settings.SORT_BY)),
                 () -> assertEquals(ViewItems.CRAFTABLE, manager.getSetting(Settings.VIEW_MODE)),
                 () -> assertEquals(SortDir.DESCENDING, manager.getSetting(Settings.SORT_DIRECTION)));

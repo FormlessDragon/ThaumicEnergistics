@@ -1,5 +1,6 @@
 package thaumicenergistics.client.gui;
 
+import ae2.api.inventories.InternalInventory;
 import ae2.api.parts.IFacadeContainer;
 import ae2.api.parts.IPart;
 import ae2.api.parts.IPartHost;
@@ -454,7 +455,7 @@ class GuiHandlerRoutingTest {
     }
 
     private static ContainerArcaneInscriber openParentInscriber(FakeMinecraft.FakePlayer player,
-                                                               ArcaneTerminalPart host) {
+                                                                ArcaneTerminalPart host) {
         ContainerArcaneInscriber parent = new ContainerArcaneInscriber(player.inventory, host);
         parent.setLocator(new FixedArcaneHostLocator(host));
         player.openContainer = parent;
@@ -807,6 +808,11 @@ class GuiHandlerRoutingTest {
                 case "upgrades" -> this.upgradeInventory.toItemHandler();
                 default -> null;
             };
+        }
+
+        @Override
+        public InternalInventory getArcaneCraftingInventory() {
+            return this.craftingInventory;
         }
 
         @Override

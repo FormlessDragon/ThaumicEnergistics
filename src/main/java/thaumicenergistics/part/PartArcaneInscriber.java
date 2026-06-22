@@ -9,7 +9,6 @@ import net.minecraft.util.ResourceLocation;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.init.ModGlobals;
-import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
 
 import javax.annotation.Nonnull;
@@ -58,6 +57,6 @@ public class PartArcaneInscriber extends PartArcaneTerminal {
 
     @Override
     protected void addArcaneDrops(List<ItemStack> list) {
-        list.addAll(ItemHandlerUtil.getInventoryAsList(this.getArcaneUpgradeInventory().toItemHandler()));
+        this.addInventoryDrops(list, this.getArcaneUpgradeInventory());
     }
 }

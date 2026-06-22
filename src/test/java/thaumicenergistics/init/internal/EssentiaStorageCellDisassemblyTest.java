@@ -1,7 +1,12 @@
 package thaumicenergistics.init.internal;
 
+import ae2.api.config.Actionable;
+import ae2.api.networking.security.IActionSource;
+import ae2.api.stacks.AEKeyTypes;
+import ae2.api.storage.cells.CellState;
 import ae2.core.AEConfig;
 import ae2.core.definitions.AEItems;
+import ae2.me.cells.BasicCellInventory;
 import ae2.recipes.game.StorageCellDisassemblyRecipe;
 import net.minecraft.init.Bootstrap;
 import net.minecraft.item.Item;
@@ -19,7 +24,11 @@ import net.minecraftforge.fml.common.eventhandler.EventBus;
 import net.minecraftforge.fml.relauncher.Side;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import thaumcraft.api.aspects.Aspect;
+import thaumicenergistics.api.storage.EssentiaStorageCell;
 import thaumicenergistics.core.definitions.ThEItems;
+import thaumicenergistics.me.key.AEEssentiaKey;
+import thaumicenergistics.me.key.AEEssentiaKeys;
 
 import java.io.File;
 import java.util.Collections;
@@ -27,7 +36,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 class EssentiaStorageCellDisassemblyTest {
@@ -39,6 +50,7 @@ class EssentiaStorageCellDisassemblyTest {
         }
         bootstrapForgeSide();
         AEConfig.init();
+        registerEssentiaKeyType();
     }
 
     @Test
@@ -59,6 +71,36 @@ class EssentiaStorageCellDisassemblyTest {
                 Objects.requireNonNull(ThEItems.ESSENTIA_COMPONENT_64K.item()));
     }
 
+    @Test
+    void ordinaryEssentiaStorageCellsPreserveFixedCapacityAndIdleDrainContract() {
+        assertCellContract(new EssentiaStorageCell(1), 1, 12);
+        assertCellContract(new EssentiaStorageCell(4), 4, 12);
+        assertCellContract(new EssentiaStorageCell(16), 16, 12);
+        assertCellContract(new EssentiaStorageCell(64), 64, 12);
+    }
+
+    @Test
+    void customTypeEssentiaStorageCellKeepsFixedBytesPerTypeAndRejectsExtraTypes() {
+        EssentiaStorageCell cell = new EssentiaStorageCell(4, 3);
+        ItemStack stack = new ItemStack(cell);
+        BasicCellInventory inventory = BasicCellInventory.createInventory(stack, null);
+        AEEssentiaKey air = essentiaKey(Aspect.AIR);
+        AEEssentiaKey fire = essentiaKey(Aspect.FIRE);
+        AEEssentiaKey water = essentiaKey(Aspect.WATER);
+        AEEssentiaKey earth = essentiaKey(Aspect.EARTH);
+
+        assertNotNull(inventory);
+        assertAll(
+                () -> assertEquals(4 * 1024, cell.getBytes(stack)),
+                () -> assertEquals(8, cell.getBytesPerType(stack)),
+                () -> assertEquals(3, cell.getTotalTypes(stack)),
+                () -> assertEquals(1.0D, cell.getIdleDrain()),
+                () -> assertEquals(1, inventory.insert(air, 1, Actionable.MODULATE, IActionSource.empty())),
+                () -> assertEquals(1, inventory.insert(fire, 1, Actionable.MODULATE, IActionSource.empty())),
+                () -> assertEquals(1, inventory.insert(water, 1, Actionable.MODULATE, IActionSource.empty())),
+                () -> assertEquals(0, inventory.insert(earth, 1, Actionable.MODULATE, IActionSource.empty())));
+    }
+
     private static void assertDisassembly(Item cell, Item component) {
         List<ItemStack> result = StorageCellDisassemblyRecipe.getDisassemblyResult(null, cell);
 
@@ -67,6 +109,41 @@ class EssentiaStorageCellDisassemblyTest {
         assertEquals(1, result.get(0).getCount());
         assertSame(component, result.get(1).getItem());
         assertEquals(1, result.get(1).getCount());
+    }
+
+    private static void assertCellContract(EssentiaStorageCell cell, int kilobytes, int totalTypes) {
+        ItemStack stack = new ItemStack(cell);
+        BasicCellInventory inventory = BasicCellInventory.createInventory(stack, null);
+        AEEssentiaKey air = essentiaKey(Aspect.AIR);
+        long expectedAmountCapacity = (long) kilobytes * 1024 * AEEssentiaKeys.INSTANCE.getAmountPerByte()
+                - 8L * AEEssentiaKeys.INSTANCE.getAmountPerByte();
+
+        assertNotNull(inventory);
+        assertAll(
+                () -> assertEquals(kilobytes * 1024, cell.getBytes(stack)),
+                () -> assertEquals(8, cell.getBytesPerType(stack)),
+                () -> assertEquals(totalTypes, cell.getTotalTypes(stack)),
+                () -> assertEquals(1.0D, cell.getIdleDrain()),
+                () -> assertEquals(expectedAmountCapacity,
+                        inventory.insert(air, Long.MAX_VALUE, Actionable.SIMULATE, IActionSource.empty())),
+                () -> assertEquals(CellState.EMPTY, inventory.getStatus()),
+                () -> assertEquals(expectedAmountCapacity,
+                        inventory.insert(air, Long.MAX_VALUE, Actionable.MODULATE, IActionSource.empty())),
+                () -> assertEquals(expectedAmountCapacity, inventory.getAvailableStacks().get(air)),
+                () -> assertEquals(CellState.FULL, inventory.getStatus()));
+    }
+
+    private static AEEssentiaKey essentiaKey(Aspect aspect) {
+        return Objects.requireNonNull(AEEssentiaKey.of(aspect));
+    }
+
+    private static void registerEssentiaKeyType() {
+        boolean registered = AEKeyTypes.getAll().stream()
+                .anyMatch(keyType -> AEEssentiaKeys.ID.equals(keyType.getId()));
+        if (!registered) {
+            AEKeyTypes.register(AEEssentiaKeys.INSTANCE);
+        }
+        assertSame(AEEssentiaKeys.INSTANCE, AEKeyTypes.get(AEEssentiaKeys.ID));
     }
 
     private static void bootstrapForgeSide() {

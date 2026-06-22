@@ -2,15 +2,18 @@ package thaumicenergistics.container.slot;
 
 import thaumicenergistics.container.ICraftingContainer;
 
+import java.util.Objects;
+
 /**
  * @author BrockWS
  */
-public class SlotArcaneMatrix extends ThESlot {
+public class SlotArcaneMatrix extends ThEAppEngSlot {
 
-    private ICraftingContainer container;
+    private final ICraftingContainer container;
 
     public SlotArcaneMatrix(ICraftingContainer container, int index, int xPosition, int yPosition) {
-        super(container.getInventory("crafting"), index, xPosition, yPosition);
+        super(Objects.requireNonNull(Objects.requireNonNull(container, "container").getCraftingInventory(),
+                "crafting inventory"), index, xPosition, yPosition);
         this.container = container;
     }
 

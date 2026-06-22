@@ -8,6 +8,8 @@ import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.thaumicenergistics.Reference;
 import net.minecraft.init.Bootstrap;
 
+import java.util.function.Supplier;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -66,6 +68,26 @@ class ThEFeaturesTest {
                 () -> assertSame(features.config(), publicApi.config()),
                 () -> assertSame(features.lang(), publicApi.lang()),
                 () -> assertSame(features.textures(), publicApi.textures()),
+                () -> assertSame(features.sounds(), publicApi.sounds()));
+    }
+
+    @Test
+    void deprecatedFacadeEntryPointsRemainCallableAbiAdapters() {
+        bootstrapMinecraft();
+        Supplier<IThEApi> legacyEntryPoint = ThaumicEnergisticsApi::instance;
+        Supplier<IThEApi> publicEntryPoint = ThEApi::instance;
+        ThEFeatureAccess features = ThEFeatures.instance();
+
+        IThEApi legacyApi = legacyEntryPoint.get();
+        IThEApi publicApi = publicEntryPoint.get();
+
+        assertAll(
+                () -> assertSame(legacyApi, publicApi),
+                () -> assertSame(features.items(), legacyApi.items()),
+                () -> assertSame(features.blocks(), publicApi.blocks()),
+                () -> assertSame(features.config(), legacyApi.config()),
+                () -> assertSame(features.lang(), publicApi.lang()),
+                () -> assertSame(features.textures(), legacyApi.textures()),
                 () -> assertSame(features.sounds(), publicApi.sounds()));
     }
 

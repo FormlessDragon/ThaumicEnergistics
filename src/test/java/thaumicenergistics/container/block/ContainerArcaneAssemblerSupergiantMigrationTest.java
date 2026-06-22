@@ -12,12 +12,10 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.wrapper.InvWrapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
-import thaumicenergistics.container.slot.ThESlot;
 import thaumicenergistics.init.ThEBlocks;
 import thaumicenergistics.test.FakeMinecraft;
 import thaumicenergistics.tile.TileArcaneAssembler;
@@ -83,15 +81,14 @@ class ContainerArcaneAssemblerSupergiantMigrationTest {
                 () -> assertEquals(8, mainSlots.get(0).xPos),
                 () -> assertEquals(149, mainSlots.get(0).yPos),
                 () -> assertEquals(8, hotbarSlots.get(0).xPos),
-                () -> assertEquals(207, hotbarSlots.get(0).yPos),
-                () -> assertTrue(mainSlots.stream().noneMatch(ThESlot.class::isInstance)),
-                () -> assertTrue(hotbarSlots.stream().noneMatch(ThESlot.class::isInstance)));
+                () -> assertEquals(207, hotbarSlots.get(0).yPos));
     }
 
     @Test
     void registersKnowledgeCoreUpgradeAndPlayerSlotSemantics() {
         FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
-        ContainerArcaneAssembler container = new ContainerArcaneAssembler(player, new TestArcaneAssemblerTile());
+        TestArcaneAssemblerTile tile = new TestArcaneAssemblerTile();
+        ContainerArcaneAssembler container = new ContainerArcaneAssembler(player, tile);
         AEBaseContainer aeContainer = assertInstanceOf(AEBaseContainer.class, container);
         List<Slot> upgradeSlots = aeContainer.getSlots(SlotSemantics.UPGRADE);
         List<Slot> mainSlots = aeContainer.getSlots(SlotSemantics.PLAYER_INVENTORY);
@@ -101,10 +98,13 @@ class ContainerArcaneAssemblerSupergiantMigrationTest {
                 () -> assertSame(ThESlotSemantics.KNOWLEDGE_CORE, aeContainer.getSlotSemantic(container.getSlot(0))),
                 () -> assertInstanceOf(SlotKnowledgeCore.class, container.getSlot(0)),
                 () -> assertInstanceOf(AppEngSlot.class, container.getSlot(0)),
+                () -> assertSame(tile.coreInventory, assertInstanceOf(AppEngSlot.class, container.getSlot(0)).getInventory()),
                 () -> assertEquals(List.of(container.getSlot(0)), aeContainer.getSlots(ThESlotSemantics.KNOWLEDGE_CORE)),
                 () -> assertEquals(5, upgradeSlots.size()),
                 () -> assertTrue(upgradeSlots.stream().allMatch(RestrictedInputSlot.class::isInstance)),
-                () -> assertFalse(upgradeSlots.stream().anyMatch(ThESlot.class::isInstance)),
+                () -> assertTrue(upgradeSlots.stream()
+                        .map(AppEngSlot.class::cast)
+                        .allMatch(slot -> slot.getInventory() == tile.upgradeInventory)),
                 () -> assertTrue(upgradeSlots.stream()
                         .allMatch(slot -> aeContainer.getSlotSemantic(slot) == SlotSemantics.UPGRADE)),
                 () -> assertFalse(upgradeSlots.contains(container.getSlot(0))),
@@ -215,12 +215,18 @@ class ContainerArcaneAssemblerSupergiantMigrationTest {
         @Override
         public IItemHandler getInventoryByName(String name) {
             return switch (name) {
-                case "cores" -> new InvWrapper(this.coreInventory);
-                case "upgrades" -> new InvWrapper(this.upgradeInventory);
+                case "cores" -> this.getCoreInventory().toItemHandler();
+                case "upgrades" -> this.getUpgradeInventory().toItemHandler();
                 default -> throw new IllegalArgumentException("Unknown test inventory: " + name);
             };
         }
 
+        @Override
+        public ThEInternalInventory getCoreInventory() {
+            return this.coreInventory;
+        }
+
+        @Override
         public ThEUpgradeInventory getUpgradeInventory() {
             return this.upgradeInventory;
         }

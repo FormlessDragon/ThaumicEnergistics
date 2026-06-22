@@ -1,7 +1,7 @@
 package thaumicenergistics.container;
 
+import ae2.api.inventories.InternalInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.items.IItemHandler;
 
 /**
  * @author BrockWS
@@ -20,5 +20,14 @@ public interface ICraftingContainer {
 
     ItemStack onCraft(ItemStack crafted);
 
-    IItemHandler getInventory(String name);
+    /**
+     * Returns the typed Supergiant internal inventory backing the arcane crafting matrix.
+     */
+    InternalInventory getCraftingInventory();
+
+    /**
+     * Returns the typed Supergiant internal inventory backing the visible crafting result.
+     */
+    InternalInventory getCraftingResultInventory();
+
 }

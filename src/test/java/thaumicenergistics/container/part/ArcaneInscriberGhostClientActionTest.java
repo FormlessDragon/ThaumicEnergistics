@@ -26,7 +26,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
@@ -173,7 +172,7 @@ class ArcaneInscriberGhostClientActionTest {
     void knowledgeCoreAddUsesTypedArcaneUpgradeInventory() {
         StrictArcaneUpgradeHost host = new StrictArcaneUpgradeHost();
         TestArcaneInscriber container = newArcaneRecipeContainer(host);
-        container.getInventory("result").insertItem(0, new ItemStack(Items.DIAMOND), false);
+        container.getCraftingResultInventory().insertItem(0, new ItemStack(Items.DIAMOND), false);
         host.arcaneUpgrades().setItemDirect(0, ThEItems.KNOWLEDGE_CORE.stack(1));
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -306,7 +305,7 @@ class ArcaneInscriberGhostClientActionTest {
 
     private static class TestArcaneTerminalHost implements IArcaneTerminalHost, IPart, IEnergySource {
 
-        private final ItemStackHandler crafting = new ItemStackHandler(15);
+        private final ThEInternalInventory crafting = new ThEInternalInventory("crafting", 15, 64);
         private final ThEKnowledgeCoreInventory upgrades =
                 new ThEKnowledgeCoreInventory("upgrades", 1, 1, new ItemStack(Items.STICK));
         private final ThEInternalInventory aeUpgrades = new ThEInternalInventory("Test upgrades", 0, 64);
@@ -342,10 +341,15 @@ class ArcaneInscriberGhostClientActionTest {
         @Override
         public IItemHandler getInventoryByName(String name) {
             return switch (name.toLowerCase(java.util.Locale.ROOT)) {
-                case "crafting" -> this.crafting;
+                case "crafting" -> this.getArcaneCraftingInventory().toItemHandler();
                 case "upgrades" -> this.upgrades.toItemHandler();
                 default -> null;
             };
+        }
+
+        @Override
+        public ThEInternalInventory getArcaneCraftingInventory() {
+            return this.crafting;
         }
 
         @Override

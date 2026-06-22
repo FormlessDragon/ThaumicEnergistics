@@ -1,9 +1,11 @@
 package thaumicenergistics.container.part;
 
 import ae2.api.config.Actionable;
+import ae2.api.inventories.InternalInventory;
 import ae2.api.stacks.AEItemKey;
 import ae2.api.storage.MEStorage;
 import ae2.api.storage.StorageHelper;
+import ae2.api.upgrades.IUpgradeInventory;
 import ae2.container.GuiIds;
 import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
@@ -11,7 +13,6 @@ import ae2.container.me.common.ContainerMEStorage;
 import ae2.container.slot.AppEngSlot;
 import ae2.container.slot.SlotBackgroundIcon;
 import ae2.core.network.serverbound.GuiActionPacket;
-import ae2.api.upgrades.IUpgradeInventory;
 import com.google.common.collect.Lists;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -19,7 +20,6 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.inventory.IContainerListener;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
@@ -33,7 +33,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.wrapper.InvWrapper;
 import net.minecraftforge.items.wrapper.PlayerArmorInvWrapper;
 import net.minecraftforge.items.wrapper.PlayerInvWrapper;
 import thaumcraft.api.aspects.Aspect;
@@ -57,7 +56,6 @@ import thaumicenergistics.util.inventory.ThEInternalInventory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class ContainerArcaneTerm extends ContainerMEStorage implements ICraftingContainer {
@@ -68,7 +66,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     private static final int ACTION_JEI_RECIPE_TRANSFER_MAX_LENGTH = GuiActionPacket.MAX_JSON_PAYLOAD_LENGTH;
 
     protected final IArcaneTerminalHost host;
-    protected final IInventory craftingResult;
+    protected final ThEInternalInventory craftingResult;
     protected SlotArcaneResult resultSlot;
     protected IRecipe recipe;
     @GuiSync(102)
@@ -164,19 +162,25 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     @Override
-    public IItemHandler getInventory(String name) {
-        switch (name.toLowerCase(Locale.ROOT)) {
-            case "crafting":
-                return this.host.getInventoryByName(name);
-            case "upgrades":
-                return this.getTypedArcaneUpgradeInventory().toItemHandler();
-            case "result":
-                return new InvWrapper(this.craftingResult);
-            case "player":
-                return new PlayerInvWrapper(this.getPlayerInventory());
-            default:
-                return null;
-        }
+    public InternalInventory getCraftingInventory() {
+        return this.host.getArcaneCraftingInventory();
+    }
+
+    @Override
+    public InternalInventory getCraftingResultInventory() {
+        return this.craftingResult;
+    }
+
+    protected IItemHandler getCraftingItemHandler() {
+        return this.getCraftingInventory().toItemHandler();
+    }
+
+    protected IItemHandler getCraftingResultItemHandler() {
+        return this.getCraftingResultInventory().toItemHandler();
+    }
+
+    protected IItemHandler getPlayerItemHandler() {
+        return new PlayerInvWrapper(this.getPlayerInventory());
     }
 
     @Override
@@ -196,7 +200,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
         this.craftingResult.setInventorySlotContents(0, ItemStack.EMPTY);
 
-        IItemHandler matrix = this.getInventory("crafting");
+        IItemHandler matrix = this.getCraftingItemHandler();
         this.recipe = TCCraftingManager.findArcaneRecipe(matrix, this.getPlayer());
         if (this.recipe != null) {
             this.craftingResult.setInventorySlotContents(0,
@@ -297,7 +301,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             return ItemStack.EMPTY;
         }
 
-        IItemHandler crafting = this.getInventory("crafting");
+        IItemHandler crafting = this.getCraftingItemHandler();
         InventoryCrafting inv = this.getInvCrafting(crafting, this.recipe);
         ItemStack crafted = this.recipe.getCraftingResult(inv);
         int roomLeft = Math.min(crafted.getMaxStackSize(), toCraft.getCount() * crafted.getCount());
@@ -407,7 +411,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
         InventoryCrafting inv = new InventoryCrafting(new DummyContainer(), 3, 3);
         for (int i = 0; i < inv.getSizeInventory(); i++) {
-            inv.setInventorySlotContents(i, this.getInventory("crafting").getStackInSlot(i).copy());
+            inv.setInventorySlotContents(i, this.getCraftingItemHandler().getStackInSlot(i).copy());
         }
         return inv;
     }
@@ -541,7 +545,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     private void handleJEITags(NBTBase normalGroup, NBTBase crystalGroup) {
-        IItemHandler crafting = this.getInventory("crafting");
+        IItemHandler crafting = this.getCraftingItemHandler();
         List<JEITransferSlot> transferSlots = new ArrayList<>();
         this.collectJEITransferSlots(transferSlots, 0, normalGroup);
         this.collectJEITransferSlots(transferSlots, 9, crystalGroup);
@@ -742,7 +746,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         }
 
         boolean clearSuccess = true;
-        IItemHandler crafting = this.getInventory("crafting");
+        IItemHandler crafting = this.getCraftingItemHandler();
         for (int slot = 0; slot < crafting.getSlots(); slot++) {
             ItemStack stack = crafting.extractItem(slot, Integer.MAX_VALUE, true);
             if (stack.isEmpty()) {
@@ -768,7 +772,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         }
 
         List<NetworkReservation> reservations = new ArrayList<>();
-        IItemHandler crafting = this.getInventory("crafting");
+        IItemHandler crafting = this.getCraftingItemHandler();
         for (int slot = 0; slot < crafting.getSlots(); slot++) {
             ItemStack stack = crafting.extractItem(slot, Integer.MAX_VALUE, true);
             if (stack.isEmpty()) {

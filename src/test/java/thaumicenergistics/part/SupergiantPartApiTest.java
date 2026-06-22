@@ -14,6 +14,7 @@ import ae2.parts.PartModel;
 import ae2.parts.reporting.AbstractTerminalPart;
 import ae2.tile.grid.AENetworkedTile;
 import net.minecraft.init.Bootstrap;
+import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.items.IItemHandler;
@@ -97,6 +98,23 @@ class SupergiantPartApiTest {
                 () -> assertInstanceOf(ThEUpgradeInventory.class, upgrades),
                 () -> assertSame(upgradeHandler, terminal.getInventoryByName("upgrades")),
                 () -> assertFalse(((ThEUpgradeInventory) upgrades).isKnowledgeCoreSlot()));
+    }
+
+    @Test
+    void arcaneTerminalHostReturnsTypedCraftingInventory() {
+        PartArcaneTerminal terminal = ThEParts.ARCANE_TERMINAL.item().createPart();
+        IArcaneTerminalHost host = terminal;
+        ThEInternalInventory crafting = assertInstanceOf(ThEInternalInventory.class,
+                host.getArcaneCraftingInventory());
+        IItemHandler craftingBridge = terminal.getInventoryByName("crafting");
+        ItemStack expectedStack = new ItemStack(Items.DIAMOND, 2);
+
+        crafting.setInventorySlotContents(0, expectedStack.copy());
+
+        assertAll(
+                () -> assertEquals(15, crafting.size()),
+                () -> assertSame(crafting, host.getArcaneCraftingInventory()),
+                () -> assertTrue(ItemStack.areItemStacksEqual(expectedStack, craftingBridge.getStackInSlot(0))));
     }
 
     @Test

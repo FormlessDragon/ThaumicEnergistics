@@ -2,6 +2,8 @@ package thaumicenergistics.container.item;
 
 import ae2.container.AEBaseContainer;
 import ae2.container.ISubGui;
+import ae2.api.inventories.InternalInventory;
+import ae2.container.slot.FakeSlot;
 import ae2.core.gui.locator.GuiHostLocator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ClickType;
@@ -9,11 +11,9 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
-import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
-import thaumicenergistics.container.slot.SlotGhost;
 import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ModGUIs;
@@ -91,7 +91,7 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
     @SuppressWarnings("SameParameterValue")
     private void addSlots(int offsetX, int offsetY) {
         for (int i = 0; i < SLOT_NUM; i++) {
-            SlotGhost slotGhost = new SlotGhost(inventory, i, offsetX + (i * 18), offsetY);
+            FakeSlot slotGhost = new FakeSlot(inventory, i, offsetX + (i * 18), offsetY);
             if (KnowledgeCoreUtil.hasRecipe(knowledgeCoreStack, i)) {
                 KnowledgeCoreUtil.Recipe recipe = KnowledgeCoreUtil.getRecipe(knowledgeCoreStack, i);
                 if (recipe != null) slotGhost.putStack(recipe.result());
@@ -131,8 +131,8 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
             switch (actionName) {
                 case ACTION_ADD_RECIPE -> {
                     this.playWriteSound(player);
-                    ThEInternalInventory ingredients = (ThEInternalInventory) ((InvWrapper) parentContainer.getInventory("crafting")).getInv();
-                    ItemStack result = parentContainer.getInventory("result").getStackInSlot(0);
+                    ThEInternalInventory ingredients = this.copyIngredients(parentContainer.getCraftingInventory());
+                    ItemStack result = parentContainer.getCraftingResultInventory().getStackInSlot(0);
                     KnowledgeCoreUtil.setRecipe(knowledgeCoreStack, slotId, new KnowledgeCoreUtil.Recipe(ingredients, result, parentContainer.getCurrentRequiredVis()));
                 }
                 case ACTION_DELETE_RECIPE -> {
@@ -149,6 +149,15 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
             parentHost.getArcaneUpgradeInventory().setItemDirect(0, ThEItems.BLANK_KNOWLEDGE_CORE.stack(1));
         }
         parentHost.returnToMainContainer(player, this);
+    }
+
+    private ThEInternalInventory copyIngredients(InternalInventory source) {
+        ThEInternalInventory copy = new ThEInternalInventory("KCoreRecipe", source.size(), 64);
+        for (int slot = 0; slot < source.size(); slot++) {
+            ItemStack stack = source.getStackInSlot(slot);
+            copy.setInventorySlotContents(slot, stack.isEmpty() ? ItemStack.EMPTY : stack.copy());
+        }
+        return copy;
     }
 
     @Override

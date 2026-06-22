@@ -1,5 +1,6 @@
 package thaumicenergistics.container.item;
 
+import ae2.api.inventories.InternalInventory;
 import ae2.container.AEBaseContainer;
 import ae2.api.storage.ILinkStatus;
 import ae2.api.storage.MEStorage;
@@ -11,6 +12,7 @@ import ae2.api.parts.IPartHost;
 import ae2.api.parts.IPartItem;
 import ae2.api.util.AECableType;
 import ae2.container.ISubGui;
+import ae2.container.slot.FakeSlot;
 import ae2.core.gui.locator.GuiHostLocator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Bootstrap;
@@ -31,7 +33,6 @@ import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
-import thaumicenergistics.container.slot.SlotGhost;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.test.FakeMinecraft;
 import thaumicenergistics.util.KnowledgeCoreUtil;
@@ -40,6 +41,7 @@ import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -162,9 +164,35 @@ class ContainerKnowledgeCoreTest {
                 () -> assertEquals(container.inventorySlots,
                         aeContainer.getSlots(ThESlotSemantics.KNOWLEDGE_CORE)),
                 () -> assertTrue(aeContainer.getSlots(ThESlotSemantics.KNOWLEDGE_CORE).stream()
-                        .allMatch(slot -> slot instanceof SlotGhost)),
+                        .allMatch(slot -> slot instanceof FakeSlot)),
                 () -> assertTrue(aeContainer.getSlots(ThESlotSemantics.KNOWLEDGE_CORE).stream()
                         .allMatch(slot -> aeContainer.getSlotSemantic(slot) == ThESlotSemantics.KNOWLEDGE_CORE)));
+    }
+
+    @Test
+    void knowledgeCoreGhostSlotsUseFakeSlotInteractionSemantics() {
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
+        RecordingArcaneHost host = new RecordingArcaneHost();
+        GuiHostLocator locator = new FixedArcaneHostLocator(host);
+        ContainerArcaneInscriber parent = newParent(player, host, locator);
+        ContainerKnowledgeCore container = new ContainerKnowledgeCore(
+                player, ModGUIs.KNOWLEDGE_CORE_VIEW, parent, locator);
+        FakeSlot slot = assertInstanceOf(FakeSlot.class, container.getSlot(0));
+        ItemStack display = new ItemStack(Items.DIAMOND, 4);
+
+        assertAll(
+                () -> assertFalse(slot.isItemValid(display)),
+                () -> assertFalse(slot.canTakeStack(player)),
+                () -> assertTrue(slot.decrStackSize(1).isEmpty()));
+
+        slot.putStack(display);
+
+        ItemStack stored = slot.getStack();
+        assertAll(
+                () -> assertEquals(Items.DIAMOND, stored.getItem()),
+                () -> assertEquals(1, stored.getCount()),
+                () -> assertEquals(Items.DIAMOND, display.getItem()),
+                () -> assertEquals(4, display.getCount()));
     }
 
     @Test
@@ -266,7 +294,7 @@ class ContainerKnowledgeCoreTest {
         ItemStack result = new ItemStack(Items.DIAMOND, 2);
         host.upgradeInventory.setInventorySlotContents(0, knowledgeCore);
         host.craftingInventory.setInventorySlotContents(0, ingredient);
-        parent.getInventory("result").insertItem(0, result.copy(), false);
+        parent.getCraftingResultInventory().insertItem(0, result.copy(), false);
         host.upgradeInventory.resetCalls();
         ContainerKnowledgeCore container = new ContainerKnowledgeCore(
                 player, ModGUIs.KNOWLEDGE_CORE_ADD, parent, locator);
@@ -424,6 +452,11 @@ class ContainerKnowledgeCoreTest {
                 }
                 default -> null;
             };
+        }
+
+        @Override
+        public InternalInventory getArcaneCraftingInventory() {
+            return this.craftingInventory;
         }
 
         @Override

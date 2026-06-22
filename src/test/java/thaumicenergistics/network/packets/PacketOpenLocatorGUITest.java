@@ -5,18 +5,17 @@ import ae2.core.gui.locator.GuiHostLocators;
 import ae2.core.gui.locator.InventoryItemLocator;
 import ae2.core.gui.locator.PartLocator;
 import ae2.core.gui.locator.TileLocator;
+import ae2.core.network.ClientboundPacket;
+import ae2.core.network.InitNetwork;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import org.junit.jupiter.api.Test;
-import thaumicenergistics.ThaumicEnergistics;
-import thaumicenergistics.core.CommonProxy;
 import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.network.PacketHandler;
+import thaumicenergistics.network.ThENetwork;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -105,7 +104,7 @@ class PacketOpenLocatorGUITest {
 
     @Test
     void roundTripsPartLocatorForArcaneTerminalOrInscriber() {
-        for (ModGUIs gui : new ModGUIs[] { ModGUIs.ARCANE_TERMINAL, ModGUIs.ARCANE_INSCRIBER }) {
+        for (ModGUIs gui : new ModGUIs[]{ModGUIs.ARCANE_TERMINAL, ModGUIs.ARCANE_INSCRIBER}) {
             PacketOpenLocatorGUI decoded = roundTrip(new PacketOpenLocatorGUI(
                     gui,
                     new PartLocator(new BlockPos(12, 34, 56), EnumFacing.NORTH),
@@ -136,10 +135,10 @@ class PacketOpenLocatorGUITest {
 
     @Test
     void roundTripsKnowledgeCoreGuiWithPartLocator() {
-        for (ModGUIs gui : new ModGUIs[] {
+        for (ModGUIs gui : new ModGUIs[]{
                 ModGUIs.KNOWLEDGE_CORE_ADD,
                 ModGUIs.KNOWLEDGE_CORE_DEL,
-                ModGUIs.KNOWLEDGE_CORE_VIEW }) {
+                ModGUIs.KNOWLEDGE_CORE_VIEW}) {
             PacketOpenLocatorGUI decoded = roundTrip(new PacketOpenLocatorGUI(
                     gui,
                     new PartLocator(new BlockPos(21, 43, 65), EnumFacing.UP),
@@ -262,35 +261,22 @@ class PacketOpenLocatorGUITest {
     }
 
     @Test
-    void handlerDelegatesClientOpenToProxy() {
+    void locatorGuiPacketUsesSupergiantClientboundPacketBase() {
         PacketOpenLocatorGUI packet = new PacketOpenLocatorGUI(
                 ModGUIs.WIRELESS_ARCANE_TERMINAL,
                 GuiHostLocators.forInventorySlot(0),
                 false,
                 8);
-        CommonProxy previousProxy = ThaumicEnergistics.proxy;
-        RecordingProxy proxy = new RecordingProxy();
-        ThaumicEnergistics.proxy = proxy;
 
-        try {
-            new PacketOpenLocatorGUI.Handler().onMessage(packet, null);
-        } finally {
-            ThaumicEnergistics.proxy = previousProxy;
-        }
-
-        assertAll(
-                () -> assertSame(packet, proxy.message),
-                () -> assertEquals(1, proxy.calls));
+        assertInstanceOf(ClientboundPacket.class, packet);
     }
 
     @Test
-    void packetHandlerRegisterIsIdempotentAfterLocatorPayloadRouteSetup() {
-        assertDoesNotThrow(PacketHandler::register);
-        Object registeredWrapper = PacketHandler.INSTANCE;
-        assertNotNull(registeredWrapper);
+    void networkRegisterIsIdempotentAfterLocatorPayloadRouteSetup() {
+        InitNetwork.init();
 
-        assertDoesNotThrow(PacketHandler::register);
-        assertSame(registeredWrapper, PacketHandler.INSTANCE);
+        assertDoesNotThrow(ThENetwork::register);
+        assertDoesNotThrow(ThENetwork::register);
     }
 
     private static PacketOpenLocatorGUI roundTrip(PacketOpenLocatorGUI packet) {
@@ -305,7 +291,7 @@ class PacketOpenLocatorGUITest {
     }
 
     private static ModGUIs[] unsupportedGuis() {
-        return new ModGUIs[] {
+        return new ModGUIs[]{
                 ModGUIs.ESSENTIA_IMPORT_BUS,
                 ModGUIs.ESSENTIA_EXPORT_BUS,
                 ModGUIs.ESSENTIA_STORAGE_BUS,
@@ -313,7 +299,7 @@ class PacketOpenLocatorGUITest {
                 ModGUIs.AE2_CRAFT_AMOUNT,
                 ModGUIs.AE2_CRAFT_CONFIRM,
                 ModGUIs.AE2_CRAFT_STATUS,
-                ModGUIs.AE2_PRIORITY };
+                ModGUIs.AE2_PRIORITY};
     }
 
     private static void assertBlockHitEquals(RayTraceResult expected, RayTraceResult actual) {
@@ -327,15 +313,4 @@ class PacketOpenLocatorGUITest {
                 () -> assertEquals(expected.hitVec.z, actual.hitVec.z));
     }
 
-    private static final class RecordingProxy extends CommonProxy {
-
-        private PacketOpenLocatorGUI message;
-        private int calls;
-
-        @Override
-        public void openLocatorGui(PacketOpenLocatorGUI message, MessageContext ctx) {
-            this.message = message;
-            this.calls++;
-        }
-    }
 }

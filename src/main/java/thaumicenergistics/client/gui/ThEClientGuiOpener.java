@@ -31,12 +31,7 @@ public final class ThEClientGuiOpener {
     private ThEClientGuiOpener() {
     }
 
-    public static void openLocatorGui(PacketOpenLocatorGUI message) {
-        Minecraft minecraft = Minecraft.getMinecraft();
-        minecraft.addScheduledTask(() -> openLocatorGui(new ClientOpenContextImpl(minecraft), message));
-    }
-
-    static void openLocatorGui(Minecraft minecraft, PacketOpenLocatorGUI message) {
+    public static void openLocatorGui(Minecraft minecraft, PacketOpenLocatorGUI message) {
         openLocatorGui(new ClientOpenContextImpl(minecraft), message);
     }
 
@@ -143,8 +138,7 @@ public final class ThEClientGuiOpener {
         return switch (message.gui()) {
             case ARCANE_TERMINAL, WIRELESS_ARCANE_TERMINAL ->
                     new GuiArcaneTerm((ContainerArcaneTerm) container, player.inventory);
-            case ARCANE_INSCRIBER ->
-                    new GuiArcaneInscriber((ContainerArcaneInscriber) container, player.inventory);
+            case ARCANE_INSCRIBER -> new GuiArcaneInscriber((ContainerArcaneInscriber) container, player.inventory);
             case ARCANE_ASSEMBLER -> new GuiArcaneAssembler((ContainerArcaneAssembler) container, player.inventory);
             case KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW ->
                     new GuiKnowledgeCore((ContainerKnowledgeCore) container);
@@ -179,7 +173,7 @@ public final class ThEClientGuiOpener {
     }
 
     private static ContainerArcaneAssembler createArcaneAssemblerContainer(EntityPlayer player, ModGUIs gui,
-                                                                          GuiHostLocator locator, int windowId) {
+                                                                           GuiHostLocator locator, int windowId) {
         ContainerArcaneAssembler container = new ContainerArcaneAssembler(player,
                 locateArcaneAssembler(player, gui, locator));
         container.setLocator(locator);
@@ -261,7 +255,7 @@ public final class ThEClientGuiOpener {
     }
 
     private static IArcaneTerminalHost locateArcaneTerminalHost(EntityPlayer player, ModGUIs gui,
-                                                               GuiHostLocator locator) {
+                                                                GuiHostLocator locator) {
         IArcaneTerminalHost host = locator.locate(player, IArcaneTerminalHost.class);
         if (host == null) {
             throw new IllegalStateException("Cannot locate host for locator-aware client gui " + gui
@@ -272,7 +266,7 @@ public final class ThEClientGuiOpener {
     }
 
     private static TileArcaneAssembler locateArcaneAssembler(EntityPlayer player, ModGUIs gui,
-                                                            GuiHostLocator locator) {
+                                                             GuiHostLocator locator) {
         TileArcaneAssembler host = locator.locate(player, TileArcaneAssembler.class);
         if (host == null) {
             throw new IllegalStateException("Cannot locate host for locator-aware client gui " + gui

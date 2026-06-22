@@ -16,7 +16,6 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.wrapper.InvWrapper;
 import thaumcraft.api.crafting.IArcaneRecipe;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.common.gui.ThEGuiOpener;
@@ -93,7 +92,7 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
 
     private void openKnowledgeCoreAdd() {
         ItemStack knowledgeCore = this.getTypedArcaneUpgradeInventory().getStackInSlot(0);
-        ItemStack result = this.getInventory("result").getStackInSlot(0);
+        ItemStack result = this.getCraftingResultInventory().getStackInSlot(0);
         if (knowledgeCore.isEmpty() || result.isEmpty() || !this.recipeIsArcane) {
             return;
         }
@@ -193,8 +192,8 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     protected boolean hasArcaneRecipeInMatrix() {
-        InvWrapper crafting = (InvWrapper) this.getInventory("crafting");
-        if (this.recipe != null && !crafting.getInv().isEmpty())
+        IItemHandler crafting = this.getCraftingItemHandler();
+        if (this.recipe != null && !this.getCraftingInventory().isEmpty())
             return TCCraftingManager.findArcaneRecipe(crafting, this.getPlayer()) != null;
         return false;
     }
@@ -214,7 +213,7 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
 
     @Override
     protected void clearCrafting() {
-        IItemHandler crafting = this.getInventory("crafting");
+        IItemHandler crafting = this.getCraftingItemHandler();
         for (int slot = 0; slot < crafting.getSlots(); slot++)
             crafting.extractItem(slot, crafting.getStackInSlot(slot).getCount(), false);
     }
@@ -241,8 +240,8 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     private void handleJEITag(int startAtSlot, NBTBase ingredientGroup, boolean mustBeSingle) {
-        IItemHandler crafting = this.getInventory("crafting");
-        IItemHandler playerInv = this.getInventory("player");
+        IItemHandler crafting = this.getCraftingItemHandler();
+        IItemHandler playerInv = this.getPlayerItemHandler();
 
         if (ingredientGroup == null || ingredientGroup.isEmpty()) {
             return;

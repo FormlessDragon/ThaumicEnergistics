@@ -66,7 +66,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     private void updateKnowledgeCoreButtons() {
         ItemStack knowledgeCore = this.getKnowledgeCore();
         boolean hasArcaneRecipe = this.inscriberContainer.isRecipeArcane();
-        ItemStack result = this.inscriberContainer.getInventory("result").getStackInSlot(0);
+        ItemStack result = this.inscriberContainer.getCraftingResultInventory().getStackInSlot(0);
         boolean hasRecipe = !result.isEmpty();
         boolean recipeExists = hasRecipe && KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem());
         boolean currentIsBlank = this.isKnowledgeCoreBlank(knowledgeCore);
@@ -145,7 +145,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
 
     private boolean canAddKnowledgeCoreRecipe() {
         ItemStack knowledgeCore = this.getKnowledgeCore();
-        ItemStack result = this.inscriberContainer.getInventory("result").getStackInSlot(0);
+        ItemStack result = this.inscriberContainer.getCraftingResultInventory().getStackInSlot(0);
         return !knowledgeCore.isEmpty()
                 && !result.isEmpty()
                 && this.inscriberContainer.isRecipeArcane()

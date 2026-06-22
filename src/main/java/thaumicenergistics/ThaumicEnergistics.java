@@ -26,7 +26,7 @@ import thaumicenergistics.command.CommandDrainVis;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.init.internal.InitUpgrades;
 import thaumicenergistics.integration.ThEIntegrationLoader;
-import thaumicenergistics.network.PacketHandler;
+import thaumicenergistics.network.ThENetwork;
 
 /**
  * <strong>Thaumic Energistics</strong>
@@ -69,7 +69,7 @@ public class ThaumicEnergistics {
         LOGGER.info("{} preInit", Reference.MOD_NAME);
         LOGGER.debug("Initialized feature access through {}", bootstrapFeatures().getClass().getName());
         MinecraftForge.EVENT_BUS.register(this);
-        PacketHandler.register();
+        ThENetwork.register();
 
         proxy.preInit(event);
 

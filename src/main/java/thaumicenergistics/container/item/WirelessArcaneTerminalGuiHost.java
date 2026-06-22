@@ -1,5 +1,6 @@
 package thaumicenergistics.container.item;
 
+import ae2.api.inventories.InternalInventory;
 import ae2.api.storage.ILinkStatus;
 import ae2.api.util.DimensionalBlockPos;
 import ae2.container.ISubGui;
@@ -97,6 +98,11 @@ public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<Wirel
             return new InvWrapper(this.upgradeInventory);
         }
         return null;
+    }
+
+    @Override
+    public InternalInventory getArcaneCraftingInventory() {
+        return this.craftingInventory;
     }
 
     @Override

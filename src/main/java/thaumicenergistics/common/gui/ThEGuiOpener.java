@@ -12,7 +12,7 @@ import thaumicenergistics.container.item.ContainerKnowledgeCore;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.network.PacketHandler;
+import thaumicenergistics.network.ThENetwork;
 import thaumicenergistics.network.packets.PacketOpenLocatorGUI;
 import thaumicenergistics.tile.TileArcaneAssembler;
 
@@ -130,7 +130,7 @@ public final class ThEGuiOpener {
     }
 
     private static ContainerArcaneInscriber createArcaneInscriberContainer(EntityPlayer player, ModGUIs gui,
-                                                                          GuiHostLocator locator, int windowId) {
+                                                                           GuiHostLocator locator, int windowId) {
         ContainerArcaneInscriber container = new ContainerArcaneInscriber(player.inventory,
                 locateArcaneTerminalHost(player, gui, locator));
         container.setLocator(locator);
@@ -139,7 +139,7 @@ public final class ThEGuiOpener {
     }
 
     private static ContainerArcaneAssembler createArcaneAssemblerContainer(EntityPlayer player, ModGUIs gui,
-                                                                          GuiHostLocator locator, int windowId) {
+                                                                           GuiHostLocator locator, int windowId) {
         ContainerArcaneAssembler container = new ContainerArcaneAssembler(player,
                 locateArcaneAssembler(player, gui, locator));
         container.setLocator(locator);
@@ -163,7 +163,7 @@ public final class ThEGuiOpener {
     }
 
     public static WirelessArcaneTerminalGuiHost locateWirelessArcaneHost(EntityPlayer player, ModGUIs gui,
-                                                                          GuiHostLocator locator) {
+                                                                         GuiHostLocator locator) {
         validateWirelessArcaneRoute(player, gui, locator);
         WirelessArcaneTerminalGuiHost host = locator.locate(player, WirelessArcaneTerminalGuiHost.class);
         if (host == null) {
@@ -175,7 +175,7 @@ public final class ThEGuiOpener {
     }
 
     private static IArcaneTerminalHost locateArcaneTerminalHost(EntityPlayer player, ModGUIs gui,
-                                                               GuiHostLocator locator) {
+                                                                GuiHostLocator locator) {
         IArcaneTerminalHost host = locator.locate(player, IArcaneTerminalHost.class);
         if (host == null) {
             throw new IllegalStateException("Cannot locate host for locator-aware gui " + gui
@@ -186,7 +186,7 @@ public final class ThEGuiOpener {
     }
 
     private static TileArcaneAssembler locateArcaneAssembler(EntityPlayer player, ModGUIs gui,
-                                                            GuiHostLocator locator) {
+                                                             GuiHostLocator locator) {
         TileArcaneAssembler host = locator.locate(player, TileArcaneAssembler.class);
         if (host == null) {
             throw new IllegalStateException("Cannot locate host for locator-aware gui " + gui
@@ -197,7 +197,7 @@ public final class ThEGuiOpener {
     }
 
     public static ContainerArcaneTerm createWirelessArcaneContainer(InventoryPlayer inventory,
-                                                                     IArcaneTerminalHost host,
+                                                                    IArcaneTerminalHost host,
                                                                     GuiHostLocator locator,
                                                                     boolean returnedFromSubScreen,
                                                                     int windowId) {
@@ -355,7 +355,7 @@ public final class ThEGuiOpener {
 
         @Override
         public void send(PacketOpenLocatorGUI packet) {
-            PacketHandler.sendToPlayer(this.player, packet);
+            ThENetwork.sendOpenLocatorGui(this.player, packet);
         }
 
         @Override

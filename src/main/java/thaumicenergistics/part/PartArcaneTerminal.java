@@ -1,5 +1,6 @@
 package thaumicenergistics.part;
 
+import ae2.api.inventories.InternalInventory;
 import ae2.api.parts.IPartItem;
 import ae2.api.parts.IPartModel;
 import ae2.api.upgrades.IUpgradeInventory;
@@ -28,7 +29,6 @@ import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.util.AEUtil;
 import thaumicenergistics.util.ForgeUtil;
-import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
@@ -90,17 +90,30 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
     @Override
     public IItemHandler getInventoryByName(String name) {
         if (name.equalsIgnoreCase("crafting")) {
-            return new InvWrapper(this.craftingInventory);
+            return this.getArcaneCraftingItemHandlerBridge();
         }
         if (name.equalsIgnoreCase("upgrades")) {
-            return this.getArcaneUpgradeInventory().toItemHandler();
+            return this.getArcaneUpgradeItemHandlerBridge();
         }
         return null;
     }
 
     @Override
+    public ThEInternalInventory getArcaneCraftingInventory() {
+        return this.craftingInventory;
+    }
+
+    @Override
     public IUpgradeInventory getArcaneUpgradeInventory() {
         return this.upgradeInventory;
+    }
+
+    private IItemHandler getArcaneCraftingItemHandlerBridge() {
+        return new InvWrapper(this.getArcaneCraftingInventory());
+    }
+
+    private IItemHandler getArcaneUpgradeItemHandlerBridge() {
+        return this.getArcaneUpgradeInventory().toItemHandler();
     }
 
     @Override
@@ -140,8 +153,16 @@ public class PartArcaneTerminal extends AbstractTerminalPart implements IArcaneT
     }
 
     protected void addArcaneDrops(List<ItemStack> drops) {
-        drops.addAll(ItemHandlerUtil.getInventoryAsList(this.getInventoryByName("crafting")));
-        drops.addAll(ItemHandlerUtil.getInventoryAsList(this.getArcaneUpgradeInventory().toItemHandler()));
+        this.addInventoryDrops(drops, this.getArcaneCraftingInventory());
+        this.addInventoryDrops(drops, this.getArcaneUpgradeInventory());
+    }
+
+    protected final void addInventoryDrops(List<ItemStack> drops, InternalInventory inventory) {
+        for (ItemStack stack : inventory) {
+            if (!stack.isEmpty()) {
+                drops.add(stack);
+            }
+        }
     }
 
     @Override

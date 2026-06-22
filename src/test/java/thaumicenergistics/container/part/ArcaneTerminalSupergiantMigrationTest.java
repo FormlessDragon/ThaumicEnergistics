@@ -45,7 +45,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.ThaumicEnergisticsApi;
@@ -67,6 +66,7 @@ import thaumicenergistics.items.ItemWirelessArcaneTerminal;
 import thaumicenergistics.part.ArcaneP2PTunnelPart;
 import thaumicenergistics.part.PartArcaneTerminal;
 import thaumicenergistics.test.FakeMinecraft;
+import thaumicenergistics.util.inventory.ThEInternalInventory;
 import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
 import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 
@@ -193,7 +193,6 @@ class ArcaneTerminalSupergiantMigrationTest {
         host.arcaneUpgradeInventory.setItemDirect(0, ThEItems.UPGRADE_ARCANE.stack(1));
 
         ContainerArcaneTerm terminal = new ContainerArcaneTerm(player.inventory, host);
-        IItemHandler upgradeHandler = terminal.getInventory("upgrades");
         AppEngSlot upgradeSlot = assertInstanceOf(AppEngSlot.class,
                 terminal.inventorySlots.stream()
                         .filter(slot -> slot instanceof AppEngSlot
@@ -206,7 +205,6 @@ class ArcaneTerminalSupergiantMigrationTest {
         assertAll(
                 () -> assertSame(host.arcaneUpgradeInventory, terminal.getArcaneHost().getArcaneUpgradeInventory()),
                 () -> assertSame(host.arcaneUpgradeInventory, upgradeSlot.getInventory()),
-                () -> assertTrue(ItemStack.areItemStacksEqual(typedUpgradeStack, upgradeHandler.getStackInSlot(0))),
                 () -> assertTrue(ItemStack.areItemStacksEqual(typedUpgradeStack, upgradeSlot.getStack())),
                 () -> assertEquals(SlotBackgroundIcon.UPGRADE, upgradeSlot.getBackgroundIcon()),
                 () -> assertTrue(terminal.hasArcaneVisRangeUpgrade()),
@@ -605,7 +603,7 @@ class ArcaneTerminalSupergiantMigrationTest {
 
     private static final class TestArcaneTerminalHost implements IArcaneTerminalHost, IPart {
 
-        private final ItemStackHandler craftingInventory = new ItemStackHandler(15);
+        private final ThEInternalInventory craftingInventory = new ThEInternalInventory("matrix", 15, 64);
         private final ThEUpgradeInventory arcaneUpgradeInventory =
                 new ThEUpgradeInventory("upgrades", 1, 1, ThEParts.ARCANE_TERMINAL.stack(1));
         private int namedUpgradeLookupCount;
@@ -641,13 +639,18 @@ class ArcaneTerminalSupergiantMigrationTest {
         @Override
         public IItemHandler getInventoryByName(String name) {
             if ("crafting".equals(name)) {
-                return this.craftingInventory;
+                return this.getArcaneCraftingInventory().toItemHandler();
             }
             if ("upgrades".equals(name)) {
                 this.namedUpgradeLookupCount++;
                 throw new AssertionError("Arcane terminal consumers must use typed arcane upgrade inventory");
             }
             return null;
+        }
+
+        @Override
+        public ThEInternalInventory getArcaneCraftingInventory() {
+            return this.craftingInventory;
         }
 
         @Override

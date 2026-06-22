@@ -2,18 +2,19 @@ package thaumicenergistics.network.packets;
 
 import ae2.core.gui.locator.GuiHostLocator;
 import ae2.core.gui.locator.GuiHostLocators;
+import ae2.core.network.ClientboundPacket;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import thaumicenergistics.ThaumicEnergistics;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumicenergistics.client.gui.ThEClientGuiOpener;
 import thaumicenergistics.init.ModGUIs;
 
 /**
  * Opens a ThE GUI on the client with AE2's full host locator payload.
  */
-public class PacketOpenLocatorGUI implements IMessage {
+public class PacketOpenLocatorGUI extends ClientboundPacket {
 
     private ModGUIs gui;
     private GuiHostLocator locator;
@@ -36,7 +37,7 @@ public class PacketOpenLocatorGUI implements IMessage {
     }
 
     @Override
-    public void fromBytes(ByteBuf buf) {
+    protected void read(ByteBuf buf) {
         PacketBuffer packetBuffer = new PacketBuffer(buf);
         int guiOrdinal = packetBuffer.readUnsignedByte();
         this.gui = validateGuiOrdinal(guiOrdinal);
@@ -55,7 +56,7 @@ public class PacketOpenLocatorGUI implements IMessage {
     }
 
     @Override
-    public void toBytes(ByteBuf buf) {
+    protected void write(ByteBuf buf) {
         PacketBuffer packetBuffer = new PacketBuffer(buf);
         ModGUIs validatedGui = validateSupportedGui(this.gui);
         if (this.locator == null) {
@@ -65,6 +66,12 @@ public class PacketOpenLocatorGUI implements IMessage {
         GuiHostLocators.writeToPacket(packetBuffer, this.locator);
         packetBuffer.writeBoolean(this.returnedFromSubScreen);
         packetBuffer.writeVarInt(validateWindowId(this.windowId));
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void handleClient(Minecraft minecraft) {
+        ThEClientGuiOpener.openLocatorGui(minecraft, this);
     }
 
     public ModGUIs gui() {
@@ -98,18 +105,12 @@ public class PacketOpenLocatorGUI implements IMessage {
         if (gui == null) {
             throw new IllegalArgumentException("PacketOpenLocatorGUI gui cannot be null");
         }
-        switch (gui) {
-            case ARCANE_TERMINAL:
-            case ARCANE_INSCRIBER:
-            case ARCANE_ASSEMBLER:
-            case KNOWLEDGE_CORE_ADD:
-            case KNOWLEDGE_CORE_DEL:
-            case KNOWLEDGE_CORE_VIEW:
-            case WIRELESS_ARCANE_TERMINAL:
-                return gui;
-            default:
-                throw new IllegalArgumentException("Unsupported PacketOpenLocatorGUI gui: " + gui);
-        }
+        return switch (gui) {
+            case ARCANE_TERMINAL, ARCANE_INSCRIBER, ARCANE_ASSEMBLER,
+                 KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW,
+                 WIRELESS_ARCANE_TERMINAL -> gui;
+            default -> throw new IllegalArgumentException("Unsupported PacketOpenLocatorGUI gui: " + gui);
+        };
     }
 
     static int validateWindowId(int windowId) {
@@ -117,14 +118,5 @@ public class PacketOpenLocatorGUI implements IMessage {
             throw new IllegalArgumentException("PacketOpenLocatorGUI windowId cannot be negative: " + windowId);
         }
         return windowId;
-    }
-
-    public static class Handler implements IMessageHandler<PacketOpenLocatorGUI, IMessage> {
-
-        @Override
-        public IMessage onMessage(PacketOpenLocatorGUI message, MessageContext ctx) {
-            ThaumicEnergistics.proxy.openLocatorGui(message, ctx);
-            return null;
-        }
     }
 }

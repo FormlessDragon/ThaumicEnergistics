@@ -1,7 +1,10 @@
 package thaumicenergistics.container.slot;
 
 import ae2.api.inventories.BaseInternalInventory;
+import ae2.api.inventories.InternalInventory;
 import ae2.container.slot.AppEngSlot;
+import ae2.container.slot.FakeSlot;
+import ae2.container.slot.OutputSlot;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -15,6 +18,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.items.ItemStackHandler;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import thaumicenergistics.container.ICraftingContainer;
 import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.test.FakeMinecraft;
 
@@ -82,6 +86,69 @@ class ArcaneSlotSupergiantMigrationTest {
     }
 
     @Test
+    void arcaneMatrixSlotUsesSupergiantInventoryAndContainerPlacementRules() {
+        TestCraftingContainer container = new TestCraftingContainer();
+        SlotArcaneMatrix slot = new SlotArcaneMatrix(container, 0, 12, 34);
+        ItemStack diamonds = new ItemStack(Items.DIAMOND, 3);
+
+        slot.putStack(diamonds.copy());
+
+        assertAll(
+                () -> assertInstanceOf(AppEngSlot.class, slot),
+                () -> assertSame(container.craftingInventory, slot.getInventory()),
+                () -> assertTrue(slot.isItemValid(new ItemStack(Items.DIAMOND))),
+                () -> assertFalse(slot.isItemValid(new ItemStack(Items.GOLD_INGOT))),
+                () -> assertEquals(1, container.matrixChanges),
+                () -> assertEquals(Items.DIAMOND, container.craftingInventory.getStackInSlot(0).getItem()),
+                () -> assertEquals(3, container.craftingInventory.getStackInSlot(0).getCount()));
+    }
+
+    @Test
+    void arcaneGhostMatrixSlotUsesFakeSlotFilteringSemantics() {
+        TestCraftingContainer container = new TestCraftingContainer();
+        SlotArcaneGhostMatrix slot = new SlotArcaneGhostMatrix(container, 0, 12, 34);
+        EntityPlayer player = new TestPlayer(FakeMinecraft.serverWorld(), false);
+        ItemStack filter = new ItemStack(Items.DIAMOND, 5);
+
+        assertAll(
+                () -> assertInstanceOf(FakeSlot.class, slot),
+                () -> assertSame(container.craftingInventory, slot.getInventory()),
+                () -> assertFalse(slot.isItemValid(filter)),
+                () -> assertFalse(slot.canTakeStack(player)),
+                () -> assertTrue(slot.decrStackSize(1).isEmpty()));
+
+        slot.putStack(filter);
+        ItemStack stored = slot.getStack();
+
+        assertAll(
+                () -> assertEquals(1, container.matrixChanges),
+                () -> assertEquals(Items.DIAMOND, stored.getItem()),
+                () -> assertEquals(5, stored.getCount()),
+                () -> assertEquals(5, filter.getCount()),
+                () -> assertEquals(Items.DIAMOND, container.craftingInventory.getStackInSlot(0).getItem()),
+                () -> assertEquals(5, container.craftingInventory.getStackInSlot(0).getCount()));
+    }
+
+    @Test
+    void arcaneResultSlotUsesOutputSlotAndCannotBeInsertedOrTakenDirectly() {
+        TestCraftingContainer container = new TestCraftingContainer();
+        EntityPlayer player = new TestPlayer(FakeMinecraft.serverWorld(), false);
+        SlotArcaneResult slot = new SlotArcaneResult(container, player, 0, 84, 18);
+        container.resultInventory.setItemDirect(0, new ItemStack(Items.EMERALD, 2));
+
+        ItemStack extracted = slot.decrStackSize(1);
+
+        assertAll(
+                () -> assertInstanceOf(OutputSlot.class, slot),
+                () -> assertSame(container.resultInventory, slot.getInventory()),
+                () -> assertFalse(slot.isItemValid(new ItemStack(Items.DIAMOND))),
+                () -> assertFalse(slot.canTakeStack(player)),
+                () -> assertTrue(extracted.isEmpty()),
+                () -> assertEquals(Items.EMERALD, slot.getStack().getItem()),
+                () -> assertEquals(2, slot.getStack().getCount()));
+    }
+
+    @Test
     void slotRecalculationCanIgnoreDynamicSlotCount() {
         SlotArmor slot = new SlotArmor(
                 new TestPlayer(FakeMinecraft.serverWorld(), false),
@@ -130,6 +197,12 @@ class ArcaneSlotSupergiantMigrationTest {
         assertAll(
                 () -> assertThrows(NullPointerException.class,
                         () -> new SlotKnowledgeCore(null, 0, 0, 0)),
+                () -> assertThrows(NullPointerException.class, () -> new SlotArcaneMatrix(null, 0, 0, 0)),
+                () -> assertThrows(NullPointerException.class, () -> new SlotArcaneGhostMatrix(null, 0, 0, 0)),
+                () -> assertThrows(NullPointerException.class,
+                        () -> new SlotArcaneResult(null, player, 0, 0, 0)),
+                () -> assertThrows(NullPointerException.class,
+                        () -> new SlotArcaneResult(new TestCraftingContainer(), null, 0, 0, 0)),
                 () -> assertThrows(NullPointerException.class, () -> new SlotArmor(null, handler, 0, 0, 0)),
                 () -> assertThrows(NullPointerException.class, () -> new SlotArmor(player, null, 0, 0, 0)));
     }
@@ -158,10 +231,16 @@ class ArcaneSlotSupergiantMigrationTest {
 
         private final NonNullList<ItemStack> stacks;
         private final int slotLimit;
+        private final boolean rejectGold;
 
         private LimitedInternalInventory(int size, int slotLimit) {
+            this(size, slotLimit, false);
+        }
+
+        private LimitedInternalInventory(int size, int slotLimit, boolean rejectGold) {
             this.stacks = NonNullList.withSize(size, ItemStack.EMPTY);
             this.slotLimit = slotLimit;
+            this.rejectGold = rejectGold;
         }
 
         @Override
@@ -186,8 +265,41 @@ class ArcaneSlotSupergiantMigrationTest {
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return !stack.isEmpty();
+            return !stack.isEmpty() && (!this.rejectGold || stack.getItem() != Items.GOLD_INGOT);
         }
+    }
+
+    private static final class TestCraftingContainer implements ICraftingContainer {
+
+        private final LimitedInternalInventory craftingInventory = new LimitedInternalInventory(15, 64, true);
+        private final LimitedInternalInventory resultInventory = new LimitedInternalInventory(1, 64);
+        private int matrixChanges;
+
+        @Override
+        public void onMatrixChanged() {
+            this.matrixChanges++;
+        }
+
+        @Override
+        public int tryCraft(int amount) {
+            throw new UnsupportedOperationException("Slot test container does not craft");
+        }
+
+        @Override
+        public ItemStack onCraft(ItemStack crafted) {
+            throw new UnsupportedOperationException("Slot test container does not craft");
+        }
+
+        @Override
+        public InternalInventory getCraftingInventory() {
+            return this.craftingInventory;
+        }
+
+        @Override
+        public InternalInventory getCraftingResultInventory() {
+            return this.resultInventory;
+        }
+
     }
 
     private static final class TestPlayer extends EntityPlayer {

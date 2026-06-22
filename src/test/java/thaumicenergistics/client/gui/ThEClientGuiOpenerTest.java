@@ -1,5 +1,6 @@
 package thaumicenergistics.client.gui;
 
+import ae2.api.inventories.InternalInventory;
 import ae2.api.storage.ILinkStatus;
 import ae2.api.storage.MEStorage;
 import ae2.api.upgrades.IUpgradeInventory;
@@ -555,6 +556,11 @@ class ThEClientGuiOpenerTest {
                 case "upgrades" -> this.upgradeInventory.toItemHandler();
                 default -> null;
             };
+        }
+
+        @Override
+        public InternalInventory getArcaneCraftingInventory() {
+            return this.craftingInventory;
         }
 
         @Override

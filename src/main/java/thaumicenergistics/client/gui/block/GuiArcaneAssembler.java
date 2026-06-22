@@ -1,12 +1,12 @@
 package thaumicenergistics.client.gui.block;
 
+import ae2.api.inventories.InternalInventory;
 import ae2.client.gui.AEBaseGui;
 import ae2.client.gui.style.GuiStyleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraftforge.items.IItemHandler;
 import org.lwjgl.opengl.GL11;
 import thaumcraft.codechicken.lib.math.MathHelper;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
@@ -24,13 +24,13 @@ public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
     private static final int[][] aspectGUILoc = {{69, 2}, {21, 82}, {21, 25}, {117, 25}, {117, 82}, {69, 106}};
     private static final ResourceLocation BACKGROUND_ACTIVE = new ResourceLocation(Reference.MOD_ID, "textures/gui/arcane_assembler/active.png");
     private static final ResourceLocation ASPECTS = new ResourceLocation(Reference.MOD_ID, "textures/gui/arcane_assembler/aspects.png");
-    private final IItemHandler inv;
+    private final InternalInventory coreInventory;
     private float enAlpha;
 
     public GuiArcaneAssembler(ContainerArcaneAssembler container, InventoryPlayer playerInventory) {
         super(container, playerInventory, GuiStyleManager.loadStyleDoc(STYLE_PATH));
-        this.inv = container.getInventory("cores");
-        this.enAlpha = inv.getStackInSlot(0).isEmpty() ? 0.0F : 1.0F;
+        this.coreInventory = container.getCoreInventory();
+        this.enAlpha = this.coreInventory.getStackInSlot(0).isEmpty() ? 0.0F : 1.0F;
         this.setTextContent(AEBaseGui.TEXT_ID_DIALOG_TITLE,
                 new TextComponentString(ThEFeatures.instance().lang().tileArcaneAssembler().getLocalizedKey()));
     }
@@ -38,7 +38,7 @@ public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
     @Override
     public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
         super.drawFG(offsetX, offsetY, mouseX, mouseY);
-        if (!this.inv.getStackInSlot(0).isEmpty()) {
+        if (!this.coreInventory.getStackInSlot(0).isEmpty()) {
             if (this.container.getGuiState().getAspectExists().containsValue(false))
                 this.fontRenderer.drawString(ThEFeatures.instance().lang().guiOutOfAspect().getLocalizedKey(), 100, this.getYSize() - 92, Color.RED.getRGB());
             if (!this.container.getGuiState().hasEnoughVis())
@@ -50,7 +50,7 @@ public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
     public void drawBG(int offsetX, int offsetY, int mouseX, int mouseY, float partialTicks) {
         super.drawBG(offsetX, offsetY, mouseX, mouseY, partialTicks);
 
-        if (this.inv.getStackInSlot(0).isEmpty()) {
+        if (this.coreInventory.getStackInSlot(0).isEmpty()) {
             if (this.enAlpha > 0.0F) this.enAlpha -= 0.05F * partialTicks;
         } else {
             if (this.enAlpha < 1.0F) this.enAlpha += 0.05F * partialTicks;
@@ -68,7 +68,7 @@ public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
             Boolean haveAspect = this.container.getGuiState().getAspectExists().get(aspects[i]);
             int x = aspectGUILoc[i][0];
             int y = aspectGUILoc[i][1];
-            if (haveAspect != null && !this.inv.getStackInSlot(0).isEmpty()) {   // recipe needs this aspect & we have a KCore
+            if (haveAspect != null && !this.coreInventory.getStackInSlot(0).isEmpty()) {   // recipe needs this aspect & we have a KCore
                 if (!haveAspect) {       // we don't have enough of this aspect
                     float alpha = (float) ((MathHelper.sin((Minecraft.getSystemTime() / 200.0) % (2 * MathHelper.pi)) + 1.0) / 2.0);
                     GL11.glColor4f(1.0F, 1.0F, 1.0F, alpha * this.enAlpha);

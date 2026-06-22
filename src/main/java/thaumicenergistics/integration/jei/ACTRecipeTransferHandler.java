@@ -1,6 +1,7 @@
 package thaumicenergistics.integration.jei;
 
 import mcp.MethodsReturnNonnullByDefault;
+import ae2.api.inventories.InternalInventory;
 import ae2.api.stacks.AEItemKey;
 import ae2.container.me.common.GridInventoryEntry;
 import ae2.container.me.common.IClientRepo;
@@ -13,6 +14,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.util.ForgeUtil;
+import thaumicenergistics.util.ThELog;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -183,18 +185,19 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
 
         private static AvailableIngredients from(ContainerArcaneTerm container) {
             AvailableIngredients ingredients = new AvailableIngredients();
-            addHandlerStacks(ingredients, container.getInventory("crafting"));
+            addInternalInventoryStacks(ingredients, container.getCraftingInventory());
             addUnlockedPlayerStacks(ingredients, container);
             addClientRepoStacks(ingredients, container);
             return ingredients;
         }
 
-        private static void addHandlerStacks(AvailableIngredients ingredients, net.minecraftforge.items.IItemHandler handler) {
-            if (handler == null) {
-                return;
+        private static void addInternalInventoryStacks(AvailableIngredients ingredients, InternalInventory inventory) {
+            if (inventory == null) {
+                ThELog.error("Arcane terminal JEI transfer cannot inspect crafting inventory: inventory is null");
+                throw new NullPointerException("crafting inventory");
             }
-            for (int slot = 0; slot < handler.getSlots(); slot++) {
-                ingredients.add(handler.getStackInSlot(slot));
+            for (int slot = 0; slot < inventory.size(); slot++) {
+                ingredients.add(inventory.getStackInSlot(slot));
             }
         }
 
