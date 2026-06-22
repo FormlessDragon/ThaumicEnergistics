@@ -125,7 +125,9 @@ class ContainerKnowledgeCoreTest {
                 () -> assertInstanceOf(ISubGui.class, container),
                 () -> assertSame(locator, container.getLocator()),
                 () -> assertSame(host, container.getHost()),
-                () -> assertSame(host, container.getLocator().locate(player, IArcaneTerminalHost.class)));
+                () -> assertSame(host, container.getLocator().locate(player, IArcaneTerminalHost.class)),
+                () -> assertEquals(0, host.namedUpgradeInventoryCalls),
+                () -> assertEquals(1, host.upgradeInventory.getStackInSlotCalls));
     }
 
     @Test
@@ -265,6 +267,7 @@ class ContainerKnowledgeCoreTest {
         host.upgradeInventory.setInventorySlotContents(0, knowledgeCore);
         host.craftingInventory.setInventorySlotContents(0, ingredient);
         parent.getInventory("result").insertItem(0, result.copy(), false);
+        host.upgradeInventory.resetCalls();
         ContainerKnowledgeCore container = new ContainerKnowledgeCore(
                 player, ModGUIs.KNOWLEDGE_CORE_ADD, parent, locator);
 
@@ -280,7 +283,9 @@ class ContainerKnowledgeCoreTest {
                 () -> assertEquals(result.getCount(), recipe.result().getCount()),
                 () -> assertEquals(ingredient.getItem(), recipe.ingredients().getStackInSlot(0).getItem()),
                 () -> assertEquals(ingredient.getCount(), recipe.ingredients().getStackInSlot(0).getCount()),
-                () -> assertEquals(requiredVis, recipe.visCost(), 0.0001f));
+                () -> assertEquals(requiredVis, recipe.visCost(), 0.0001f),
+                () -> assertEquals(0, host.namedUpgradeInventoryCalls),
+                () -> assertEquals(0, host.upgradeInventory.setItemDirectCalls));
     }
 
     @Test
@@ -294,6 +299,7 @@ class ContainerKnowledgeCoreTest {
         KnowledgeCoreUtil.setRecipe(knowledgeCore, 3,
                 new KnowledgeCoreUtil.Recipe(ingredients, new ItemStack(Items.DIAMOND), 0));
         host.upgradeInventory.setInventorySlotContents(0, knowledgeCore);
+        host.upgradeInventory.resetCalls();
         ContainerKnowledgeCore container = new ContainerKnowledgeCore(
                 player, ModGUIs.KNOWLEDGE_CORE_DEL, parent, locator);
 
@@ -302,7 +308,9 @@ class ContainerKnowledgeCoreTest {
         assertAll(
                 () -> assertEquals(1, host.returnCalls),
                 () -> assertSame(container, host.returnedSubGui),
-                () -> assertTrue(KnowledgeCoreUtil.isEmpty(host.upgradeInventory.getStackInSlot(0))));
+                () -> assertTrue(KnowledgeCoreUtil.isEmpty(host.upgradeInventory.getStackInSlot(0))),
+                () -> assertEquals(0, host.namedUpgradeInventoryCalls),
+                () -> assertEquals(1, host.upgradeInventory.setItemDirectCalls));
     }
 
     private static ContainerArcaneInscriber newParent(FakeMinecraft.FakePlayer player,
@@ -310,6 +318,7 @@ class ContainerKnowledgeCoreTest {
                                                       GuiHostLocator locator) {
         ContainerArcaneInscriber parent = new ContainerArcaneInscriber(player.inventory, host);
         parent.setLocator(locator);
+        host.rejectNamedUpgradeInventory();
         return parent;
     }
 
@@ -319,6 +328,7 @@ class ContainerKnowledgeCoreTest {
                                                       float requiredVis) {
         ContainerArcaneInscriber parent = new FixedVisArcaneInscriber(player, host, requiredVis);
         parent.setLocator(locator);
+        host.rejectNamedUpgradeInventory();
         return parent;
     }
 
@@ -359,11 +369,19 @@ class ContainerKnowledgeCoreTest {
     private static final class RecordingArcaneHost implements IArcaneTerminalHost, IPart {
 
         private final ThEInternalInventory craftingInventory = new ThEInternalInventory("crafting", 15, 64);
-        private final ThEKnowledgeCoreInventory upgradeInventory =
-                new ThEKnowledgeCoreInventory("upgrades", 1, 1, new ItemStack(net.minecraft.init.Items.STICK));
+        private final RecordingKnowledgeCoreInventory upgradeInventory =
+                new RecordingKnowledgeCoreInventory("upgrades", 1, 1, new ItemStack(net.minecraft.init.Items.STICK));
+        private boolean rejectNamedUpgradeInventory;
+        private int namedUpgradeInventoryCalls;
         private int returnCalls;
         private EntityPlayer returnedPlayer;
         private ISubGui returnedSubGui;
+
+        private void rejectNamedUpgradeInventory() {
+            this.namedUpgradeInventoryCalls = 0;
+            this.upgradeInventory.resetCalls();
+            this.rejectNamedUpgradeInventory = true;
+        }
 
         @Override
         public IPartItem<?> getPartItem() {
@@ -397,7 +415,13 @@ class ContainerKnowledgeCoreTest {
         public IItemHandler getInventoryByName(String name) {
             return switch (name) {
                 case "crafting" -> new InvWrapper(this.craftingInventory);
-                case "upgrades" -> this.upgradeInventory.toItemHandler();
+                case "upgrades" -> {
+                    this.namedUpgradeInventoryCalls++;
+                    if (this.rejectNamedUpgradeInventory) {
+                        throw new AssertionError("Knowledge Core container must use typed upgrade inventory");
+                    }
+                    yield this.upgradeInventory.toItemHandler();
+                }
                 default -> null;
             };
         }
@@ -463,6 +487,33 @@ class ContainerKnowledgeCoreTest {
         public IConfigManager getConfigManager() {
             return IConfigManager.builder(() -> {
             }).build();
+        }
+    }
+
+    private static final class RecordingKnowledgeCoreInventory extends ThEKnowledgeCoreInventory {
+
+        private int getStackInSlotCalls;
+        private int setItemDirectCalls;
+
+        private RecordingKnowledgeCoreInventory(String customName, int size, int stackLimit, ItemStack upgradable) {
+            super(customName, size, stackLimit, upgradable);
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int index) {
+            this.getStackInSlotCalls++;
+            return super.getStackInSlot(index);
+        }
+
+        @Override
+        public void setItemDirect(int slotIndex, ItemStack stack) {
+            this.setItemDirectCalls++;
+            super.setItemDirect(slotIndex, stack);
+        }
+
+        private void resetCalls() {
+            this.getStackInSlotCalls = 0;
+            this.setItemDirectCalls = 0;
         }
     }
 }

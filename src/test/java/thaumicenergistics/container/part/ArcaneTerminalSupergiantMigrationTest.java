@@ -33,6 +33,7 @@ import com.google.gson.JsonPrimitive;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Bootstrap;
+import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -41,6 +42,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.ThaumicEnergisticsApi;
@@ -52,6 +54,7 @@ import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.client.gui.part.GuiArcaneTerm;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
+import thaumicenergistics.container.slot.SlotUpgrade;
 import thaumicenergistics.core.definitions.ThEApiItems;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.core.definitions.ThEParts;
@@ -176,6 +179,47 @@ class ArcaneTerminalSupergiantMigrationTest {
                 () -> assertNotNull(amountFactory),
                 () -> assertNotNull(confirmFactory),
                 () -> assertNotNull(statusFactory));
+    }
+
+    @Test
+    void arcaneTerminalUpgradeConsumerReadsTypedArcaneUpgradeInventory() {
+        TestArcaneTerminalHost host = new TestArcaneTerminalHost();
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.clientWorld());
+        host.arcaneUpgradeInventory.setItemDirect(0, new ItemStack(Items.DIAMOND));
+
+        ContainerArcaneTerm terminal = new ContainerArcaneTerm(player.inventory, host);
+        IItemHandler upgradeHandler = terminal.getInventory("upgrades");
+        SlotUpgrade upgradeSlot = assertInstanceOf(SlotUpgrade.class,
+                terminal.inventorySlots.stream()
+                        .filter(slot -> slot instanceof SlotUpgrade)
+                        .findFirst()
+                        .orElseThrow(() -> new AssertionError("Arcane terminal upgrade slot is missing")));
+        host.arcaneUpgradeInventory.setItemDirect(0, new ItemStack(Items.EMERALD));
+        ItemStack typedUpgradeStack = host.arcaneUpgradeInventory.getStackInSlot(0);
+
+        assertAll(
+                () -> assertSame(host.arcaneUpgradeInventory, terminal.getArcaneUpgradeInventory()),
+                () -> assertTrue(ItemStack.areItemStacksEqual(typedUpgradeStack, upgradeHandler.getStackInSlot(0))),
+                () -> assertTrue(ItemStack.areItemStacksEqual(typedUpgradeStack, upgradeSlot.getStack())),
+                () -> assertTrue(terminal.hasArcaneVisRangeUpgrade()),
+                () -> assertEquals(0, host.namedUpgradeLookupCount,
+                        "Arcane terminal must not consume host named upgrades inventory"));
+    }
+
+    @Test
+    void arcaneTerminalVisUpgradeDetectionReadsTypedArcaneUpgradeInventory() {
+        TestArcaneTerminalHost host = new TestArcaneTerminalHost();
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.clientWorld());
+        ContainerArcaneTerm terminal = new ContainerArcaneTerm(player.inventory, host);
+
+        assertFalse(terminal.hasArcaneVisRangeUpgrade());
+
+        host.arcaneUpgradeInventory.setItemDirect(0, new ItemStack(Items.DIAMOND));
+
+        assertAll(
+                () -> assertTrue(terminal.hasArcaneVisRangeUpgrade()),
+                () -> assertEquals(0, host.namedUpgradeLookupCount,
+                        "Vis upgrade detection must not consume host named upgrades inventory"));
     }
 
     @Test
@@ -499,8 +543,10 @@ class ArcaneTerminalSupergiantMigrationTest {
 
     private static final class TestArcaneTerminalHost implements IArcaneTerminalHost, IPart {
 
+        private final ItemStackHandler craftingInventory = new ItemStackHandler(15);
         private final ThEUpgradeInventory arcaneUpgradeInventory =
-                new ThEUpgradeInventory("upgrades", 1, 1, new ItemStack(net.minecraft.init.Items.STICK));
+                new ThEUpgradeInventory("upgrades", 1, 1, new ItemStack(Items.STICK));
+        private int namedUpgradeLookupCount;
 
         @Override
         public IPartItem<?> getPartItem() {
@@ -532,8 +578,12 @@ class ArcaneTerminalSupergiantMigrationTest {
 
         @Override
         public IItemHandler getInventoryByName(String name) {
+            if ("crafting".equals(name)) {
+                return this.craftingInventory;
+            }
             if ("upgrades".equals(name)) {
-                return this.arcaneUpgradeInventory.toItemHandler();
+                this.namedUpgradeLookupCount++;
+                throw new AssertionError("Arcane terminal consumers must use typed arcane upgrade inventory");
             }
             return null;
         }

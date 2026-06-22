@@ -68,7 +68,7 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
         this.parentContainer = parent;
         this.parentLocator = parentLocator;
         this.parentHost = parentHost;
-        this.knowledgeCoreStack = this.parentContainer.getInventory("upgrades").getStackInSlot(0);
+        this.knowledgeCoreStack = this.parentHost.getArcaneUpgradeInventory().getStackInSlot(0);
         initInv();
         addSlots(8, 15);
         registerClientAction(ACTION_ADD_RECIPE, Integer.class, this::handleAddRecipe);

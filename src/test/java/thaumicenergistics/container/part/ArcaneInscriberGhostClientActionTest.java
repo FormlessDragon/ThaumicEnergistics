@@ -13,7 +13,9 @@ import ae2.api.storage.MEStorage;
 import ae2.api.util.AECableType;
 import ae2.api.util.IConfigManager;
 import ae2.container.ISubGui;
+import ae2.core.gui.locator.GuiHostLocator;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Bootstrap;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.Slot;
@@ -29,6 +31,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.container.slot.SlotArcaneGhostMatrix;
+import thaumicenergistics.container.slot.SlotKnowledgeCore;
+import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.ModGUIs;
 import thaumicenergistics.test.FakeMinecraft;
 import thaumicenergistics.util.inventory.ThEKnowledgeCoreInventory;
@@ -150,9 +154,84 @@ class ArcaneInscriberGhostClientActionTest {
         assertEquals(Items.GOLD_INGOT, slot.getStack().getItem());
     }
 
+    @Test
+    void knowledgeCoreSlotUsesTypedArcaneUpgradeInventory() {
+        StrictArcaneUpgradeHost host = new StrictArcaneUpgradeHost();
+        ContainerArcaneInscriber container = newContainer(host);
+        SlotKnowledgeCore slot = knowledgeCoreSlot(container);
+        ItemStack core = ThEItems.KNOWLEDGE_CORE.stack(1);
+
+        slot.putStack(core.copy());
+
+        assertAll(
+                () -> assertEquals(0, host.namedUpgradeInventoryCalls),
+                () -> assertEquals(core.getItem(), host.arcaneUpgrades().getStackInSlot(0).getItem()),
+                () -> assertEquals(1, host.typedArcaneUpgradeInventoryCalls));
+    }
+
+    @Test
+    void knowledgeCoreAddUsesTypedArcaneUpgradeInventory() {
+        StrictArcaneUpgradeHost host = new StrictArcaneUpgradeHost();
+        TestArcaneInscriber container = newArcaneRecipeContainer(host);
+        container.getInventory("result").insertItem(0, new ItemStack(Items.DIAMOND), false);
+        host.arcaneUpgrades().setItemDirect(0, ThEItems.KNOWLEDGE_CORE.stack(1));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                container::requestKnowledgeCoreAdd);
+
+        assertAll(
+                () -> assertTrue(exception.getMessage().contains("non-server player"), exception.getMessage()),
+                () -> assertEquals(0, host.namedUpgradeInventoryCalls),
+                () -> assertTrue(host.typedArcaneUpgradeInventoryCalls > 0));
+    }
+
+    @Test
+    void knowledgeCoreDelUsesTypedArcaneUpgradeInventory() {
+        StrictArcaneUpgradeHost host = new StrictArcaneUpgradeHost();
+        ContainerArcaneInscriber container = newContainer(host);
+        host.arcaneUpgrades().setItemDirect(0, ThEItems.KNOWLEDGE_CORE.stack(1));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                container::requestKnowledgeCoreDel);
+
+        assertAll(
+                () -> assertTrue(exception.getMessage().contains("non-server player"), exception.getMessage()),
+                () -> assertEquals(0, host.namedUpgradeInventoryCalls),
+                () -> assertTrue(host.typedArcaneUpgradeInventoryCalls > 0));
+    }
+
+    @Test
+    void knowledgeCoreViewUsesTypedArcaneUpgradeInventory() {
+        StrictArcaneUpgradeHost host = new StrictArcaneUpgradeHost();
+        ContainerArcaneInscriber container = newContainer(host);
+        host.arcaneUpgrades().setItemDirect(0, ThEItems.KNOWLEDGE_CORE.stack(1));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                container::requestKnowledgeCoreView);
+
+        assertAll(
+                () -> assertTrue(exception.getMessage().contains("non-server player"), exception.getMessage()),
+                () -> assertEquals(0, host.namedUpgradeInventoryCalls),
+                () -> assertTrue(host.typedArcaneUpgradeInventoryCalls > 0));
+    }
+
     private static ContainerArcaneInscriber newContainer() {
+        return newContainer(new TestArcaneTerminalHost());
+    }
+
+    private static ContainerArcaneInscriber newContainer(TestArcaneTerminalHost host) {
         FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
-        return new ContainerArcaneInscriber(player.inventory, new TestArcaneTerminalHost());
+        ContainerArcaneInscriber container = new ContainerArcaneInscriber(player.inventory, host);
+        container.setLocator(new FixedHostLocator(host));
+        return container;
+    }
+
+    private static TestArcaneInscriber newArcaneRecipeContainer(TestArcaneTerminalHost host) {
+        FakeMinecraft.FakePlayer player = FakeMinecraft.player(FakeMinecraft.serverWorld());
+        TestArcaneInscriber container = new TestArcaneInscriber(player.inventory, host);
+        container.setLocator(new FixedHostLocator(host));
+        container.refreshIsArcane();
+        return container;
     }
 
     private static SlotArcaneGhostMatrix normalGhostSlot(ContainerArcaneInscriber container) {
@@ -160,6 +239,14 @@ class ArcaneInscriberGhostClientActionTest {
                 .filter(slot -> slot instanceof SlotArcaneGhostMatrix)
                 .map(SlotArcaneGhostMatrix.class::cast)
                 .filter(slot -> slot.getSlotIndex() < 9)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static SlotKnowledgeCore knowledgeCoreSlot(ContainerArcaneInscriber container) {
+        return container.inventorySlots.stream()
+                .filter(SlotKnowledgeCore.class::isInstance)
+                .map(SlotKnowledgeCore.class::cast)
                 .findFirst()
                 .orElseThrow();
     }
@@ -188,7 +275,36 @@ class ArcaneInscriberGhostClientActionTest {
         return "{\"slotNumber\":" + slotNumber + ",\"stackTag\":\"" + escapedStackTag + "\"}";
     }
 
-    private static final class TestArcaneTerminalHost implements IArcaneTerminalHost, IPart, IEnergySource {
+    private static class TestArcaneInscriber extends ContainerArcaneInscriber {
+
+        private TestArcaneInscriber(InventoryPlayer ip, IArcaneTerminalHost host) {
+            super(ip, host);
+        }
+
+        @Override
+        protected boolean hasArcaneRecipeInMatrix() {
+            return true;
+        }
+    }
+
+    private static final class FixedHostLocator implements GuiHostLocator {
+
+        private final IArcaneTerminalHost host;
+
+        private FixedHostLocator(IArcaneTerminalHost host) {
+            this.host = host;
+        }
+
+        @Override
+        public <T> T locate(EntityPlayer player, Class<T> hostInterface) {
+            if (hostInterface.isInstance(this.host)) {
+                return hostInterface.cast(this.host);
+            }
+            return null;
+        }
+    }
+
+    private static class TestArcaneTerminalHost implements IArcaneTerminalHost, IPart, IEnergySource {
 
         private final ItemStackHandler crafting = new ItemStackHandler(15);
         private final ThEKnowledgeCoreInventory upgrades =
@@ -234,6 +350,10 @@ class ArcaneInscriberGhostClientActionTest {
 
         @Override
         public ae2.api.upgrades.IUpgradeInventory getArcaneUpgradeInventory() {
+            return this.upgrades;
+        }
+
+        final ThEKnowledgeCoreInventory arcaneUpgrades() {
             return this.upgrades;
         }
 
@@ -295,6 +415,27 @@ class ArcaneInscriberGhostClientActionTest {
         @Override
         public double extractAEPower(double amt, Actionable mode, PowerMultiplier usePowerMultiplier) {
             return amt;
+        }
+    }
+
+    private static final class StrictArcaneUpgradeHost extends TestArcaneTerminalHost {
+
+        private int namedUpgradeInventoryCalls;
+        private int typedArcaneUpgradeInventoryCalls;
+
+        @Override
+        public IItemHandler getInventoryByName(String name) {
+            if ("upgrades".equalsIgnoreCase(name)) {
+                this.namedUpgradeInventoryCalls++;
+                throw new AssertionError("Arcane Inscriber must use typed arcane upgrade inventory");
+            }
+            return super.getInventoryByName(name);
+        }
+
+        @Override
+        public ae2.api.upgrades.IUpgradeInventory getArcaneUpgradeInventory() {
+            this.typedArcaneUpgradeInventoryCalls++;
+            return super.getArcaneUpgradeInventory();
         }
     }
 

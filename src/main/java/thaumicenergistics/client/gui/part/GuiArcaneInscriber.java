@@ -64,7 +64,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     }
 
     private void updateKnowledgeCoreButtons() {
-        ItemStack knowledgeCore = this.inscriberContainer.getInventory("upgrades").getStackInSlot(0);
+        ItemStack knowledgeCore = this.getKnowledgeCore();
         boolean hasArcaneRecipe = this.inscriberContainer.isRecipeArcane();
         ItemStack result = this.inscriberContainer.getInventory("result").getStackInSlot(0);
         boolean hasRecipe = !result.isEmpty();
@@ -144,7 +144,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     }
 
     private boolean canAddKnowledgeCoreRecipe() {
-        ItemStack knowledgeCore = this.inscriberContainer.getInventory("upgrades").getStackInSlot(0);
+        ItemStack knowledgeCore = this.getKnowledgeCore();
         ItemStack result = this.inscriberContainer.getInventory("result").getStackInSlot(0);
         return !knowledgeCore.isEmpty()
                 && !result.isEmpty()
@@ -153,8 +153,12 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     }
 
     private boolean canOpenStoredKnowledgeCore() {
-        ItemStack knowledgeCore = this.inscriberContainer.getInventory("upgrades").getStackInSlot(0);
+        ItemStack knowledgeCore = this.getKnowledgeCore();
         return !knowledgeCore.isEmpty() && !this.isKnowledgeCoreBlank(knowledgeCore);
+    }
+
+    private ItemStack getKnowledgeCore() {
+        return this.inscriberContainer.getArcaneHost().getArcaneUpgradeInventory().getStackInSlot(0);
     }
 
     private boolean isKnowledgeCoreBlank(ItemStack knowledgeCore) {

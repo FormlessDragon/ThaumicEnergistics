@@ -9,6 +9,7 @@ import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
 import ae2.container.me.common.ContainerMEStorage;
 import ae2.core.network.serverbound.GuiActionPacket;
+import ae2.api.upgrades.IUpgradeInventory;
 import com.google.common.collect.Lists;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -165,8 +166,9 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     public IItemHandler getInventory(String name) {
         switch (name.toLowerCase(Locale.ROOT)) {
             case "crafting":
-            case "upgrades":
                 return this.host.getInventoryByName(name);
+            case "upgrades":
+                return this.getArcaneUpgradeInventory().toItemHandler();
             case "result":
                 return new InvWrapper(this.craftingResult);
             case "player":
@@ -322,7 +324,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
                 TCUtil.drainVis(this.host.getVisWorld(),
                         this.host.getVisPos(),
                         this.getCurrentRequiredVis(),
-                        this.getInventory("upgrades").getStackInSlot(0).isEmpty() ? 0 : 1);
+                        this.hasArcaneVisRangeUpgrade() ? 1 : 0);
             }
 
             inv = this.getInvCrafting(crafting, this.recipe);
@@ -416,7 +418,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         World world = this.host.getVisWorld();
         BlockPos pos = this.host.getVisPos();
         float vis = AuraHelper.getVis(world, pos);
-        if (!this.getInventory("upgrades").getStackInSlot(0).isEmpty()) {
+        if (this.hasArcaneVisRangeUpgrade()) {
             vis += AuraHelper.getVis(world, pos.add(-16, 0, -16));
             vis += AuraHelper.getVis(world, pos.add(-16, 0, 0));
             vis += AuraHelper.getVis(world, pos.add(-16, 0, 16));
@@ -429,6 +431,14 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             vis += AuraHelper.getVis(world, pos.add(16, 0, 16));
         }
         return vis;
+    }
+
+    IUpgradeInventory getArcaneUpgradeInventory() {
+        return this.host.getArcaneUpgradeInventory();
+    }
+
+    boolean hasArcaneVisRangeUpgrade() {
+        return !this.getArcaneUpgradeInventory().getStackInSlot(0).isEmpty();
     }
 
     protected float getRequiredVis(IRecipe recipe, EntityPlayer player) {
@@ -818,7 +828,8 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
     @SuppressWarnings("SameParameterValue")
     protected void addUpgradeSlots(int offsetX, int offsetY) {
-        this.addSlot(new SlotUpgrade(this.getInventory("upgrades"), 0, offsetX, offsetY), SlotSemantics.UPGRADE);
+        this.addSlot(new SlotUpgrade(this.getArcaneUpgradeInventory().toItemHandler(), 0, offsetX, offsetY),
+                SlotSemantics.UPGRADE);
     }
 
     private static final class NetworkReservation {
