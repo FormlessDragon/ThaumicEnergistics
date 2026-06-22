@@ -5,6 +5,7 @@ import ae2.api.storage.MEStorage;
 import ae2.api.upgrades.IUpgradeInventory;
 import ae2.api.upgrades.UpgradeInventories;
 import ae2.api.util.IConfigManager;
+import ae2.client.gui.AEBaseGui;
 import ae2.client.gui.style.GuiStyleManager;
 import ae2.container.ISubGui;
 import ae2.core.gui.locator.GuiHostLocator;
@@ -174,6 +175,7 @@ class ThEClientGuiOpenerTest {
         assertAll(
                 () -> assertSame(ThEClientGuiOpener.OpenStatus.SUCCESS, result.status()),
                 () -> assertInstanceOf(GuiArcaneAssembler.class, client.displayedScreen),
+                () -> assertInstanceOf(AEBaseGui.class, client.displayedScreen),
                 () -> assertSame(host, container.getTE()),
                 () -> assertSame(locator, container.getLocator()),
                 () -> assertEquals(93, container.windowId));

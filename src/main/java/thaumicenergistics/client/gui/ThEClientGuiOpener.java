@@ -145,7 +145,7 @@ public final class ThEClientGuiOpener {
                     new GuiArcaneTerm((ContainerArcaneTerm) container, player.inventory);
             case ARCANE_INSCRIBER ->
                     new GuiArcaneInscriber((ContainerArcaneInscriber) container, player.inventory);
-            case ARCANE_ASSEMBLER -> new GuiArcaneAssembler((ContainerArcaneAssembler) container);
+            case ARCANE_ASSEMBLER -> new GuiArcaneAssembler((ContainerArcaneAssembler) container, player.inventory);
             case KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW ->
                     new GuiKnowledgeCore((ContainerKnowledgeCore) container);
             default -> throw new IllegalArgumentException("Unsupported locator-aware client gui " + message.gui()

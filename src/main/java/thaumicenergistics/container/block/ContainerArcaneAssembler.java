@@ -3,6 +3,7 @@ package thaumicenergistics.container.block;
 import ae2.container.AEBaseContainer;
 import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
+import ae2.container.slot.RestrictedInputSlot;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
@@ -16,7 +17,6 @@ import net.minecraft.util.SoundEvent;
 import net.minecraftforge.items.IItemHandler;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
-import thaumicenergistics.container.slot.SlotUpgrade;
 import thaumicenergistics.core.ThEFeatures;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.ForgeUtil;
@@ -37,8 +37,10 @@ public class ContainerArcaneAssembler extends AEBaseContainer {
         super(Objects.requireNonNull(player, "player").inventory, null);
         this.TE = Objects.requireNonNull(TE, "TE");
         this.addSlot(new SlotKnowledgeCore(this.getInventory("cores"), 0, 81, 66), ThESlotSemantics.KNOWLEDGE_CORE);
-        for (int i = 0; i < this.getInventory("upgrades").getSlots(); i++)
-            this.addSlot(new SlotUpgrade(this.getInventory("upgrades"), i, 186, 8 + i * 18), SlotSemantics.UPGRADE);
+        var typedUpgradeInventory = this.TE.getUpgradeInventory();
+        for (int i = 0; i < typedUpgradeInventory.size(); i++)
+            this.addSlot(new RestrictedInputSlot(RestrictedInputSlot.PlacableItemType.UPGRADES,
+                    typedUpgradeInventory, i, 186, 8 + i * 18), SlotSemantics.UPGRADE);
         this.addPlayerInventorySlots(8, 149);
         this.addListener(new KnowledgeCoreSlotListener());
         this.refreshGuiState();

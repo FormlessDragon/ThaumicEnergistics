@@ -20,6 +20,8 @@ class GuiStyleResourceTest {
             "/screens/terminals/thaumicenergistics_arcane_terminal.json";
     private static final String KNOWLEDGE_CORE_STYLE =
             "/screens/thaumicenergistics_knowledge_core.json";
+    private static final String ARCANE_ASSEMBLER_STYLE =
+            "/screens/thaumicenergistics_arcane_assembler.json";
 
     @BeforeEach
     void initializeSupergiantStyleLoader() {
@@ -61,6 +63,21 @@ class GuiStyleResourceTest {
                 () -> assertSlotTop(style, "THE_KNOWLEDGE_CORE", 8, 15, SlotGridLayout.HORIZONTAL),
                 () -> assertText(style, "dialog_title", 8, 5),
                 () -> assertWidgetTop(style, "knowledgeCoreAction", 154, 0));
+    }
+
+    @Test
+    void supergiantLoaderParsesArcaneAssemblerStyle() {
+        GuiStyle style = GuiStyleManager.loadStyleDoc(ARCANE_ASSEMBLER_STYLE);
+
+        assertAll(
+                () -> style.validate(),
+                () -> assertBackground(style, 210, 231),
+                () -> assertSlotTop(style, "THE_KNOWLEDGE_CORE", 81, 66, null),
+                () -> assertSlotTop(style, "UPGRADE", 186, 8, SlotGridLayout.VERTICAL),
+                () -> assertSlotTop(style, "PLAYER_INVENTORY", 8, 149, SlotGridLayout.BREAK_AFTER_9COLS),
+                () -> assertSlotTop(style, "PLAYER_HOTBAR", 8, 207, SlotGridLayout.HORIZONTAL),
+                () -> assertText(style, "dialog_title", 8, 3),
+                () -> assertText(style, "player_inventory", 8, 139));
     }
 
     @Test

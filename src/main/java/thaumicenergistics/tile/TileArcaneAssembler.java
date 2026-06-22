@@ -164,6 +164,10 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThEInvTile, 
         };
     }
 
+    public ThEUpgradeInventory getUpgradeInventory() {
+        return this.upgradeInv;
+    }
+
     @Override
     public List<? extends IPatternDetails> getAvailablePatterns() {
         if (!this.isActive()) {
