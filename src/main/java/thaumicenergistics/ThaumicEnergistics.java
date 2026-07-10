@@ -2,32 +2,30 @@ package thaumicenergistics;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.config.Config;
-import net.minecraftforge.common.config.ConfigManager;
-import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import thaumicenergistics.core.ThEConfig;
 import thaumicenergistics.core.CommonProxy;
-import thaumicenergistics.core.ThEFeatureAccess;
-import thaumicenergistics.core.ThEFeatures;
+import thaumicenergistics.core.ThESounds;
+import thaumicenergistics.core.registries.AERegistries;
+import thaumicenergistics.init.internal.InitStorageCells;
+import thaumicenergistics.init.internal.InitUpgrades;
 import thaumicenergistics.thaumicenergistics.Reference;
-import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.command.CommandAddVis;
 import thaumicenergistics.command.CommandDrainVis;
 import thaumicenergistics.init.ModGlobals;
-import thaumicenergistics.init.internal.InitUpgrades;
 import thaumicenergistics.integration.ThEIntegrationLoader;
 import thaumicenergistics.network.ThENetwork;
-import thaumicenergistics.util.ThELog;
+import thaumicenergistics.core.ThELog;
+
+import java.util.Objects;
 
 /**
  * <strong>Thaumic Energistics</strong>
@@ -60,6 +58,18 @@ public class ThaumicEnergistics {
      */
     public static Logger LOGGER = LogManager.getLogger(Reference.MOD_NAME);
 
+    private boolean commonBootstrapInitialized;
+    private boolean commonSetupInitialized;
+    private boolean postRegistrationInitialized;
+
+    public static ThaumicEnergistics instance() {
+        return INSTANCE;
+    }
+
+    public static CommonProxy proxy() {
+        return Objects.requireNonNull(proxy, "ThE proxy has not been injected yet.");
+    }
+
     /**
      * Called before the load event.
      *
@@ -67,18 +77,10 @@ public class ThaumicEnergistics {
      */
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        ThEConfig.init();
         ThELog.info("{} preInit", Reference.MOD_NAME);
-        ThELog.debug("Initialized feature access through {}", bootstrapFeatures().getClass().getName());
-        MinecraftForge.EVENT_BUS.register(this);
-        ThENetwork.register();
-
-        proxy.preInit(event);
-
-        ThEIntegrationLoader.preInit();
-    }
-
-    static ThEFeatureAccess bootstrapFeatures() {
-        return ThEFeatures.bootstrap();
+        initializeCommonBootstrap();
+        proxy().preInit(event);
     }
 
     /**
@@ -88,13 +90,9 @@ public class ThaumicEnergistics {
      */
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        NetworkRegistry.INSTANCE.registerGuiHandler(ThaumicEnergistics.INSTANCE, new GuiHandler());
-
-        InitUpgrades.init();
-
-        proxy.init(event);
-
-        ThEIntegrationLoader.init();
+        ThELog.info("{} init", Reference.MOD_NAME);
+        initializeCommonSetup();
+        proxy().init(event);
     }
 
     /**
@@ -104,34 +102,55 @@ public class ThaumicEnergistics {
      */
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
-        proxy.postInit(event);
-
-        ThEIntegrationLoader.postInit();
+        ThELog.info("{} postInit", Reference.MOD_NAME);
+        postRegistrationInitialization();
+        proxy().postInit(event);
+        ThEConfig.instance().save();
     }
 
     @Mod.EventHandler
-    public void serverLoad(FMLServerStartingEvent event) {
+    public void serverStarting(FMLServerStartingEvent event) {
         if (ModGlobals.DEBUG_MODE) {
             event.registerServerCommand(new CommandAddVis());
             event.registerServerCommand(new CommandDrainVis());
         }
     }
 
-    @SubscribeEvent
-    public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-        //Temporary alpha warning
-        //TextComponentString s1 = new TextComponentString("Thaumic Energistics is currently in alpha. Post issues to GitHub");
-        //s1.getStyle().setColor(TextFormatting.RED);
-        //TextComponentString link = new TextComponentString("https://github.com/Nividica/ThaumicEnergistics");
-        //link.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/Nividica/ThaumicEnergistics")).setColor(TextFormatting.GOLD);
-        //
-        //event.player.sendMessage(s1.appendSibling(link));
+    private void initializeCommonBootstrap() {
+        if(this.commonBootstrapInitialized) {
+            return;
+        }
+
+        MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(ThEConfig.instance());
+        AERegistries.init();
+        ThENetwork.register();
+        ThESounds.init();
+        ThEIntegrationLoader.preInit();
+
+        this.commonBootstrapInitialized = true;
     }
 
-    @SubscribeEvent
-    public void onConfigChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event) {
-        if (event.getModID().equals(Reference.MOD_ID))
-            ConfigManager.sync(Reference.MOD_ID, Config.Type.INSTANCE);
+    private void initializeCommonSetup() {
+        if(this.commonSetupInitialized) {
+            return;
+        }
+
+        ThEIntegrationLoader.init();
+
+        this.commonSetupInitialized = true;
+    }
+
+    private void postRegistrationInitialization() {
+        if(this.postRegistrationInitialized) {
+            return;
+        }
+
+        InitStorageCells.init();
+        InitUpgrades.init();
+        ThEIntegrationLoader.postInit();
+
+        this.postRegistrationInitialized = true;
     }
 
     public static ResourceLocation id(String id) {

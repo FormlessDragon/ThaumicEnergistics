@@ -3,7 +3,7 @@ package thaumicenergistics.util;
 import ae2.api.config.TerminalStyle;
 import net.minecraft.item.ItemStack;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
-import thaumicenergistics.core.ThEFeatures;
+import thaumicenergistics.core.ThEConfig;
 
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +36,7 @@ public class ThEUtil {
         if (stack == null || !(stack.getItem() instanceof IEssentiaContainerItem) || stack.getItem().getRegistryName() == null)
             return 0;
 
-        Map<String, Integer> capacities = ThEFeatures.instance().config().essentiaContainerCapacity();
+        Map<String, Integer> capacities = ThEConfig.instance().essentiaContainerCapacity();
         String registryName = stack.getItem().getRegistryName().toString();
         Integer capacity = capacities.get(registryName + ":" + stack.getMetadata());
         return capacity != null ? capacity : capacities.getOrDefault(registryName, 0);

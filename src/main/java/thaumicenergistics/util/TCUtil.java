@@ -9,6 +9,7 @@ import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
 import thaumcraft.api.aura.AuraHelper;
 import thaumcraft.api.items.ItemsTC;
+import thaumicenergistics.core.ThELog;
 
 /**
  * @author BrockWS

@@ -28,7 +28,6 @@ public final class RegistryHandler {
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
         ThEItems.register(event);
-        ThEParts.register(event);
         InitStorageCells.init();
     }
 

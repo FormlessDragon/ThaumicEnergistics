@@ -16,10 +16,10 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
-import thaumicenergistics.core.ThEFeatures;
+import thaumicenergistics.core.ThESounds;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.ForgeUtil;
-import thaumicenergistics.util.ThELog;
+import thaumicenergistics.core.ThELog;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -77,8 +77,8 @@ public class ContainerArcaneAssembler extends AEBaseContainer {
 
     public void playCoreSound(EntityPlayer player) { // plays the right sound, when the Knowledge Core gets removed or placed in the slot
         ResourceLocation sound = this.TE.getCoreInventory().getStackInSlot(0).isEmpty()
-                ? ThEFeatures.instance().sounds().knowledgeCorePowerDown()
-                : ThEFeatures.instance().sounds().knowledgeCorePowerUp();
+                ? ThESounds.instance().knowledgeCorePowerDown()
+                : ThESounds.instance().knowledgeCorePowerUp();
         SoundEvent soundEvent = this.resolveCoreSound(sound);
         player.world.playSound(null, TE.getPos(), soundEvent, SoundCategory.BLOCKS, 1, 1);
     }

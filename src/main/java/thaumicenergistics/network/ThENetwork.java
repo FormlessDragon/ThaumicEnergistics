@@ -4,7 +4,7 @@ import ae2.core.network.AppEngPayloadHandler;
 import ae2.core.network.InitNetwork;
 import net.minecraft.entity.player.EntityPlayerMP;
 import thaumicenergistics.network.packets.PacketOpenLocatorGUI;
-import thaumicenergistics.util.ThELog;
+import thaumicenergistics.core.ThELog;
 
 /**
  * Registers Thaumic Energistics packets on Supergiant's AE2 network channel.

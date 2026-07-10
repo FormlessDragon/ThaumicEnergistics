@@ -17,6 +17,7 @@ import thaumicenergistics.util.KnowledgeCoreUtil;
  * @author Alex811
  */
 public class GuiArcaneInscriber extends GuiArcaneTerm {
+    public static final String STYLE_PATH = "/screens/terminals/thaumicenergistics_arcane_inscriber.json";
 
     private final KnowledgeCoreButton coreAddButton;
     private final KnowledgeCoreButton coreDelButton;
@@ -26,7 +27,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     public GuiArcaneInscriber(ContainerArcaneInscriber container, InventoryPlayer playerInventory) {
         super(container, playerInventory,
                 new TextComponentTranslation("gui.thaumicenergistics.arcane_inscriber"),
-                GuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH));
+                GuiStyleManager.loadStyleDoc(GuiArcaneInscriber.STYLE_PATH));
         this.inscriberContainer = container;
 
         this.coreAddButton = new KnowledgeCoreButton(Icon.ARROW_DOWN, this::requestKnowledgeCoreAddIfAllowed);

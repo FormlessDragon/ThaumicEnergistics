@@ -14,9 +14,9 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
-import thaumicenergistics.me.cell.CreativeEssentiaCellHandler;
-import thaumicenergistics.me.cell.CreativeEssentiaCellInventory;
-import thaumicenergistics.me.key.AEEssentiaKeys;
+import thaumicenergistics.common.me.cell.CreativeEssentiaCellHandler;
+import thaumicenergistics.common.me.cell.CreativeEssentiaCellInventory;
+import thaumicenergistics.common.me.key.AEEssentiaKeys;
 
 import java.util.Collections;
 import java.util.List;

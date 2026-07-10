@@ -35,7 +35,7 @@ import thaumicenergistics.integration.thaumcraft.research.CardTinkerAE;
 import thaumicenergistics.integration.thaumcraft.research.ScanMod;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.TCUtil;
-import thaumicenergistics.util.ThELog;
+import thaumicenergistics.core.ThELog;
 
 import java.util.ArrayList;
 import java.util.Arrays;

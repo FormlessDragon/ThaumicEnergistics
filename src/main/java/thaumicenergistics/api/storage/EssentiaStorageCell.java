@@ -1,7 +1,7 @@
 package thaumicenergistics.api.storage;
 
 import ae2.items.storage.BasicStorageCell;
-import thaumicenergistics.me.key.AEEssentiaKeys;
+import thaumicenergistics.common.me.key.AEEssentiaKeys;
 
 public class EssentiaStorageCell extends BasicStorageCell {
 

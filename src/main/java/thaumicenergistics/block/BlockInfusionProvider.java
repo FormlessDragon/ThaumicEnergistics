@@ -11,7 +11,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
-import thaumicenergistics.me.key.AEEssentiaKey;
+import thaumicenergistics.common.me.key.AEEssentiaKey;
 import thaumicenergistics.tile.TileInfusionProvider;
 
 /**

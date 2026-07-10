@@ -1,16 +1,19 @@
 package thaumicenergistics.init.internal;
 
 import ae2.api.client.StorageCellModels;
+import ae2.api.storage.StorageCells;
 import ae2.core.definitions.AEItems;
 import ae2.recipes.game.StorageCellDisassemblyRecipe;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import thaumicenergistics.ThaumicEnergistics;
+import thaumicenergistics.common.me.cell.CreativeEssentiaCellHandler;
 import thaumicenergistics.core.definitions.ThEItems;
 
 import java.util.List;
 import java.util.Objects;
+
+import static thaumicenergistics.ThaumicEnergistics.id;
 
 public final class InitStorageCells {
 
@@ -27,8 +30,8 @@ public final class InitStorageCells {
         if(initialized) {
             return;
         }
-        initialized = true;
 
+        StorageCells.addCellHandler(CreativeEssentiaCellHandler.INSTANCE);
         registerEssentiaCellDisassembly();
 
         StorageCellModels.registerModel(Objects.requireNonNull(ThEItems.CREATIVE_ESSENTIA_CELL.item()), MODEL_CELL_CREATIVE_ESSENTIA);
@@ -36,6 +39,8 @@ public final class InitStorageCells {
         StorageCellModels.registerModel(Objects.requireNonNull(ThEItems.ESSENTIA_CELL_4K.item()), MODEL_CELL_ESSENTIA_4K);
         StorageCellModels.registerModel(Objects.requireNonNull(ThEItems.ESSENTIA_CELL_16K.item()), MODEL_CELL_ESSENTIA_16K);
         StorageCellModels.registerModel(Objects.requireNonNull(ThEItems.ESSENTIA_CELL_64K.item()), MODEL_CELL_ESSENTIA_64K);
+
+        initialized = true;
     }
 
     static void registerEssentiaCellDisassembly() {
@@ -58,11 +63,6 @@ public final class InitStorageCells {
         StorageCellDisassemblyRecipe.register(new StorageCellDisassemblyRecipe(
                 cell,
                 List.of(new ItemStack(housing), new ItemStack(component))));
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private static ResourceLocation id(String id)  {
-        return ThaumicEnergistics.id(id);
     }
 
 }

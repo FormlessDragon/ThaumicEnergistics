@@ -8,7 +8,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import org.jetbrains.annotations.Nullable;
 import thaumcraft.api.aspects.IAspectContainer;
-import thaumicenergistics.me.key.AEEssentiaKeys;
+import thaumicenergistics.common.me.key.AEEssentiaKeys;
 
 public class EssentiaExternalStorageStrategy implements ExternalStorageStrategy {
 

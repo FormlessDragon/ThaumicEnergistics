@@ -2,11 +2,9 @@ package thaumicenergistics.integration;
 
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModAPIManager;
-import thaumicenergistics.init.ModGlobals;
-import thaumicenergistics.integration.appeng.ThEAppliedEnergistics;
 import thaumicenergistics.integration.invtweaks.ThEInvTweaks;
 import thaumicenergistics.integration.thaumcraft.ThEThaumcraft;
-import thaumicenergistics.util.ThELog;
+import thaumicenergistics.core.ThELog;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -20,7 +18,6 @@ public class ThEIntegrationLoader {
 
     static {
         registerIntegration("thaumcraft", ThEThaumcraft.class);
-        registerIntegration(ModGlobals.MOD_ID_AE2, ThEAppliedEnergistics.class);
         registerIntegration("inventorytweaks", ThEInvTweaks.class);
     }
 

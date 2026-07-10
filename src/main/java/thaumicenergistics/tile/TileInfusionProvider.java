@@ -16,7 +16,7 @@ import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectSource;
 import thaumicenergistics.core.definitions.ThEBlocks;
-import thaumicenergistics.me.key.AEEssentiaKey;
+import thaumicenergistics.common.me.key.AEEssentiaKey;
 import thaumicenergistics.util.ForgeUtil;
 
 /**
@@ -65,8 +65,7 @@ public class TileInfusionProvider extends ThENetworkTile implements IAspectSourc
         AspectList list = new AspectList();
         KeyCounter stored = this.getStoredAspects();
         for (Object2LongMap.Entry<AEKey> entry : stored) {
-            if (entry.getKey() instanceof AEEssentiaKey) {
-                AEEssentiaKey key = (AEEssentiaKey) entry.getKey();
+            if (entry.getKey() instanceof AEEssentiaKey key) {
                 long amount = entry.getLongValue();
                 list.add(key.getAspect(), amount >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) amount);
             }

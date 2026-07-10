@@ -10,9 +10,9 @@ import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
 import thaumcraft.common.tiles.essentia.TileJarFillable;
-import thaumicenergistics.util.ThELog;
-import thaumicenergistics.me.key.AEEssentiaKey;
-import thaumicenergistics.me.key.AEEssentiaKeys;
+import thaumicenergistics.core.ThELog;
+import thaumicenergistics.common.me.key.AEEssentiaKey;
+import thaumicenergistics.common.me.key.AEEssentiaKeys;
 
 import java.util.Objects;
 

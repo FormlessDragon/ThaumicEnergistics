@@ -10,7 +10,7 @@ import thaumicenergistics.block.BlockInfusionProvider;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.tile.TileInfusionProvider;
-import thaumicenergistics.util.ThELog;
+import thaumicenergistics.core.ThELog;
 
 public final class ThEBlocks {
 
@@ -31,19 +31,18 @@ public final class ThEBlocks {
 
     private ThEBlocks() {}
 
-    public static void register(RegistryEvent.Register<Block> event) {
-        ThELog.info("Registering Blocks");
+    public static BlockDefinition<?>[] all() {
+        return BLOCKS.clone();
+    }
 
-        for (BlockDefinition<?> definition : BLOCKS) {
+    public static void register(RegistryEvent.Register<Block> event) {
+        for(BlockDefinition<?> definition : BLOCKS) {
             event.getRegistry().register(definition.block());
         }
 
-        for (TileDefinition<?> definition : TILES) {
+        for(TileDefinition<?> definition : TILES) {
             definition.register();
         }
     }
 
-    public static BlockDefinition<?>[] all() {
-        return BLOCKS.clone();
-    }
 }

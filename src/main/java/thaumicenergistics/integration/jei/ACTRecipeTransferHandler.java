@@ -14,7 +14,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.util.ForgeUtil;
-import thaumicenergistics.util.ThELog;
+import thaumicenergistics.core.ThELog;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;

@@ -8,7 +8,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandler;
 import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.util.ThELog;
+import thaumicenergistics.core.ThELog;
 
 /**
  * Host contract for Thaumic Energistics arcane terminal containers.

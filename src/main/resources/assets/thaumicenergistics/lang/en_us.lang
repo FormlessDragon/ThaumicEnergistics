@@ -18,7 +18,7 @@ item.thaumicenergistics.essentia_storage_cell_1k.name=1k ME Essentia Storage Cel
 item.thaumicenergistics.essentia_storage_cell_4k.name=4k ME Essentia Storage Cell
 item.thaumicenergistics.essentia_storage_cell_16k.name=16k ME Essentia Storage Cell
 item.thaumicenergistics.essentia_storage_cell_64k.name=64k ME Essentia Storage Cell
-item.thaumicenergistics.essentia_cell_creative.name=Creative ME Essentia Storage Cell
+item.thaumicenergistics.creative_essentia_cell.name=Creative ME Essentia Storage Cell
 
 item.thaumicenergistics.essentia_import.name=ME Essentia Import Bus
 item.thaumicenergistics.essentia_export.name=ME Essentia Export Bus

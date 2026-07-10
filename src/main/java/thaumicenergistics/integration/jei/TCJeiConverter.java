@@ -7,7 +7,7 @@ import mezz.jei.api.recipe.IIngredientType;
 import org.jspecify.annotations.Nullable;
 import thaumcraft.api.aspects.AspectList;
 import thaumicenergistics.api.stacks.EssentiaStack;
-import thaumicenergistics.me.key.AEEssentiaKey;
+import thaumicenergistics.common.me.key.AEEssentiaKey;
 
 import static com.buuz135.thaumicjei.ThaumcraftJEIPlugin.ASPECT_LIST;
 

@@ -1,5 +1,6 @@
 package thaumicenergistics.container.slot;
 
+import ae2.container.slot.AppEngSlot;
 import thaumicenergistics.container.ICraftingContainer;
 
 import java.util.Objects;
@@ -7,7 +8,7 @@ import java.util.Objects;
 /**
  * @author BrockWS
  */
-public class SlotArcaneMatrix extends ThEAppEngSlot {
+public class SlotArcaneMatrix extends AppEngSlot {
 
     private final ICraftingContainer container;
 

@@ -30,7 +30,7 @@ import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.KnowledgeCoreUtil;
-import thaumicenergistics.util.ThELog;
+import thaumicenergistics.core.ThELog;
 
 /**
  * @author Alex811
@@ -326,9 +326,9 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     @Override
-    protected void addUpgradeSlots(int offsetX, int offsetY) {
+    protected void addArcaneAuxiliarySlots(int offsetX, int offsetY) {
         this.addSlot(new SlotKnowledgeCore(this.getTypedArcaneUpgradeInventory(), 0, offsetX, offsetY),
-                SlotSemantics.UPGRADE);
+                ThESlotSemantics.KNOWLEDGE_CORE);
     }
 
     @Override

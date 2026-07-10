@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import thaumicenergistics.client.gui.ThEClientGuiOpener;
+import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.init.ModGUIs;
 
 /**
@@ -71,7 +71,7 @@ public class PacketOpenLocatorGUI extends ClientboundPacket {
     @Override
     @SideOnly(Side.CLIENT)
     public void handleClient(Minecraft minecraft) {
-        ThEClientGuiOpener.openLocatorGui(minecraft, this);
+        GuiHandler.openLocatorGui(minecraft, this);
     }
 
     public ModGUIs gui() {

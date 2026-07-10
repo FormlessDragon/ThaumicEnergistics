@@ -18,8 +18,8 @@ import thaumcraft.api.aspects.IEssentiaContainerItem;
 import thaumcraft.api.items.ItemsTC;
 import thaumcraft.common.items.consumables.ItemPhial;
 import thaumicenergistics.api.stacks.EssentiaStack;
-import thaumicenergistics.me.key.AEEssentiaKey;
-import thaumicenergistics.me.key.AEEssentiaKeys;
+import thaumicenergistics.common.me.key.AEEssentiaKey;
+import thaumicenergistics.common.me.key.AEEssentiaKeys;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.ThEUtil;
 

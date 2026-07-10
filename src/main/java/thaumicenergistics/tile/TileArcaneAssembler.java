@@ -20,10 +20,11 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.items.IItemHandler;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aura.AuraHelper;
-import thaumicenergistics.core.ThEFeatures;
+import thaumicenergistics.core.ThEConfig;
+import thaumicenergistics.core.ThELog;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.core.definitions.ThEBlocks;
-import thaumicenergistics.me.key.AEEssentiaKey;
+import thaumicenergistics.common.me.key.AEEssentiaKey;
 import thaumicenergistics.util.*;
 import thaumicenergistics.util.inventory.IThEInvTile;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
@@ -314,7 +315,7 @@ public class TileArcaneAssembler extends ThENetworkTile implements IThEInvTile, 
     @Nonnull
     @Override
     public TickingRequest getTickingRequest(@Nonnull IGridNode node) {
-        return new TickingRequest(ThEFeatures.instance().config().tickTimeArcaneAssemblerMin(), ThEFeatures.instance().config().tickTimeArcaneAssemblerMax(), !this.isBusy());
+        return new TickingRequest(ThEConfig.instance().tickTimeArcaneAssemblerMin(), ThEConfig.instance().tickTimeArcaneAssemblerMax(), !this.isBusy());
     }
 
     /**

@@ -15,6 +15,6 @@ run/
 *.log
 *.zip
 
-AGENTS.md
+src/test/
 docs/
 logs/

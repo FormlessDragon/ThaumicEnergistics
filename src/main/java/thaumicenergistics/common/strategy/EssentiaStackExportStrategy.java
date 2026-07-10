@@ -12,9 +12,9 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import thaumcraft.api.aspects.IAspectContainer;
-import thaumicenergistics.me.key.AEEssentiaKey;
-import thaumicenergistics.me.key.AEEssentiaKeys;
-import thaumicenergistics.util.ThELog;
+import thaumicenergistics.common.me.key.AEEssentiaKey;
+import thaumicenergistics.common.me.key.AEEssentiaKeys;
+import thaumicenergistics.core.ThELog;
 
 public class EssentiaStackExportStrategy implements StackExportStrategy {
 

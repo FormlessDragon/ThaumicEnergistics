@@ -50,7 +50,7 @@ import thaumicenergistics.integration.jei.ArcaneRecipeTransferPayload;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.TCUtil;
-import thaumicenergistics.util.ThELog;
+import thaumicenergistics.core.ThELog;
 import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import java.util.ArrayList;
@@ -83,7 +83,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         this.craftingResult = new ThEInternalInventory("Result", 1, 64);
 
         this.addMatrixSlots(32, 36);
-        this.addUpgradeSlots(177, 54);
+        this.addArcaneAuxiliarySlots(177, 54);
         this.addArmorSlots(ip.player, new PlayerArmorInvWrapper(ip), 8, 19);
         this.registerClientAction(ACTION_CLEAR_GRID, this::clearCraftingGrid);
         this.registerClientAction(ACTION_SET_CLEAR_ON_CLOSE, Boolean.class, this::setClearGridOnClose);
@@ -838,7 +838,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     @SuppressWarnings("SameParameterValue")
-    protected void addUpgradeSlots(int offsetX, int offsetY) {
+    protected void addArcaneAuxiliarySlots(int offsetX, int offsetY) {
         AppEngSlot upgradeSlot = new AppEngSlot(this.getTypedArcaneUpgradeInventory(), 0, offsetX, offsetY);
         upgradeSlot.setBackgroundIcon(SlotBackgroundIcon.UPGRADE);
         this.addSlot(upgradeSlot, SlotSemantics.UPGRADE);
