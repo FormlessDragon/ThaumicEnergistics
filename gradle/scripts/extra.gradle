@@ -1,3 +1,7 @@
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.util.zip.ZipFile
+
 // You may write any gradle buildscript component in this file
 // This file is automatically applied after build.gradle + dependencies.gradle is ran
 
@@ -12,4 +16,79 @@ spotless {
         endWithNewline()
         removeUnusedImports()
     }
+}
+
+def scalarLibraryEntryName = 'scala-library-2.11.1.jar'
+def scalarDevelopmentDependency = 'curse.maven:scalar-legacy-1235372:6842491'
+def scalarDevelopmentArtifact = configurations.create('scalarDevelopmentArtifact') {
+    canBeConsumed = false
+    canBeResolved = true
+    transitive = false
+}
+dependencies.add(scalarDevelopmentArtifact.name, scalarDevelopmentDependency)
+
+def scalarArtifactProvider = providers.provider {
+    Set<File> scalarArtifacts = scalarDevelopmentArtifact.files.findAll {
+        it.isFile() && it.name == 'scalar-legacy-1235372-6842491.jar'
+    }
+    if (scalarArtifacts.size() != 1) {
+        throw new GradleException("Expected exactly one Scalar artifact, found ${scalarArtifacts.size()}: ${scalarArtifacts}")
+    }
+    return scalarArtifacts.iterator().next()
+}
+
+def registerScalarLibraryExtraction = { String side ->
+    def targetFile = layout.projectDirectory.file("run/${side}/mods/1.12.2/${scalarLibraryEntryName}")
+    tasks.register("extractScalarLibraryFor${side.capitalize()}") {
+        group = 'development'
+        description = "Extracts ${scalarLibraryEntryName} from Scalar for the ${side} development run."
+        inputs.files(scalarDevelopmentArtifact).withPropertyName('scalarArtifact')
+        outputs.file(targetFile)
+        outputs.upToDateWhen { false }
+
+        doLast {
+            File scalarArtifact = scalarArtifactProvider.get()
+            if (!scalarArtifact.isFile()) {
+                throw new GradleException("Scalar artifact does not exist: ${scalarArtifact}")
+            }
+
+            new ZipFile(scalarArtifact).withCloseable { scalarZip ->
+                def scalaLibraryEntry = scalarZip.getEntry(scalarLibraryEntryName)
+                if (scalaLibraryEntry == null || scalaLibraryEntry.isDirectory()) {
+                    throw new GradleException("Scalar artifact ${scalarArtifact} does not contain ${scalarLibraryEntryName}")
+                }
+
+                java.nio.file.Path targetPath = targetFile.asFile.toPath()
+                Files.createDirectories(targetPath.parent)
+                java.nio.file.Path temporaryPath = Files.createTempFile(
+                    targetPath.parent, "${scalarLibraryEntryName}.", '.tmp')
+                try {
+                    scalarZip.getInputStream(scalaLibraryEntry).withCloseable { input ->
+                        Files.copy(input, temporaryPath,
+                                StandardCopyOption.REPLACE_EXISTING)
+                    }
+                    if (Files.exists(targetPath)
+                        && Files.mismatch(temporaryPath, targetPath) == -1L) {
+                        logger.lifecycle("Scalar ${scalarLibraryEntryName} is already current for ${side}.")
+                        return
+                    }
+                    Files.move(temporaryPath, targetPath,
+                            StandardCopyOption.ATOMIC_MOVE,
+                            StandardCopyOption.REPLACE_EXISTING)
+                    logger.lifecycle("Extracted Scalar ${scalarLibraryEntryName} to ${targetPath}.")
+                } finally {
+                    Files.deleteIfExists(temporaryPath)
+                }
+            }
+        }
+    }
+}
+
+def extractScalarLibraryForClient = registerScalarLibraryExtraction('client')
+def extractScalarLibraryForServer = registerScalarLibraryExtraction('server')
+tasks.named('runClient') {
+    dependsOn(extractScalarLibraryForClient)
+}
+tasks.named('runServer') {
+    dependsOn(extractScalarLibraryForServer)
 }

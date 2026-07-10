@@ -128,18 +128,8 @@ public final class AEEssentiaKey extends AEKey {
     }
 
     @Override
-    public boolean isTagged(String tag) {
-        return false;
-    }
-
-    @Override
     public NBTBase get(String tag) {
         return null;
-    }
-
-    @Override
-    public boolean hasComponents() {
-        return false;
     }
 
     @Override
