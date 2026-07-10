@@ -10,7 +10,6 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.core.definitions.ThEItems;
-import thaumicenergistics.core.definitions.ThEParts;
 import thaumicenergistics.init.client.InitModelRegistration;
 import thaumicenergistics.init.internal.InitStorageCells;
 import thaumicenergistics.thaumicenergistics.Reference;

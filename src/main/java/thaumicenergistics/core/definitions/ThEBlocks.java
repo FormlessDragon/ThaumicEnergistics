@@ -10,7 +10,6 @@ import thaumicenergistics.block.BlockInfusionProvider;
 import thaumicenergistics.init.ModGlobals;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.tile.TileInfusionProvider;
-import thaumicenergistics.core.ThELog;
 
 public final class ThEBlocks {
 

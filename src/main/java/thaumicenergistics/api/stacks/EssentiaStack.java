@@ -2,7 +2,6 @@ package thaumicenergistics.api.stacks;
 
 import net.minecraft.nbt.NBTTagCompound;
 import thaumcraft.api.aspects.Aspect;
-import thaumcraft.api.aspects.AspectList;
 
 /**
  * Something for Essentia similar to ItemStack and FluidStack, since Thaumcraft doesn't have one

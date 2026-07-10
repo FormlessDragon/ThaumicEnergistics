@@ -1,7 +1,6 @@
 package thaumicenergistics.core.definitions;
 
 import ae2.core.AEConfig;
-import ae2.core.definitions.AEBlocks;
 import ae2.core.definitions.BlockDefinition;
 import ae2.core.definitions.ItemDefinition;
 import ae2.items.materials.StorageComponentItem;

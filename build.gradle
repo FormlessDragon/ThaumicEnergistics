@@ -4,8 +4,9 @@ plugins {
     id 'maven-publish'
     id 'com.gradleup.shadow' version '9.4.1'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.4.1'
-    id 'xyz.wagyourtail.unimined' version '1.4.18-kappa'
+    id 'xyz.wagyourtail.unimined' version '1.4.23-kappa'
     id 'net.kyori.blossom' version '2.2.0'
+    id 'com.diffplug.spotless' version '8.4.0'
 }
 
 import org.jetbrains.gradle.ext.Gradle
@@ -181,6 +182,9 @@ idea {
     project {
         settings {
             runConfigurations {
+                '0. Apply Spotless'(Gradle) {
+                    taskNames = ["spotlessApply"]
+                }
                 '1. Build'(Gradle) {
                     taskNames = ["build"]
                 }
