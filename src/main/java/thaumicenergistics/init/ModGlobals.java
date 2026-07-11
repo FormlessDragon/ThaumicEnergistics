@@ -39,4 +39,5 @@ public class ModGlobals {
     public static final String MOD_ID_AE2 = "ae2";
 
     public static final boolean DEBUG_MODE = System.getProperties().containsKey("thaumicenergisticsdebug");
+
 }

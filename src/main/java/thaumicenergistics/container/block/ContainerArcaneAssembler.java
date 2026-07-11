@@ -4,6 +4,7 @@ import ae2.container.AEBaseContainer;
 import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
 import ae2.container.slot.RestrictedInputSlot;
+import ae2.util.inv.AppEngInternalInventory;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
@@ -20,7 +21,6 @@ import thaumicenergistics.core.ThESounds;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.core.ThELog;
-import thaumicenergistics.util.inventory.ThEInternalInventory;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Objects;
@@ -46,7 +46,7 @@ public class ContainerArcaneAssembler extends AEBaseContainer {
         this.refreshGuiState();
     }
 
-    public ThEInternalInventory getCoreInventory() {
+    public AppEngInternalInventory getCoreInventory() {
         return this.TE.getCoreInventory();
     }
 

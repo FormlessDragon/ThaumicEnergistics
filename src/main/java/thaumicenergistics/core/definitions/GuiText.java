@@ -5,6 +5,7 @@ import ae2.core.localization.LocalizationEnum;
 public enum GuiText implements LocalizationEnum {
 
     Essentias,
+    arcane_vis,
     out_of_aspect,
     out_of_vis,
     vis_discount,
@@ -14,7 +15,8 @@ public enum GuiText implements LocalizationEnum {
     knowledge_core_is_blank,
     no_recipe,
     recipe_not_arcane,
-    recipe_already_stored;
+    recipe_already_stored,
+    essentia_smelt;
 
     private final String translationKey;
 

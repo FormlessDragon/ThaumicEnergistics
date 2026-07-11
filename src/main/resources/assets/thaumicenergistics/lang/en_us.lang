@@ -30,6 +30,7 @@ item.thaumicenergistics.arcane_inscriber.name=Arcane Inscriber
 item.thaumicenergistics.arcane_p2p_tunnel.name=ME Arcane P2P Tunnel
 
 item.thaumicenergistics.upgrade_arcane.name=Arcane Charging Upgrade
+item.thaumicenergistics.knowledge_core_pattern_expansion_card.name=Knowledge Core Pattern Expansion Card
 item.thaumicenergistics.knowledge_core.name=Knowledge Core
 item.thaumicenergistics.blank_knowledge_core.name=Blank Knowledge Core
 
@@ -46,7 +47,8 @@ tooltip.thaumicenergistics.arcane_assembler.no_aspect=Error: out of aspect
 tooltip.thaumicenergistics.arcane_assembler.no_vis=Error: out of Vis
 
 # GUI
-gui.the.Essentias=Essentias
+gui.thaumicenergistics.Essentias=Essentias
+gui.thaumicenergistics.arcane_vis=Arcane Vis
 gui.thaumicenergistics.arcane_terminal=Arcane Terminal
 gui.thaumicenergistics.arcane_inscriber=Arcane Inscriber
 

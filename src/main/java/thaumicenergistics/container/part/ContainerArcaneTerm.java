@@ -571,21 +571,19 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             return;
         }
 
-        if (!(ingredientGroup instanceof NBTTagList)) {
+        if (!(ingredientGroup instanceof NBTTagList subs)) {
             ThELog.warn("Invalid JEI ingredient group: {}", ingredientGroup);
             return;
         }
 
-        NBTTagList subs = (NBTTagList) ingredientGroup;
         for (int i = 0; i < subs.tagCount(); i++) {
             int slot = startAtSlot + i;
             NBTBase sub = subs.get(i);
-            if (!(sub instanceof NBTTagList)) {
+            if (!(sub instanceof NBTTagList alternatives)) {
                 ThELog.warn("Invalid JEI ingredient entry: {}", sub);
                 continue;
             }
 
-            NBTTagList alternatives = (NBTTagList) sub;
             if (alternatives.tagCount() <= 0) {
                 continue;
             }
@@ -740,12 +738,11 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         this.clearCraftingIntoNetwork();
     }
 
-    private boolean clearCraftingIntoNetwork() {
+    private void clearCraftingIntoNetwork() {
         if (this.storage == null) {
-            return false;
+            return;
         }
 
-        boolean clearSuccess = true;
         IItemHandler crafting = this.getCraftingItemHandler();
         for (int slot = 0; slot < crafting.getSlots(); slot++) {
             ItemStack stack = crafting.extractItem(slot, Integer.MAX_VALUE, true);
@@ -758,11 +755,8 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             if (inserted > 0) {
                 crafting.extractItem(slot, inserted, false);
             }
-            if (!crafting.getStackInSlot(slot).isEmpty()) {
-                clearSuccess = false;
-            }
+            crafting.getStackInSlot(slot);
         }
-        return clearSuccess;
     }
 
     private boolean clearCraftingIntoNetworkForJEI() {
@@ -844,34 +838,13 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         this.addSlot(upgradeSlot, SlotSemantics.UPGRADE);
     }
 
-    private static final class NetworkReservation {
-        private final int slot;
-        private final ItemStack stack;
-
-        private NetworkReservation(int slot, ItemStack stack) {
-            this.slot = slot;
-            this.stack = stack;
-        }
+    private record NetworkReservation(int slot, ItemStack stack) {
     }
 
-    private static final class JEITransferSlot {
-        private final int slot;
-        private final List<ItemStack> alternatives;
-
-        private JEITransferSlot(int slot, List<ItemStack> alternatives) {
-            this.slot = slot;
-            this.alternatives = alternatives;
-        }
+    private record JEITransferSlot(int slot, List<ItemStack> alternatives) {
     }
 
-    private static final class JEITransferAssignment {
-        private final int slot;
-        private final ItemStack stack;
-
-        private JEITransferAssignment(int slot, ItemStack stack) {
-            this.slot = slot;
-            this.stack = stack;
-        }
+    private record JEITransferAssignment(int slot, ItemStack stack) {
     }
 
     private static final class JEITransferAvailability {
@@ -941,7 +914,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
                     this.restore(alternative);
                     return true;
                 }
-                assignments.remove(assignments.size() - 1);
+                assignments.removeLast();
                 this.restore(alternative);
             }
             return false;

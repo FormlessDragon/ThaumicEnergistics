@@ -1,9 +1,12 @@
 {
   "$schema": "schema.json",
-  "includes": ["common/common.json"],
+  "includes": [
+    "common/common.json",
+    "common/player_inventory.json"
+  ],
   "background": {
     "texture": "thaumicenergistics:textures/gui/knowledge_core.png",
-    "srcRect": [0, 0, 176, 40]
+    "srcRect": [0, 0, 176, 178]
   },
   "slots": {
     "THE_KNOWLEDGE_CORE": {
@@ -16,6 +19,10 @@
     "knowledgeCoreAction": {
       "left": 154,
       "top": 0
+    },
+    "upgrades": {
+      "right": 2,
+      "height": 54
     }
   },
   "text": {
@@ -26,6 +33,15 @@
       "position": {
         "left": 8,
         "top": 5
+      }
+    },
+    "player_inventory": {
+      "text": {
+        "translate": "container.inventory"
+      },
+      "position": {
+        "left": 8,
+        "top": 84
       }
     }
   }

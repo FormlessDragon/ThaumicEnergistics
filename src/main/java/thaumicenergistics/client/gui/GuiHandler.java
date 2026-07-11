@@ -118,6 +118,7 @@ public final class GuiHandler {
             case ARCANE_ASSEMBLER -> createArcaneAssemblerContainer(player, gui, locator, message.windowId());
             case KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW ->
                     createKnowledgeCoreContainer(player, openContainer, gui, locator, message.windowId());
+            case KNOWLEDGE_CORE_MANAGE -> createKnowledgeCoreManagementContainer(player, locator, message.windowId());
             case WIRELESS_ARCANE_TERMINAL -> ThEGuiOpener.createWirelessArcaneContainer(
                     player.inventory, locateWirelessArcaneHost(player, gui, locator), locator,
                     message.returnedFromSubScreen(), message.windowId());
@@ -142,6 +143,7 @@ public final class GuiHandler {
             case ARCANE_ASSEMBLER -> new GuiArcaneAssembler((ContainerArcaneAssembler) container, player.inventory);
             case KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW ->
                     new GuiKnowledgeCore((ContainerKnowledgeCore) container);
+            case KNOWLEDGE_CORE_MANAGE -> new GuiKnowledgeCore((ContainerKnowledgeCore) container);
             default -> throw new IllegalArgumentException("Unsupported locator-aware client gui " + message.gui()
                     + " with locator " + locatorDescription(message.locator())
                     + " for player " + playerDescription(player));
@@ -199,6 +201,14 @@ public final class GuiHandler {
         }
 
         ContainerKnowledgeCore container = new ContainerKnowledgeCore(player, gui, parent, parentLocator);
+        container.windowId = windowId;
+        return container;
+    }
+
+    private static ContainerKnowledgeCore createKnowledgeCoreManagementContainer(EntityPlayer player,
+                                                                                   GuiHostLocator locator,
+                                                                                   int windowId) {
+        ContainerKnowledgeCore container = new ContainerKnowledgeCore(player, locator);
         container.windowId = windowId;
         return container;
     }

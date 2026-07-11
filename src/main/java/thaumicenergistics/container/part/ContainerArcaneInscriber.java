@@ -225,7 +225,7 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
         return ((IArcaneRecipe) recipe).getVis();
     }
 
-    @Override
+    /*@Override
     public void handleJEITransfer(EntityPlayer player, NBTTagCompound tag) {
         NBTBase normal = tag.getTag("normal");
         NBTBase crystals = tag.getTag("crystal");
@@ -237,7 +237,7 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
         handleJEITag(9, crystals, false);
 
         this.onMatrixChanged();
-    }
+    }*/
 
     private void handleJEITag(int startAtSlot, NBTBase ingredientGroup, boolean mustBeSingle) {
         IItemHandler crafting = this.getCraftingItemHandler();

@@ -19,6 +19,7 @@ import java.awt.Color;
  * @author Alex811
  */
 public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
+
     private static final String STYLE_PATH = "/screens/thaumicenergistics_arcane_assembler.json";
     private static final String[] aspects = {"aer", "terra", "ignis", "aqua", "ordo", "perditio"};
     private static final int[][] aspectGUILoc = {{69, 2}, {21, 82}, {21, 25}, {117, 25}, {117, 82}, {69, 106}};
@@ -82,4 +83,5 @@ public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
+
 }

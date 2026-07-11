@@ -24,21 +24,7 @@ public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKe
 
     @Override
     public void drawInGui(Minecraft mc, int x, int y, AEEssentiaKey what) {
-        Aspect aspect = what.getAspect();
-        GlStateManager.pushMatrix();
-        try {
-            GlStateManager.enableBlend();
-            GlStateManager.disableLighting();
-            mc.getTextureManager().bindTexture(aspect.getImage());
-
-            drawAspectQuad(x, y, x + 16.0D, y + 16.0D, new Color(aspect.getColor()));
-        } finally {
-            GlStateManager.enableBlend();
-            GlStateManager.disableDepth();
-            GlStateManager.disableLighting();
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-            GlStateManager.popMatrix();
-        }
+        renderAspect(mc, x, y, what.getAspect());
     }
 
     @Override
@@ -72,7 +58,7 @@ public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKe
         return what.getDisplayName();
     }
 
-    private static void drawAspectQuad(double x0, double y0, double x1, double y1, Color color) {
+    public static void drawAspectQuad(double x0, double y0, double x1, double y1, Color color) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
@@ -81,6 +67,36 @@ public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKe
         buffer.pos(x1, y0, 0.0001D).tex(1.0D, 0.0D).color(color.getRed(), color.getGreen(), color.getBlue(), 255).endVertex();
         buffer.pos(x0, y0, 0.0001D).tex(0.0D, 0.0D).color(color.getRed(), color.getGreen(), color.getBlue(), 255).endVertex();
         tessellator.draw();
+    }
+
+    public static void renderAspect(Minecraft mc, int x, int y, Aspect aspect) {
+        GlStateManager.pushMatrix();
+        try {
+            GlStateManager.enableTexture2D();
+            GlStateManager.enableBlend();
+            GlStateManager.tryBlendFuncSeparate(
+                GL11.GL_SRC_ALPHA,
+                GL11.GL_ONE_MINUS_SRC_ALPHA,
+                GL11.GL_ONE,
+                GL11.GL_ZERO);
+            GlStateManager.disableLighting();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            mc.getTextureManager().bindTexture(aspect.getImage());
+
+            drawAspectQuad(x, y, x + 16.0D, y + 16.0D, new Color(aspect.getColor()));
+        } finally {
+            GlStateManager.enableTexture2D();
+            GlStateManager.enableBlend();
+            GlStateManager.tryBlendFuncSeparate(
+                GL11.GL_SRC_ALPHA,
+                GL11.GL_ONE_MINUS_SRC_ALPHA,
+                GL11.GL_ONE,
+                GL11.GL_ZERO);
+            GlStateManager.disableDepth();
+            GlStateManager.disableLighting();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.popMatrix();
+        }
     }
 
 }

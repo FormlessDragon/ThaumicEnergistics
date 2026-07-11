@@ -8,11 +8,11 @@
       "grid": "BREAK_AFTER_3COLS"
     },
     "CRAFTING_RESULT": {
-      "left": 107,
+      "left": 108,
       "bottom": 140
     },
     "THE_ARCANE_CRYSTAL": {
-      "left": 130,
+      "left": 131,
       "bottom": 158,
       "grid": "BREAK_AFTER_2COLS"
     },
@@ -22,49 +22,29 @@
       "grid": "VERTICAL"
     },
     "THE_KNOWLEDGE_CORE": {
-      "left": 174,
-      "bottom": 145
-    }
-  },
-  "text": {
-    "dialog_title": {
-      "text": {
-        "translate": "gui.ae2.Terminal"
-      },
-      "position": {
-        "left": 8,
-        "top": 6
-      }
-    },
-    "crafting_grid_title": {
-      "text": {
-        "translate": "gui.ae2.CraftingTerminal"
-      },
-      "position": {
-        "left": 8,
-        "bottom": 177
-      }
+      "left": 176,
+      "bottom": 166
     }
   },
   "terminalStyle": {
     "header": {
-      "texture": "thaumicenergistics:textures/gui/arcane_inscriber.png",
+      "texture": "thaumicenergistics:textures/gui/arcane_inscriber_new.png",
       "srcRect": [0, 0, 195, 17]
     },
     "firstRow": {
-      "texture": "thaumicenergistics:textures/gui/arcane_inscriber.png",
+      "texture": "thaumicenergistics:textures/gui/arcane_inscriber_new.png",
       "srcRect": [0, 17, 195, 18]
     },
     "row": {
-      "texture": "thaumicenergistics:textures/gui/arcane_inscriber.png",
+      "texture": "thaumicenergistics:textures/gui/arcane_inscriber_new.png",
       "srcRect": [0, 35, 195, 18]
     },
     "lastRow": {
-      "texture": "thaumicenergistics:textures/gui/arcane_inscriber.png",
+      "texture": "thaumicenergistics:textures/gui/arcane_inscriber_new.png",
       "srcRect": [0, 53, 195, 18]
     },
     "bottom": {
-      "texture": "thaumicenergistics:textures/gui/arcane_inscriber.png",
+      "texture": "thaumicenergistics:textures/gui/arcane_inscriber_new.png",
       "srcRect": [0, 71, 195, 180]
     }
   },
@@ -74,16 +54,16 @@
       "bottom": 159
     },
     "knowledgeCoreAdd": {
-      "left": 87,
-      "bottom": 100
+      "left": 176,
+      "bottom": 146
     },
     "knowledgeCoreDelete": {
-      "left": 104,
-      "bottom": 100
+      "left": 176,
+      "bottom": 127
     },
     "knowledgeCoreView": {
-      "left": 121,
-      "bottom": 100
+      "left": 176,
+      "bottom": 108
     }
   }
 }

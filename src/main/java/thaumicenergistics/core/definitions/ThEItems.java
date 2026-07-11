@@ -46,6 +46,8 @@ public final class ThEItems {
             new ItemKnowledgeCore(false), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<Item> UPGRADE_ARCANE = new ItemDefinition<>(ThEItemIds.UPGRADE_ARCANE,
             new Item(), ModGlobals.CREATIVE_TAB);
+    public static final ItemDefinition<Item> KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD = new ItemDefinition<>(
+            ThEItemIds.KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD, new Item(), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<Item> DIFFUSION_CORE = new ItemDefinition<>(ThEItemIds.DIFFUSION_CORE,
             new Item(), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<Item> COALESCENCE_CORE = new ItemDefinition<>(ThEItemIds.COALESCENCE_CORE,
@@ -66,6 +68,7 @@ public final class ThEItems {
             BLANK_KNOWLEDGE_CORE,
             KNOWLEDGE_CORE,
             UPGRADE_ARCANE,
+            KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD,
             DIFFUSION_CORE,
             COALESCENCE_CORE
     };

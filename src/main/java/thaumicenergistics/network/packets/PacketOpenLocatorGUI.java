@@ -107,7 +107,7 @@ public class PacketOpenLocatorGUI extends ClientboundPacket {
         }
         return switch (gui) {
             case ARCANE_TERMINAL, ARCANE_INSCRIBER, ARCANE_ASSEMBLER,
-                 KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW,
+                 KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW, KNOWLEDGE_CORE_MANAGE,
                  WIRELESS_ARCANE_TERMINAL -> gui;
             default -> throw new IllegalArgumentException("Unsupported PacketOpenLocatorGUI gui: " + gui);
         };

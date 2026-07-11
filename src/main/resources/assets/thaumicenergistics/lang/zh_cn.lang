@@ -30,6 +30,7 @@ item.thaumicenergistics.arcane_inscriber.name=奥术记录仪
 item.thaumicenergistics.arcane_p2p_tunnel.name=ME奥术P2P隧道
 
 item.thaumicenergistics.upgrade_arcane.name=奥术合成升级
+item.thaumicenergistics.knowledge_core_pattern_expansion_card.name=知识核心样板扩展卡
 item.thaumicenergistics.knowledge_core.name=知识核心
 item.thaumicenergistics.blank_knowledge_core.name=空白知识核心
 
@@ -46,7 +47,8 @@ tooltip.thaumicenergistics.arcane_assembler.no_aspect=错误：缺少源质
 tooltip.thaumicenergistics.arcane_assembler.no_vis=错误：缺少Vis
 
 # GUI
-gui.the.Essentias=源质
+gui.thaumicenergistics.Essentias=源质
+gui.thaumicenergistics.arcane_vis=奥术灵气
 gui.thaumicenergistics.arcane_terminal=奥术合成终端
 gui.thaumicenergistics.arcane_inscriber=奥术记录仪
 

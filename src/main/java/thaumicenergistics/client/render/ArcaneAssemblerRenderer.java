@@ -22,22 +22,26 @@ public class ArcaneAssemblerRenderer extends TileEntitySpecialRenderer<TileArcan
 
     @Override
     public void render(TileArcaneAssembler te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
-        final ItemStack renderedItem = te.getCraftingInv().getStackInSlot(0);
-        if (renderedItem != null && !renderedItem.isEmpty()) {
+        final ItemStack renderedItem = te.getCurrentOutput();
+        if (!renderedItem.isEmpty()) {
             GlStateManager.pushMatrix();
 
-            GlStateManager.translate((float) x + 0.5F, (float) y + 0.5F, (float) z + 0.5F);
-            float degrees = (float) (Minecraft.getSystemTime() * 0.05D % 360);
-            GlStateManager.rotate(degrees, 0, 1, 0);
-            GlStateManager.scale(0.5F, 0.5F, 0.5F);
+            try {
+                GlStateManager.translate((float) x + 0.5F, (float) y + 0.5F, (float) z + 0.5F);
+                float degrees = (float) (Minecraft.getSystemTime() * 0.05D % 360);
+                GlStateManager.rotate(degrees, 0, 1, 0);
+                GlStateManager.scale(0.5F, 0.5F, 0.5F);
 
-            GlStateManager.disableLighting();
-            RenderHelper.enableStandardItemLighting();
-            Minecraft.getMinecraft().getRenderItem().renderItem(renderedItem, ItemCameraTransforms.TransformType.FIXED);
-            RenderHelper.disableStandardItemLighting();
-            GlStateManager.enableLighting();
+                GlStateManager.disableLighting();
+                RenderHelper.enableStandardItemLighting();
+                Minecraft.getMinecraft().getRenderItem().renderItem(renderedItem, ItemCameraTransforms.TransformType.FIXED);
+            } finally {
+                RenderHelper.disableStandardItemLighting();
+                GlStateManager.enableLighting();
 
-            GlStateManager.popMatrix();
+                GlStateManager.popMatrix();
+            }
+
             if (!Minecraft.getMinecraft().isGamePaused()) {
                 particleProgress += particleMultiplier;
                 if (particleProgress >= 1) {

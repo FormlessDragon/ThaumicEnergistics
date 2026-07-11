@@ -36,16 +36,15 @@ public class TCJeiConverter implements IngredientConverter<AspectList> {
     @Override
     @Nullable
     public GenericStack getStackFromIngredient(AspectList ingredient) {
-        if(ingredient == null || ingredient.getAspects()[0] == null) {
+        if (ingredient == null || ingredient.getAspects().length != 1) {
             return null;
         }
 
-        EssentiaStack essentiaStack = new EssentiaStack(ingredient.getAspects()[0], 1);
-        AEEssentiaKey key = AEEssentiaKey.of(essentiaStack);
-        if (key == null) {
+        var aspect = ingredient.getAspects()[0];
+        if (aspect == null || ingredient.getAmount(aspect) <= 0) {
             return null;
         }
 
-        return new GenericStack(key, essentiaStack.getAmount());
+        return new GenericStack(AEEssentiaKey.of(aspect), 1);
     }
 }

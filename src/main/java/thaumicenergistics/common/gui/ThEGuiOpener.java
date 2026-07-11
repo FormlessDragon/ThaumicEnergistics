@@ -108,6 +108,7 @@ public final class ThEGuiOpener {
             case ARCANE_ASSEMBLER -> createArcaneAssemblerContainer(player, gui, locator, windowId);
             case KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW ->
                     createKnowledgeCoreContainer(player, gui, locator, knowledgeCoreParent, windowId);
+            case KNOWLEDGE_CORE_MANAGE -> createKnowledgeCoreManagementContainer(player, locator, windowId);
             case WIRELESS_ARCANE_TERMINAL -> createWirelessArcaneContainer(
                     player.inventory, locateWirelessArcaneHost(player, gui, locator), locator,
                     returnedFromSubScreen, windowId);
@@ -158,6 +159,14 @@ public final class ThEGuiOpener {
                     + "; locator " + locatorDescription(parentLocator));
         }
         ContainerKnowledgeCore container = new ContainerKnowledgeCore(player, gui, parent, parentLocator);
+        container.windowId = windowId;
+        return container;
+    }
+
+    private static ContainerKnowledgeCore createKnowledgeCoreManagementContainer(EntityPlayer player,
+                                                                                   GuiHostLocator locator,
+                                                                                   int windowId) {
+        ContainerKnowledgeCore container = new ContainerKnowledgeCore(player, locator);
         container.windowId = windowId;
         return container;
     }
@@ -302,9 +311,10 @@ public final class ThEGuiOpener {
     private static boolean isSupportedLocatorGui(ModGUIs gui) {
         return gui == ModGUIs.ARCANE_TERMINAL
                 || gui == ModGUIs.ARCANE_INSCRIBER
-                || gui == ModGUIs.ARCANE_ASSEMBLER
-                || gui == ModGUIs.WIRELESS_ARCANE_TERMINAL
-                || isKnowledgeCoreGui(gui);
+                 || gui == ModGUIs.ARCANE_ASSEMBLER
+                 || gui == ModGUIs.WIRELESS_ARCANE_TERMINAL
+                 || gui == ModGUIs.KNOWLEDGE_CORE_MANAGE
+                 || isKnowledgeCoreGui(gui);
     }
 
     private static boolean isKnowledgeCoreGui(ModGUIs gui) {

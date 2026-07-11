@@ -59,8 +59,8 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
         float visRequired = this.inscriberContainer.getVisState().getVisRequired();
         this.fontRenderer.drawString(
                 GuiText.vis_required.getLocal(this.getVisIfSet(visRequired)),
-                60,
-                this.ySize - 168,
+                80,
+                this.ySize - 180,
                 4210752);
     }
 

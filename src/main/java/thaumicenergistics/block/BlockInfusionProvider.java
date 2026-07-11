@@ -2,10 +2,13 @@ package thaumicenergistics.block;
 
 import ae2.api.stacks.AEKey;
 import ae2.api.stacks.KeyCounter;
+import ae2.block.AEBaseTileBlock;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
@@ -17,20 +20,51 @@ import thaumicenergistics.tile.TileInfusionProvider;
 /**
  * @author BrockWS
  */
-public class BlockInfusionProvider extends BlockBase<TileInfusionProvider> {
+public class BlockInfusionProvider extends AEBaseTileBlock<TileInfusionProvider> {
+
+    public static final PropertyBool ACTIVE = PropertyBool.create("active");
+    public static final PropertyBool POWERED = PropertyBool.create("powered");
 
     public BlockInfusionProvider() {
-        super(TileInfusionProvider.class);
+        super(Material.IRON);
+        this.setTileEntity(TileInfusionProvider.class);
+        this.setDefaultState(this.blockState.getBaseState()
+            .withProperty(ACTIVE, Boolean.FALSE)
+            .withProperty(POWERED, Boolean.FALSE));
+    }
+
+    @Override
+    protected BlockStateContainer createBlockState() {
+        return createBlockState(ACTIVE, POWERED);
+    }
+
+    @Override
+    public int getMetaFromState(IBlockState state) {
+        return (state.getValue(ACTIVE) ? 1 : 0) | (state.getValue(POWERED) ? 2 : 0);
+    }
+
+    @Override
+    public IBlockState getStateFromMeta(int meta) {
+        return this.getDefaultState()
+            .withProperty(ACTIVE, (meta & 1) != 0)
+            .withProperty(POWERED, (meta & 2) != 0);
+    }
+
+    @Override
+    protected IBlockState updateBlockStateFromTileEntity(IBlockState currentState, TileInfusionProvider tileEntity) {
+        return currentState
+            .withProperty(ACTIVE, tileEntity.getMainNode().isActive())
+            .withProperty(POWERED, tileEntity.getMainNode().isPowered());
     }
 
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
         if (world.isRemote || hand != EnumHand.MAIN_HAND)
             return super.onBlockActivated(world, pos, state, player, hand, facing, hitX, hitY, hitZ);
-        TileEntity te = world.getTileEntity(pos);
-        if (te instanceof TileInfusionProvider inf) {
+        TileInfusionProvider tile = this.getTileEntity(world, pos);
+        if (tile != null) {
             if (player.isSneaking()) {
-                KeyCounter storedAspects = inf.getStoredAspects();
+                KeyCounter storedAspects = tile.getStoredAspects();
                 if (!storedAspects.isEmpty()) {
                     player.sendMessage(new TextComponentString("Stored Aspects:"));
                     for (Object2LongMap.Entry<AEKey> stack : storedAspects) {
@@ -42,7 +76,7 @@ public class BlockInfusionProvider extends BlockBase<TileInfusionProvider> {
                     player.sendMessage(new TextComponentString("No aspects found"));
                 }
             }
-            inf.refreshVisualState();
+            tile.refreshVisualState();
             return true;
         }
         return false;

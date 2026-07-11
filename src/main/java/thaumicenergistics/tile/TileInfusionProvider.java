@@ -1,11 +1,14 @@
 package thaumicenergistics.tile;
 
 import ae2.api.config.Actionable;
+import ae2.api.implementations.IPowerChannelState;
 import ae2.api.networking.GridFlags;
+import ae2.api.networking.IGrid;
 import ae2.api.networking.security.IActionSource;
 import ae2.api.stacks.AEKey;
 import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
+import ae2.tile.grid.AENetworkedPoweredTile;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import java.util.Objects;
@@ -22,8 +25,11 @@ import thaumicenergistics.util.ForgeUtil;
 /**
  * @author BrockWS
  */
-public class TileInfusionProvider extends ThENetworkTile implements IAspectSource {
+public class TileInfusionProvider extends AENetworkedPoweredTile
+        implements IPowerChannelState, IAspectSource {
     private static final String TAG_STORED_ASPECTS = "storedAspects";
+
+    protected final IActionSource src = IActionSource.ofMachine(this);
 
     // Client side only, for rendering aspect icons with goggles
     private AspectList clientAspects = new AspectList();
@@ -38,6 +44,21 @@ public class TileInfusionProvider extends ThENetworkTile implements IAspectSourc
     @Override
     public ItemStack getItemFromTile() {
         return ThEBlocks.INFUSION_PROVIDER.stack();
+    }
+
+    @Override
+    public boolean isPowered() {
+        return this.getMainNode().isPowered();
+    }
+
+    @Override
+    public boolean isActive() {
+        return this.getMainNode().isActive();
+    }
+
+    private MEStorage getNetworkStorage() {
+        IGrid grid = this.getMainNode().getGrid();
+        return grid == null || grid.getStorageService() == null ? null : grid.getStorageService().getInventory();
     }
 
     public KeyCounter getStoredAspects() {

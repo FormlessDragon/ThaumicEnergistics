@@ -8,7 +8,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.registries.IForgeRegistry;
 import thaumicenergistics.thaumicenergistics.Reference;
 
-import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * @author Alex811
@@ -16,7 +16,7 @@ import java.util.HashMap;
 @Mod.EventBusSubscriber
 public class ThESounds {
 
-    private static final HashMap<String, ResourceLocation> SOUNDS = new HashMap<>();
+    private static final HashSet<SoundEvent> SOUNDS = new HashSet<>();
 
     private final ResourceLocation soundKnowledgeCoreWrite;
     private final ResourceLocation soundKnowledgeCorePowerUp;
@@ -48,7 +48,7 @@ public class ThESounds {
         ResourceLocation resourceLocation = new ResourceLocation(Reference.MOD_ID, sound);
         SoundEvent soundEvent = new SoundEvent(resourceLocation);
         soundEvent.setRegistryName(sound);
-        SOUNDS.put(sound, resourceLocation);
+        SOUNDS.add(soundEvent);
         return resourceLocation;
     }
 
@@ -67,11 +67,7 @@ public class ThESounds {
     @SubscribeEvent
     public static void registerSoundEvents(RegistryEvent.Register<SoundEvent> event) {
         IForgeRegistry<SoundEvent> registry = event.getRegistry();
-        SOUNDS.forEach((name, loc) -> {
-            SoundEvent soundEvent = new SoundEvent(loc);
-            soundEvent.setRegistryName(name);
-            registry.register(soundEvent);
-        });
+        SOUNDS.forEach(registry::register);
     }
 
 }
