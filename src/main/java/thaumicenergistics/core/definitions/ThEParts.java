@@ -10,7 +10,7 @@ import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import thaumicenergistics.api.ids.ThEPartIds;
-import thaumicenergistics.init.ModGlobals;
+import thaumicenergistics.core.ModGlobals;
 import thaumicenergistics.part.ArcaneP2PTunnelPart;
 import thaumicenergistics.part.PartArcaneInscriber;
 import thaumicenergistics.part.PartArcaneTerminal;

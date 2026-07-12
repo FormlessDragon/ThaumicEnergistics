@@ -1,5 +1,7 @@
 package thaumicenergistics.core.definitions;
 
+import ae2.api.crafting.PatternDetailsHelper;
+import ae2.api.upgrades.Upgrades;
 import ae2.core.AEConfig;
 import ae2.core.definitions.BlockDefinition;
 import ae2.core.definitions.ItemDefinition;
@@ -10,10 +12,12 @@ import net.minecraft.item.ItemBlock;
 import net.minecraftforge.event.RegistryEvent;
 import thaumicenergistics.api.ids.ThEItemIds;
 import thaumicenergistics.api.storage.EssentiaStorageCell;
-import thaumicenergistics.init.ModGlobals;
+import thaumicenergistics.core.ThELog;
+import thaumicenergistics.core.ModGlobals;
 import thaumicenergistics.items.CreativeEssentiaCell;
 import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.items.tools.powerd.WirelessArcaneTermItem;
+import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCorePatternProjection;
 
 import java.util.function.IntSupplier;
 
@@ -45,9 +49,13 @@ public final class ThEItems {
     public static final ItemDefinition<ItemKnowledgeCore> KNOWLEDGE_CORE = new ItemDefinition<>(ThEItemIds.KNOWLEDGE_CORE,
             new ItemKnowledgeCore(false), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<Item> UPGRADE_ARCANE = new ItemDefinition<>(ThEItemIds.UPGRADE_ARCANE,
-            new Item(), ModGlobals.CREATIVE_TAB);
+            Upgrades.createUpgradeCardItem(), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<Item> KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD = new ItemDefinition<>(
             ThEItemIds.KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD, new Item(), ModGlobals.CREATIVE_TAB);
+    public static final ItemDefinition<Item> KNOWLEDGE_CORE_PATTERN = new ItemDefinition<>(
+            ThEItemIds.KNOWLEDGE_CORE_PATTERN,
+            PatternDetailsHelper.encodedPatternItemBuilder(KnowledgeCorePatternProjection.INSTANCE::decode).build(),
+            null);
     public static final ItemDefinition<Item> DIFFUSION_CORE = new ItemDefinition<>(ThEItemIds.DIFFUSION_CORE,
             new Item(), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<Item> COALESCENCE_CORE = new ItemDefinition<>(ThEItemIds.COALESCENCE_CORE,
@@ -69,6 +77,7 @@ public final class ThEItems {
             KNOWLEDGE_CORE,
             UPGRADE_ARCANE,
             KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD,
+            KNOWLEDGE_CORE_PATTERN,
             DIFFUSION_CORE,
             COALESCENCE_CORE
     };
@@ -76,13 +85,14 @@ public final class ThEItems {
     private ThEItems() {}
 
     private static double getWirelessTerminalBattery() {
-        return getConfiguredBattery(AEConfig.instance()::getWirelessTerminalBattery, 1600000);
+        return getConfiguredBattery(() -> AEConfig.instance().getWirelessTerminalBattery(), 1600000);
     }
 
     private static double getConfiguredBattery(IntSupplier supplier, double fallback) {
         try {
             return supplier.getAsInt();
-        } catch (IllegalStateException ignored) {
+        } catch (IllegalStateException exception) {
+            ThELog.warn("AE2 configuration is not initialized; using wireless terminal battery fallback {}", fallback);
             return fallback;
         }
     }

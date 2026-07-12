@@ -26,6 +26,9 @@ public final class ArcaneVisKeyRenderHandler implements AEKeyRenderHandler<Arcan
 
     @Override
     public void drawInGui(Minecraft minecraft, int x, int y, ArcaneVisKey what) {
+        boolean blendEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
+        boolean lightingEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
+        boolean textureEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
         GlStateManager.pushMatrix();
         try {
             GlStateManager.enableBlend();
@@ -33,17 +36,16 @@ public final class ArcaneVisKeyRenderHandler implements AEKeyRenderHandler<Arcan
             GlStateManager.disableTexture2D();
             drawVisMote(x + 8.0F, y + 8.0F, 6.0F);
         } finally {
-            GlStateManager.enableTexture2D();
-            GlStateManager.enableBlend();
-            GlStateManager.disableDepth();
-            GlStateManager.disableLighting();
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            restoreCapabilities(blendEnabled, lightingEnabled, textureEnabled);
             GlStateManager.popMatrix();
         }
     }
 
     @Override
     public void drawOnBlockFace(ArcaneVisKey what, float scale, int combinedLight, World world) {
+        boolean blendEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
+        boolean lightingEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
+        boolean textureEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
         GlStateManager.pushMatrix();
         try {
             GlStateManager.enableBlend();
@@ -51,11 +53,7 @@ public final class ArcaneVisKeyRenderHandler implements AEKeyRenderHandler<Arcan
             GlStateManager.disableTexture2D();
             drawVisMote(0.0F, 0.0F, scale / 2.0F);
         } finally {
-            GlStateManager.enableTexture2D();
-            GlStateManager.enableBlend();
-            GlStateManager.disableDepth();
-            GlStateManager.disableLighting();
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            restoreCapabilities(blendEnabled, lightingEnabled, textureEnabled);
             GlStateManager.popMatrix();
         }
     }
@@ -77,6 +75,24 @@ public final class ArcaneVisKeyRenderHandler implements AEKeyRenderHandler<Arcan
             buffer.pos(x, y, 0.0001D).color(54, 154, 230, 255).endVertex();
         }
         tessellator.draw();
+    }
+
+    private static void restoreCapabilities(boolean blendEnabled, boolean lightingEnabled, boolean textureEnabled) {
+        if (blendEnabled) {
+            GlStateManager.enableBlend();
+        } else {
+            GlStateManager.disableBlend();
+        }
+        if (lightingEnabled) {
+            GlStateManager.enableLighting();
+        } else {
+            GlStateManager.disableLighting();
+        }
+        if (textureEnabled) {
+            GlStateManager.enableTexture2D();
+        } else {
+            GlStateManager.disableTexture2D();
+        }
     }
 
 }

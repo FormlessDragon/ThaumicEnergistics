@@ -8,30 +8,29 @@ import ae2.core.gui.locator.ItemGuiHostLocator;
 import ae2.helpers.WirelessTerminalGuiHost;
 import ae2.items.tools.powered.WirelessTerminalItem;
 import ae2.items.tools.powered.WirelessTerminals;
+import ae2.api.upgrades.IUpgradeInventory;
+import ae2.api.upgrades.UpgradeInventories;
+import ae2.util.inv.AppEngInternalInventory;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.wrapper.InvWrapper;
-import thaumicenergistics.api.storage.IArcaneTerminalHost;
-import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.util.inventory.ThEInternalInventory;
-import thaumicenergistics.util.inventory.ThEUpgradeInventory;
+import thaumicenergistics.api.storage.IArcaneTerminalUpgradeHost;
+import thaumicenergistics.core.ModGUIs;
 
 import java.util.function.BiConsumer;
 
 public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<WirelessTerminalItem>
-        implements IArcaneTerminalHost {
+        implements IArcaneTerminalUpgradeHost {
 
     private static final String TAG_ARCANE_MATRIX = "arcaneMatrix";
     private static final String TAG_ARCANE_UPGRADES = "arcaneUpgrades";
 
     private final WirelessTerminalItem terminalItem;
-    private final ThEInternalInventory craftingInventory;
-    private final ThEUpgradeInventory upgradeInventory;
+    private final AppEngInternalInventory craftingInventory;
+    private final IUpgradeInventory upgradeInventory;
 
     public WirelessArcaneTerminalGuiHost(WirelessTerminalItem stackItem,
                                          WirelessTerminalItem terminalItem,
@@ -40,20 +39,14 @@ public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<Wirel
                                          BiConsumer<EntityPlayer, ISubGui> returnToMainContainer) {
         super(stackItem, terminalItem, player, locator, returnToMainContainer);
         this.terminalItem = terminalItem;
-        this.craftingInventory = new ThEInternalInventory("matrix", 15, 64) {
+        this.craftingInventory = new AppEngInternalInventory(null, 15, 64) {
             @Override
-            public void markDirty() {
-                super.markDirty();
+            protected void onContentsChanged(int slot) {
+                super.onContentsChanged(slot);
                 WirelessArcaneTerminalGuiHost.this.saveArcaneInventories();
             }
         };
-        this.upgradeInventory = new ThEUpgradeInventory("upgrades", 1, 1, getItemStack()) {
-            @Override
-            public void markDirty() {
-                super.markDirty();
-                WirelessArcaneTerminalGuiHost.this.saveArcaneInventories();
-            }
-        };
+        this.upgradeInventory = UpgradeInventories.forMachine(this.terminalItem, 1, this::saveArcaneInventories);
         this.loadArcaneInventories();
     }
 
@@ -70,18 +63,14 @@ public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<Wirel
         if (data == null) {
             return;
         }
-        if (data.hasKey(TAG_ARCANE_MATRIX)) {
-            this.craftingInventory.deserializeNBT(data.getTagList(TAG_ARCANE_MATRIX, 10));
-        }
-        if (data.hasKey(TAG_ARCANE_UPGRADES)) {
-            this.upgradeInventory.deserializeNBT(data.getTagList(TAG_ARCANE_UPGRADES, 10));
-        }
+        this.craftingInventory.readFromNBT(data, TAG_ARCANE_MATRIX);
+        this.upgradeInventory.readFromNBT(data, TAG_ARCANE_UPGRADES);
     }
 
     private void saveArcaneInventories() {
         NBTTagCompound data = this.getTerminalData();
-        data.setTag(TAG_ARCANE_MATRIX, this.craftingInventory.serializeNBT());
-        data.setTag(TAG_ARCANE_UPGRADES, this.upgradeInventory.serializeNBT());
+        this.craftingInventory.writeToNBT(data, TAG_ARCANE_MATRIX);
+        this.upgradeInventory.writeToNBT(data, TAG_ARCANE_UPGRADES);
     }
 
     @Override
@@ -90,23 +79,12 @@ public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<Wirel
     }
 
     @Override
-    public IItemHandler getInventoryByName(String name) {
-        if (name.equalsIgnoreCase("crafting")) {
-            return new InvWrapper(this.craftingInventory);
-        }
-        if (name.equalsIgnoreCase("upgrades")) {
-            return new InvWrapper(this.upgradeInventory);
-        }
-        return null;
-    }
-
-    @Override
     public InternalInventory getArcaneCraftingInventory() {
         return this.craftingInventory;
     }
 
     @Override
-    public ThEUpgradeInventory getArcaneUpgradeInventory() {
+    public IUpgradeInventory getArcaneUpgradeInventory() {
         return this.upgradeInventory;
     }
 

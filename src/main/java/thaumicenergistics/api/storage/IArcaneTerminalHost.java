@@ -2,61 +2,52 @@ package thaumicenergistics.api.storage;
 
 import ae2.api.inventories.InternalInventory;
 import ae2.api.storage.ITerminalHost;
-import ae2.api.upgrades.IUpgradeInventory;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.items.IItemHandler;
-import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.core.ThELog;
+import thaumicenergistics.core.ModGUIs;
 
 /**
- * Host contract for Thaumic Energistics arcane terminal containers.
+ * Shared host contract for every arcane terminal-style GUI.
  * <p>
- * Arcane terminal hosts expose two different inventory boundaries: the legacy named item-handler bridge and typed ThE
- * inventories. The typed inventories are the production path for ThE containers and logic. The legacy bridge remains
- * only for existing external ABI callers that still request Forge {@link IItemHandler} views by name.
+ * The contract exists because the Arcane Terminal and Arcane Inscriber share their matrix, GUI navigation and Vis
+ * context, while their auxiliary inventories have different semantics. Consumers that need an upgrade slot or a
+ * knowledge-core slot must depend on the corresponding specialized host interface.
  */
 public interface IArcaneTerminalHost extends ITerminalHost {
 
+    /**
+     * Returns the concrete ThE GUI owned by this host so sub-GUIs can navigate back to the correct screen.
+     */
     ModGUIs getGui();
 
     /**
-     * Legacy named Forge item-handler bridge retained for external ABI callers.
-     * <p>
-     * New ThE production logic must prefer {@link #getArcaneCraftingInventory()} and
-     * {@link #getArcaneUpgradeInventory()} so inventory consumers fail at compile time instead of through string names.
+     * Returns the fifteen-slot arcane matrix used by recipe lookup and matrix slot interactions.
      */
-    IItemHandler getInventoryByName(String name);
+    InternalInventory getArcaneCraftingInventory();
 
     /**
-     * Returns the typed ThE arcane crafting matrix inventory for terminal-style hosts.
-     * <p>
-     * This default preserves binary compatibility for hosts that have not migrated yet. Production callers that require
-     * the matrix must use hosts that override this method; otherwise the failure is explicit and logged.
+     * Reports whether the host currently has a valid world location from which Vis can be queried.
      */
-    default InternalInventory getArcaneCraftingInventory() {
-        ThELog.error("Arcane terminal host {} does not expose a typed arcane crafting inventory",
-                this.getClass().getName());
-        throw new UnsupportedOperationException("Arcane terminal host does not expose typed arcane crafting inventory");
-    }
-
-    /**
-     * Returns the ThE arcane upgrade / knowledge-core inventory for this host.
-     * <p>
-     * This is the typed boundary for ThE-specific arcane upgrade semantics, not a request for AE2 generic upgrades.
-     * Part hosts override it so callers can avoid {@code getInventoryByName("upgrades")} and its stringly-typed
-     * boundary.
-     */
-    IUpgradeInventory getArcaneUpgradeInventory();
-
     boolean hasVisSource();
 
+    /**
+     * Returns the world containing the Vis source after {@link #hasVisSource()} has succeeded.
+     */
     World getVisWorld();
 
+    /**
+     * Returns the block position used for Vis queries after {@link #hasVisSource()} has succeeded.
+     */
     BlockPos getVisPos();
 
+    /**
+     * Returns the position used when the container navigates back from an arcane sub-GUI.
+     */
     BlockPos getReturnPos();
 
+    /**
+     * Returns the side used when the container navigates back from an arcane sub-GUI.
+     */
     EnumFacing getReturnSide();
 }

@@ -12,8 +12,8 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import ae2.core.gui.locator.GuiHostLocators;
 import thaumicenergistics.common.gui.ThEGuiOpener;
-import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.util.KnowledgeCoreUtil;
+import thaumicenergistics.core.ModGUIs;
+import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
 /**
  * If you're looking for methods to operate on a

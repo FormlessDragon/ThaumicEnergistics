@@ -27,8 +27,12 @@ public class TCJeiConverter implements IngredientConverter<AspectList> {
 
         if (stack.what() instanceof AEEssentiaKey essentiaKey) {
             AspectList aspectList = new AspectList();
-            EssentiaStack essentiaStack = essentiaKey.toStack(Math.max(1, Ints.saturatedCast(stack.amount())));
-            return aspectList.add(essentiaStack.getAspect(), 1);
+            int amount = Ints.saturatedCast(stack.amount());
+            if (amount <= 0) {
+                return null;
+            }
+            EssentiaStack essentiaStack = essentiaKey.toStack(amount);
+            return aspectList.add(essentiaStack.getAspect(), amount);
         }
         return null;
     }
@@ -45,6 +49,6 @@ public class TCJeiConverter implements IngredientConverter<AspectList> {
             return null;
         }
 
-        return new GenericStack(AEEssentiaKey.of(aspect), 1);
+        return new GenericStack(AEEssentiaKey.of(aspect), ingredient.getAmount(aspect));
     }
 }

@@ -2,6 +2,7 @@ package thaumicenergistics.container.part;
 
 import ae2.api.stacks.AEItemKey;
 import ae2.api.config.Actionable;
+import ae2.api.inventories.InternalInventory;
 import ae2.api.util.IConfigurableObject;
 import ae2.container.GuiIds;
 import ae2.container.SlotSemantics;
@@ -17,19 +18,20 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.items.IItemHandler;
 import thaumcraft.api.crafting.IArcaneRecipe;
-import thaumicenergistics.api.storage.IArcaneTerminalHost;
+import thaumicenergistics.api.storage.IArcaneInscriberHost;
 import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.slot.SlotArcaneGhostMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
 import thaumicenergistics.core.definitions.ThEItems;
-import thaumicenergistics.init.ModGUIs;
+import thaumicenergistics.core.ModGUIs;
 import thaumicenergistics.integration.jei.ArcaneInscriberGhostItemPayload;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.items.ItemKnowledgeCore;
+import thaumicenergistics.part.inventory.ArcaneInscriberMatrixInventory;
 import thaumicenergistics.util.ItemHandlerUtil;
-import thaumicenergistics.util.KnowledgeCoreUtil;
+import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 import thaumicenergistics.core.ThELog;
 
 /**
@@ -46,9 +48,29 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     @GuiSync(103)
     private boolean recipeIsArcane = false;
 
-    public ContainerArcaneInscriber(InventoryPlayer ip, IArcaneTerminalHost host) {
+    public ContainerArcaneInscriber(InventoryPlayer ip, IArcaneInscriberHost host) {
         super(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, host);
         this.registerInscriberActions();
+    }
+
+    @Override
+    public IArcaneInscriberHost getArcaneHost() {
+        return (IArcaneInscriberHost) super.getArcaneHost();
+    }
+
+    @Override
+    public IArcaneInscriberHost getHost() {
+        return (IArcaneInscriberHost) super.getHost();
+    }
+
+    private InternalInventory getKnowledgeCoreInventory() {
+        InternalInventory inventory = this.getArcaneHost().getKnowledgeCoreInventory();
+        if (inventory == null) {
+            ThELog.error("Arcane Inscriber host returned a null knowledge-core inventory: {}",
+                    this.getArcaneHost().getClass().getName());
+            throw new IllegalStateException("Arcane Inscriber knowledge-core inventory must not be null");
+        }
+        return inventory;
     }
 
     public boolean isRecipeArcane() {
@@ -91,7 +113,7 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     private void openKnowledgeCoreAdd() {
-        ItemStack knowledgeCore = this.getTypedArcaneUpgradeInventory().getStackInSlot(0);
+        ItemStack knowledgeCore = this.getKnowledgeCoreInventory().getStackInSlot(0);
         ItemStack result = this.getCraftingResultInventory().getStackInSlot(0);
         if (knowledgeCore.isEmpty() || result.isEmpty() || !this.recipeIsArcane) {
             return;
@@ -103,7 +125,9 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
 
         boolean currentIsBlank = ((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
         if (currentIsBlank) {
-            this.getArcaneHost().getArcaneUpgradeInventory().setItemDirect(0, ThEItems.KNOWLEDGE_CORE.stack(1));
+            ItemStack convertedCore =
+                    KnowledgeCoreUtil.copyNonRecipeData(knowledgeCore, ThEItems.KNOWLEDGE_CORE.stack(1));
+            this.getKnowledgeCoreInventory().setItemDirect(0, convertedCore);
         } else if (KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem())) {
             return;
         }
@@ -112,14 +136,14 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     private void openKnowledgeCoreDel() {
-        ItemStack knowledgeCore = this.getTypedArcaneUpgradeInventory().getStackInSlot(0);
+        ItemStack knowledgeCore = this.getKnowledgeCoreInventory().getStackInSlot(0);
         if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
             ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_DEL, this.getLocator(), false);
         }
     }
 
     private void openKnowledgeCoreView() {
-        ItemStack knowledgeCore = this.getTypedArcaneUpgradeInventory().getStackInSlot(0);
+        ItemStack knowledgeCore = this.getKnowledgeCoreInventory().getStackInSlot(0);
         if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
             ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_VIEW, this.getLocator(), false);
         }
@@ -219,13 +243,32 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     @Override
+    protected boolean clearCraftingForJEI() {
+        this.clearCrafting();
+        return true;
+    }
+
+    @Override
+    protected boolean allowJEIIngredientFallback() {
+        return true;
+    }
+
+    @Override
+    protected int getJEITransferSlotLimit(IItemHandler crafting, int slot) {
+        if (slot < ArcaneInscriberMatrixInventory.INGREDIENT_SLOT_COUNT) {
+            return 1;
+        }
+        return super.getJEITransferSlotLimit(crafting, slot);
+    }
+
+    @Override
     protected float getRequiredVis(IRecipe recipe, EntityPlayer player) {
         if (!(recipe instanceof IArcaneRecipe))
             return -1;
         return ((IArcaneRecipe) recipe).getVis();
     }
 
-    /*@Override
+    @Override
     public void handleJEITransfer(EntityPlayer player, NBTTagCompound tag) {
         NBTBase normal = tag.getTag("normal");
         NBTBase crystals = tag.getTag("crystal");
@@ -237,7 +280,7 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
         handleJEITag(9, crystals, false);
 
         this.onMatrixChanged();
-    }*/
+    }
 
     private void handleJEITag(int startAtSlot, NBTBase ingredientGroup, boolean mustBeSingle) {
         IItemHandler crafting = this.getCraftingItemHandler();
@@ -327,7 +370,7 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
 
     @Override
     protected void addArcaneAuxiliarySlots(int offsetX, int offsetY) {
-        this.addSlot(new SlotKnowledgeCore(this.getTypedArcaneUpgradeInventory(), 0, offsetX, offsetY),
+        this.addSlot(new SlotKnowledgeCore(this.getKnowledgeCoreInventory(), 0, offsetX, offsetY),
                 ThESlotSemantics.KNOWLEDGE_CORE);
     }
 

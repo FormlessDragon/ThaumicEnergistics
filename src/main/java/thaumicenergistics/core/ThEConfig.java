@@ -31,6 +31,9 @@ public class ThEConfig {
     @Config.Name("Client Config")
     public static Client client = new Client();
 
+    @Config.Name("Common Config")
+    public static Common common = new Common();
+
     private static ThEConfig INSTANCE;
 
     private ThEConfig() {
@@ -75,6 +78,17 @@ public class ThEConfig {
         }
     }
 
+    public static class Common {
+
+        @Config.Name("KnowledgeCore expansion card max installed")
+        @Config.RangeInt(min = 0, max = 3)
+        public int expansionCardMaxInstalled = 1;
+
+        public Common() {
+
+        }
+    }
+
     public static class TickRates {
         @Config.Name("Arcane Assembler Min")
         public int tickTimeArcaneAssemblerMin = 2;
@@ -106,6 +120,10 @@ public class ThEConfig {
 
     public double arcaneAssemblerParticleMultiplier() {
         return client.arcaneAssemblerParticleMultiplier;
+    }
+
+    public int expansionCardMaxInstalled() {
+        return common.expansionCardMaxInstalled;
     }
 
 }

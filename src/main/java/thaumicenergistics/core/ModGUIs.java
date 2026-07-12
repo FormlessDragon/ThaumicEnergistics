@@ -1,0 +1,16 @@
+package thaumicenergistics.core;
+
+/**
+ * @author BrockWS
+ */
+public enum ModGUIs {
+    ARCANE_TERMINAL,
+    WIRELESS_ARCANE_TERMINAL,
+    ARCANE_INSCRIBER,
+    ARCANE_ASSEMBLER,
+
+    KNOWLEDGE_CORE_ADD,
+    KNOWLEDGE_CORE_DEL,
+    KNOWLEDGE_CORE_VIEW,
+    KNOWLEDGE_CORE_MANAGE
+}

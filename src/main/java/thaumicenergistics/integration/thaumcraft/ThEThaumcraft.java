@@ -27,7 +27,7 @@ import thaumcraft.api.items.ItemsTC;
 import thaumcraft.api.research.ResearchCategories;
 import thaumcraft.api.research.ScanningManager;
 import thaumcraft.api.research.theorycraft.TheorycraftManager;
-import thaumicenergistics.init.ModGlobals;
+import thaumicenergistics.core.ModGlobals;
 import thaumicenergistics.integration.IThEIntegration;
 import thaumicenergistics.integration.thaumcraft.research.AidMEController;
 import thaumicenergistics.integration.thaumcraft.research.AidMEDrive;

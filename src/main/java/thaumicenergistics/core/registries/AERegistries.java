@@ -7,7 +7,6 @@ import thaumicenergistics.common.strategy.EssentiaContainerItemStrategy;
 import thaumicenergistics.common.strategy.EssentiaExternalStorageStrategy;
 import thaumicenergistics.common.strategy.EssentiaStackExportStrategy;
 import thaumicenergistics.common.strategy.EssentiaStackImportStrategy;
-import thaumicenergistics.util.KnowledgeCoreUtil;
 
 public class AERegistries {
 
@@ -24,7 +23,6 @@ public class AERegistries {
 
         AEKeyTypes.register(AEEssentiaKeys.INSTANCE);
         AEKeyTypes.register(ArcaneVisKeys.INSTANCE);
-        KnowledgeCoreUtil.registerPatternDecoder();
         EssentiaContainerItemStrategy.register();
         EssentiaStackImportStrategy.register();
         EssentiaStackExportStrategy.register();

@@ -31,6 +31,7 @@ public final class ThEItemIds {
     public static final ResourceLocation KNOWLEDGE_CORE = id("knowledge_core");
     public static final ResourceLocation UPGRADE_ARCANE = id("upgrade_arcane");
     public static final ResourceLocation KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD = id("knowledge_core_pattern_expansion_card");
+    public static final ResourceLocation KNOWLEDGE_CORE_PATTERN = id("knowledge_core_pattern");
     public static final ResourceLocation DIFFUSION_CORE = id("diffusion_core");
     public static final ResourceLocation COALESCENCE_CORE = id("coalescence_core");
 

@@ -7,7 +7,8 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.network.play.client.CPacketCloseWindow;
-import thaumicenergistics.api.storage.IArcaneTerminalHost;
+import thaumicenergistics.api.storage.IArcaneInscriberHost;
+import thaumicenergistics.api.storage.IArcaneTerminalUpgradeHost;
 import thaumicenergistics.client.gui.block.GuiArcaneAssembler;
 import thaumicenergistics.client.gui.item.GuiKnowledgeCore;
 import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
@@ -18,7 +19,7 @@ import thaumicenergistics.container.item.ContainerKnowledgeCore;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
-import thaumicenergistics.init.ModGUIs;
+import thaumicenergistics.core.ModGUIs;
 import thaumicenergistics.network.packets.PacketOpenLocatorGUI;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.core.ThELog;
@@ -155,7 +156,7 @@ public final class GuiHandler {
                                                                      boolean returnedFromSubScreen,
                                                                      int windowId) {
         ContainerArcaneTerm container = new ContainerArcaneTerm(player.inventory,
-                locateArcaneTerminalHost(player, gui, locator));
+                locateArcaneTerminalUpgradeHost(player, gui, locator));
         container.setLocator(locator);
         container.setReturnedFromSubScreen(returnedFromSubScreen);
         container.windowId = windowId;
@@ -167,7 +168,7 @@ public final class GuiHandler {
                                                                            boolean returnedFromSubScreen,
                                                                            int windowId) {
         ContainerArcaneInscriber container = new ContainerArcaneInscriber(player.inventory,
-                locateArcaneTerminalHost(player, gui, locator));
+                locateArcaneInscriberHost(player, gui, locator));
         container.setLocator(locator);
         container.setReturnedFromSubScreen(returnedFromSubScreen);
         container.windowId = windowId;
@@ -188,8 +189,8 @@ public final class GuiHandler {
                                                                        int windowId) {
         ContainerArcaneInscriber parent = getKnowledgeCoreParent(player, gui, openContainer);
         GuiHostLocator parentLocator = getKnowledgeCoreParentLocator(player, gui, parent);
-        IArcaneTerminalHost parentHost = parent.getHost();
-        IArcaneTerminalHost packetLocatedHost = locateArcaneTerminalHost(player, gui, packetLocator);
+        IArcaneInscriberHost parentHost = parent.getHost();
+        IArcaneInscriberHost packetLocatedHost = locateArcaneInscriberHost(player, gui, packetLocator);
         if (packetLocatedHost != parentHost) {
             throw new IllegalStateException("Knowledge Core packet locator mismatch for gui " + gui.name()
                     + " player " + playerDescription(player)
@@ -233,7 +234,7 @@ public final class GuiHandler {
                     + "; parent " + parent);
         }
 
-        IArcaneTerminalHost parentHost = parent.getHost();
+        IArcaneInscriberHost parentHost = parent.getHost();
         if (parentHost == null) {
             throw new IllegalStateException("Cannot open Knowledge Core gui " + gui.name()
                     + " without parent host for player " + playerDescription(player)
@@ -241,7 +242,7 @@ public final class GuiHandler {
                     + "; parent " + parent);
         }
 
-        IArcaneTerminalHost locatedHost = parentLocator.locate(player, IArcaneTerminalHost.class);
+        IArcaneInscriberHost locatedHost = parentLocator.locate(player, IArcaneInscriberHost.class);
         if (locatedHost != parentHost) {
             throw new IllegalStateException("Knowledge Core parent locator mismatch for gui " + gui.name()
                     + " player " + playerDescription(player)
@@ -264,13 +265,26 @@ public final class GuiHandler {
         return host;
     }
 
-    private static IArcaneTerminalHost locateArcaneTerminalHost(EntityPlayer player, ModGUIs gui,
-                                                                GuiHostLocator locator) {
-        IArcaneTerminalHost host = locator.locate(player, IArcaneTerminalHost.class);
+    private static IArcaneTerminalUpgradeHost locateArcaneTerminalUpgradeHost(EntityPlayer player,
+                                                                               ModGUIs gui,
+                                                                               GuiHostLocator locator) {
+        IArcaneTerminalUpgradeHost host = locator.locate(player, IArcaneTerminalUpgradeHost.class);
         if (host == null) {
             throw new IllegalStateException("Cannot locate host for locator-aware client gui " + gui
                     + " with locator " + locatorDescription(locator)
-                    + "; expected " + IArcaneTerminalHost.class.getName());
+                    + "; expected " + IArcaneTerminalUpgradeHost.class.getName());
+        }
+        return host;
+    }
+
+    private static IArcaneInscriberHost locateArcaneInscriberHost(EntityPlayer player,
+                                                                  ModGUIs gui,
+                                                                  GuiHostLocator locator) {
+        IArcaneInscriberHost host = locator.locate(player, IArcaneInscriberHost.class);
+        if (host == null) {
+            throw new IllegalStateException("Cannot locate host for locator-aware client gui " + gui
+                    + " with locator " + locatorDescription(locator)
+                    + "; expected " + IArcaneInscriberHost.class.getName());
         }
         return host;
     }

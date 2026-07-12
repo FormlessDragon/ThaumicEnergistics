@@ -22,7 +22,6 @@ import ae2.api.upgrades.IUpgradeInventory;
 import ae2.api.upgrades.Upgrades;
 import ae2.core.definitions.AEItems;
 import ae2.core.gui.locator.GuiHostLocators;
-import ae2.helpers.patternprovider.PatternContainer;
 import ae2.tile.grid.AENetworkedTile;
 import ae2.util.inv.AppEngInternalInventory;
 import ae2.util.inv.InternalInventoryHost;
@@ -32,20 +31,27 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.World;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aura.AuraHelper;
+import thaumicenergistics.common.crafting.ArcaneVisAccounting;
+import thaumicenergistics.common.crafting.ArcaneVisAccountingImpl;
 import thaumicenergistics.common.gui.ThEGuiOpener;
+import thaumicenergistics.common.crafting.ArcaneVisProvider;
 import thaumicenergistics.common.me.key.AEEssentiaKey;
+import thaumicenergistics.api.storage.ReadOnlyPatternContainer;
 import thaumicenergistics.core.ThEConfig;
 import thaumicenergistics.core.ThELog;
 import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.core.definitions.ThEItems;
-import thaumicenergistics.init.ModGUIs;
+import thaumicenergistics.core.ModGUIs;
 import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.util.ForgeUtil;
-import thaumicenergistics.util.KnowledgeCoreUtil;
+import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
+import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCorePatternProjection;
 import thaumicenergistics.util.TCUtil;
 
 import javax.annotation.Nonnull;
@@ -64,7 +70,7 @@ import java.util.Objects;
  * resulting stacks remain in a persistent output buffer until the grid accepts them.</p>
  */
 public class TileArcaneAssembler extends AENetworkedTile
-        implements ICraftingProvider, IGridTickable, InternalInventoryHost, PatternContainer {
+    implements ArcaneVisProvider, IGridTickable, InternalInventoryHost, ReadOnlyPatternContainer {
 
     private static final String NBT_CORE = "core";
     private static final String NBT_UPGRADES = "upgrades";
@@ -76,6 +82,7 @@ public class TileArcaneAssembler extends AENetworkedTile
     private static final String NBT_PROGRESS = "progress";
     private static final int OUTPUT_BUFFER_SLOTS = 10;
     private static final int MAX_CRAFT_PROGRESS = 100;
+    private static final ArcaneVisAccounting VIS_ACCOUNTING = new ArcaneVisAccountingImpl();
 
     private final IActionSource src = IActionSource.ofMachine(this);
     private final AppEngInternalInventory coreInv;
@@ -84,8 +91,6 @@ public class TileArcaneAssembler extends AENetworkedTile
     private final List<ItemStack> cachedOutputs = new ArrayList<>();
     private final Map<String, Boolean> aspectExists = new HashMap<>();
     private TerminalPatternInventory terminalPatternInventory;
-    private List<Boolean> advertisedVisAvailability = List.of();
-    private boolean visAvailabilityInitialized;
 
     private CurrentRecipeSnapshot currentRecipe;
     private ItemStack currentOutput = ItemStack.EMPTY;
@@ -97,10 +102,10 @@ public class TileArcaneAssembler extends AENetworkedTile
 
     public TileArcaneAssembler() {
         this.getMainNode()
-                .setIdlePowerUsage(1.0)
-                .setFlags(GridFlags.REQUIRE_CHANNEL)
-                .addService(ICraftingProvider.class, this)
-                .addService(IGridTickable.class, this);
+            .setIdlePowerUsage(1.0)
+            .setFlags(GridFlags.REQUIRE_CHANNEL)
+            .addService(ICraftingProvider.class, this)
+            .addService(IGridTickable.class, this);
         this.coreInv = new AppEngInternalInventory(this, 1, 1, new KnowledgeCoreFilter());
         this.upgradeInv = new ArcaneAssemblerUpgradeInventory();
         this.outputBuffer = new AppEngInternalInventory(this, OUTPUT_BUFFER_SLOTS, 64);
@@ -115,7 +120,6 @@ public class TileArcaneAssembler extends AENetworkedTile
     @Override
     public void onMainNodeStateChanged(IGridNodeListener.State reason) {
         this.updatePoweredState();
-        this.invalidateVisAvailability();
         ICraftingProvider.requestUpdate(this.getMainNode());
         this.updateTickingState();
     }
@@ -139,11 +143,11 @@ public class TileArcaneAssembler extends AENetworkedTile
         boolean nextIsCrafting = data.readBoolean();
         int nextProgress = data.readInt();
         changed = changed
-                || nextMissingAspect != this.missingAspect
-                || nextHasEnoughVis != this.hasEnoughVis
-                || nextHasJob != this.hasJob()
-                || nextIsCrafting != this.isCrafting()
-                || nextProgress != this.progress;
+            || nextMissingAspect != this.missingAspect
+            || nextHasEnoughVis != this.hasEnoughVis
+            || nextHasJob != this.hasJob()
+            || nextIsCrafting != this.isCrafting()
+            || nextProgress != this.progress;
         this.missingAspect = nextMissingAspect;
         this.hasEnoughVis = nextHasEnoughVis;
         this.pendingCrafts = nextHasJob ? Math.max(1, this.pendingCrafts) : 0;
@@ -172,13 +176,12 @@ public class TileArcaneAssembler extends AENetworkedTile
         this.upgradeInv.readFromNBT(tag, NBT_UPGRADES);
         this.outputBuffer.readFromNBT(tag, NBT_OUTPUT_BUFFER);
         this.rebuildTerminalPatternInventory();
-        this.invalidateVisAvailability();
         this.pendingCrafts = Math.max(0, tag.getInteger(NBT_PENDING_CRAFTS));
         this.progress = MathHelper.clamp(tag.getInteger(NBT_PROGRESS), 0, MAX_CRAFT_PROGRESS);
         this.currentRecipe = CurrentRecipeSnapshot.readFromNBT(tag);
         this.currentOutput = this.currentRecipe == null
-                ? ItemStack.EMPTY
-                : this.currentRecipe.result();
+            ? ItemStack.EMPTY
+            : this.currentRecipe.result();
         this.readCachedOutputs(tag);
         if (this.pendingCrafts > 0 && this.currentOutput.isEmpty()) {
             ThELog.error("Arcane Assembler @ {} has pending crafts without a current output; discarding the invalid job", this.getPos());
@@ -206,11 +209,11 @@ public class TileArcaneAssembler extends AENetworkedTile
         this.pendingCrafts = data.hasKey("hasJob") && data.getBoolean("hasJob") ? 1 : 0;
         this.powered = data.hasKey("powered") && data.getBoolean("powered");
         this.progress = data.hasKey(NBT_PROGRESS)
-                ? MathHelper.clamp(data.getInteger(NBT_PROGRESS), 0, MAX_CRAFT_PROGRESS)
-                : 0;
+            ? MathHelper.clamp(data.getInteger(NBT_PROGRESS), 0, MAX_CRAFT_PROGRESS)
+            : 0;
         this.currentOutput = data.hasKey(NBT_CURRENT_OUTPUT, 10)
-                ? new ItemStack(data.getCompoundTag(NBT_CURRENT_OUTPUT))
-                : ItemStack.EMPTY;
+            ? new ItemStack(data.getCompoundTag(NBT_CURRENT_OUTPUT))
+            : ItemStack.EMPTY;
     }
 
     public AppEngInternalInventory getCoreInventory() {
@@ -234,23 +237,46 @@ public class TileArcaneAssembler extends AENetworkedTile
     }
 
     @Override
+    public World getArcaneVisWorld() {
+        return this.getWorld();
+    }
+
+    @Override
+    public BlockPos getArcaneVisPosition() {
+        return this.getPos();
+    }
+
+    @Override
+    public int getArcaneVisChunkRadius() {
+        return this.upgradeInv.getInstalledUpgrades(ThEItems.UPGRADE_ARCANE.item());
+    }
+
+    @Override
+    public List<AEItemKey> getArcaneVisPatternDefinitions() {
+        return this.getCoreRecipes().stream()
+            .map(KnowledgeCoreUtil::getAEPattern)
+            .map(IPatternDetails::getDefinition)
+            .toList();
+    }
+
+    @Override
     public List<? extends IPatternDetails> getAvailablePatterns() {
         if (!this.getMainNode().isActive()) {
             return List.of();
         }
-        List<KnowledgeCoreUtil.Recipe> recipes = this.getCoreRecipes();
-        List<Boolean> visAvailability = this.getVisAvailabilityVector(recipes);
-        this.updateVisAvailabilityVector(visAvailability);
-        List<IPatternDetails> patterns = new ArrayList<>(recipes.size());
-        for (int index = 0; index < recipes.size(); index++) {
-            patterns.add(KnowledgeCoreUtil.getAEPattern(recipes.get(index), visAvailability.get(index)));
-        }
-        return patterns;
+        return this.getCoreRecipes().stream()
+            .map(KnowledgeCoreUtil::getAEPattern)
+            .toList();
     }
 
     @Override
     public IGrid getGrid() {
         return this.getMainNode().getGrid();
+    }
+
+    @Override
+    public boolean isVisibleInTerminal() {
+        return !this.terminalPatternInventory.isEmpty();
     }
 
     @Override
@@ -271,15 +297,22 @@ public class TileArcaneAssembler extends AENetworkedTile
     }
 
     @Override
+    public long getTerminalSortOrder() {
+        return ((long) this.getPos().getZ() << 24)
+            ^ ((long) this.getPos().getX() << 8)
+            ^ this.getPos().getY();
+    }
+
+    @Override
     public void openTerminalPatternContainerGui(net.minecraft.entity.player.EntityPlayer player) {
         ThEGuiOpener.openLocatorGui(Objects.requireNonNull(player, "player"), ModGUIs.ARCANE_ASSEMBLER,
-                GuiHostLocators.forTile(this), false);
+            GuiHostLocators.forTile(this), false);
     }
 
     @Override
     public PatternContainerGroup getTerminalGroup() {
         return new PatternContainerGroup(AEItemKey.of(ThEBlocks.ARCANE_ASSEMBLER.stack()),
-                new TextComponentTranslation("tile.thaumicenergistics.arcane_assembler.name"), List.of());
+            new TextComponentTranslation("tile.thaumicenergistics.arcane_assembler.name"), List.of());
     }
 
     /**
@@ -294,16 +327,15 @@ public class TileArcaneAssembler extends AENetworkedTile
         }
 
         if (!(patternDetails instanceof KnowledgeCoreUtil.KnowledgeCorePatternDetails knowledgeCorePattern)
-                || !this.isPublishedKnowledgeCorePattern(knowledgeCorePattern)) {
+            || !this.isPublishedKnowledgeCorePattern(knowledgeCorePattern)) {
             return false;
         }
         CurrentRecipeSnapshot recipe = CurrentRecipeSnapshot.from(
-                knowledgeCorePattern.getRecipe(), knowledgeCorePattern.getDefinition());
+            knowledgeCorePattern.getRecipe(), knowledgeCorePattern.getDefinition());
         if (!this.canQueueRecipe(recipe, multiplier)) {
             return false;
         }
         boolean acceptedResources = this.acceptRecipeResources(recipe, multiplier);
-        this.refreshVisAvailability();
         if (!acceptedResources) {
             return false;
         }
@@ -326,10 +358,10 @@ public class TileArcaneAssembler extends AENetworkedTile
     @Override
     public boolean canMergePatternPush(IPatternDetails patternDetails) {
         return patternDetails != null
-                && this.getMainNode().isActive()
-                && this.currentRecipe != null
-                && this.currentRecipe.definition().equals(patternDetails.getDefinition())
-                && this.pendingCrafts < this.getParallelLimit();
+            && this.getMainNode().isActive()
+            && this.currentRecipe != null
+            && this.currentRecipe.definition().equals(patternDetails.getDefinition())
+            && this.pendingCrafts < this.getParallelLimit();
     }
 
     @Override
@@ -340,7 +372,18 @@ public class TileArcaneAssembler extends AENetworkedTile
         if (this.pendingCrafts > 0 && !this.canMergePatternPush(patternDetails)) {
             return 0;
         }
-        return Math.max(0, Math.min(maxMultiplier, this.getParallelLimit() - this.pendingCrafts));
+        int queueCapacity = Math.max(0, Math.min(maxMultiplier, this.getParallelLimit() - this.pendingCrafts));
+        if (!(patternDetails instanceof KnowledgeCoreUtil.KnowledgeCorePatternDetails knowledgePattern)) {
+            return 0;
+        }
+        try {
+            return limitPatternPushByVis(
+                this.getWorldVis(), knowledgePattern.getRecipe().visCost(), queueCapacity);
+        } catch (IllegalArgumentException exception) {
+            ThELog.error("Arcane Assembler @ {} rejected pattern {} with invalid Vis values (cost {}): {}",
+                this.getPos(), patternDetails.getDefinition(), knowledgePattern.getRecipe().visCost(), exception.getMessage());
+            return 0;
+        }
     }
 
     @Override
@@ -360,9 +403,9 @@ public class TileArcaneAssembler extends AENetworkedTile
     @Override
     public TickingRequest getTickingRequest(@Nonnull IGridNode node) {
         return new TickingRequest(
-                ThEConfig.instance().tickTimeArcaneAssemblerMin(),
-                ThEConfig.instance().tickTimeArcaneAssemblerMax(),
-                false);
+            ThEConfig.instance().tickTimeArcaneAssemblerMin(),
+            ThEConfig.instance().tickTimeArcaneAssemblerMax(),
+            false);
     }
 
     @Nonnull
@@ -372,7 +415,6 @@ public class TileArcaneAssembler extends AENetworkedTile
             return TickRateModulation.SLEEP;
         }
 
-        this.refreshVisAvailability();
         this.updatePoweredState();
         boolean injectedOutput = this.injectOutputBuffer();
         if (this.pendingCrafts <= 0) {
@@ -415,11 +457,9 @@ public class TileArcaneAssembler extends AENetworkedTile
     public void onChangeInventory(AppEngInternalInventory inventory, int slot) {
         if (inventory == this.coreInv) {
             this.rebuildTerminalPatternInventory();
-            this.invalidateVisAvailability();
             ICraftingProvider.requestUpdate(this.getMainNode());
         } else if (inventory == this.upgradeInv) {
             this.upgradeInv.invalidateInstalledUpgrades();
-            this.invalidateVisAvailability();
             ICraftingProvider.requestUpdate(this.getMainNode());
         }
         this.saveChanges();
@@ -486,20 +526,27 @@ public class TileArcaneAssembler extends AENetworkedTile
         if (this.getWorld() == null) {
             return 0;
         }
-        int radius = this.upgradeInv.getInstalledUpgrades(ThEItems.UPGRADE_ARCANE.item());
-        float vis = AuraHelper.getVis(this.getWorld(), this.getPos());
-        if (radius <= 0) {
-            return vis;
-        }
-
-        for (int x = -16; x <= 16; x += 16) {
-            for (int z = -16; z <= 16; z += 16) {
-                if (x != 0 || z != 0) {
-                    vis += AuraHelper.getVis(this.getWorld(), this.getPos().add(x, 0, z));
-                }
+        int radius = this.getArcaneVisChunkRadius();
+        float vis = 0;
+        for (int offsetX = -radius; offsetX <= radius; offsetX++) {
+            for (int offsetZ = -radius; offsetZ <= radius; offsetZ++) {
+                vis += AuraHelper.getVis(
+                    this.getWorld(), this.getPos().add(offsetX * 16, 0, offsetZ * 16));
             }
         }
         return vis;
+    }
+
+    static int limitPatternPushByVis(float availableVis, float recipeVisCost, int maxMultiplier) {
+        if (maxMultiplier <= 0) {
+            return 0;
+        }
+        long requiredUnits = VIS_ACCOUNTING.requiredUnits(recipeVisCost);
+        if (requiredUnits == 0) {
+            return maxMultiplier;
+        }
+        long availableUnits = VIS_ACCOUNTING.availableUnits(availableVis);
+        return (int) Math.min(maxMultiplier, availableUnits / requiredUnits);
     }
 
     private boolean canQueueRecipe(CurrentRecipeSnapshot recipe, int multiplier) {
@@ -507,8 +554,8 @@ public class TileArcaneAssembler extends AENetworkedTile
             return false;
         }
         return this.pendingCrafts == 0
-                || this.currentRecipe != null
-                && this.currentRecipe.definition().equals(recipe.definition());
+            || this.currentRecipe != null
+            && this.currentRecipe.definition().equals(recipe.definition());
     }
 
     private boolean acceptRecipeResources(CurrentRecipeSnapshot recipe, int multiplier) {
@@ -528,8 +575,8 @@ public class TileArcaneAssembler extends AENetworkedTile
         for (Map.Entry<Aspect, Long> requirement : requirements.entrySet()) {
             AEEssentiaKey key = AEEssentiaKey.of(requirement.getKey());
             long extracted = key == null
-                    ? 0
-                    : inventory.extract(key, requirement.getValue(), Actionable.SIMULATE, this.src);
+                ? 0
+                : inventory.extract(key, requirement.getValue(), Actionable.SIMULATE, this.src);
             boolean available = extracted >= requirement.getValue();
             availability.put(requirement.getKey().getTag(), available);
             requirementsMissing |= !available;
@@ -543,8 +590,8 @@ public class TileArcaneAssembler extends AENetworkedTile
         for (Map.Entry<Aspect, Long> requirement : requirements.entrySet()) {
             AEEssentiaKey key = AEEssentiaKey.of(requirement.getKey());
             long extracted = key == null
-                    ? 0
-                    : inventory.extract(key, requirement.getValue(), Actionable.MODULATE, this.src);
+                ? 0
+                : inventory.extract(key, requirement.getValue(), Actionable.MODULATE, this.src);
             if (extracted < requirement.getValue()) {
                 if (extracted > 0) {
                     extractedAspects.put(requirement.getKey(), extracted);
@@ -560,16 +607,16 @@ public class TileArcaneAssembler extends AENetworkedTile
 
         if (requiredVis > 0) {
             TCUtil.drainVis(this.getWorld(), this.getPos(), requiredVis,
-                    this.upgradeInv.getInstalledUpgrades(ThEItems.UPGRADE_ARCANE.item()));
+                this.upgradeInv.getInstalledUpgrades(ThEItems.UPGRADE_ARCANE.item()));
         }
         this.setResourceDiagnostics(true, false, Map.of());
         return true;
     }
 
     private Map<Aspect, Long> collectAspectRequirements(
-            CurrentRecipeSnapshot recipe,
-            int multiplier,
-            Map<String, Boolean> availability) {
+        CurrentRecipeSnapshot recipe,
+        int multiplier,
+        Map<String, Boolean> availability) {
         this.missingAspect = false;
         Map<Aspect, Long> requirements = new LinkedHashMap<>();
         for (ItemStack aspectStack : recipe.aspectIngredients()) {
@@ -598,7 +645,7 @@ public class TileArcaneAssembler extends AENetworkedTile
             long restored = inventory.insert(key, extracted.getValue(), Actionable.MODULATE, this.src);
             if (restored != extracted.getValue()) {
                 ThELog.error("Arcane Assembler @ {} could not restore {} {} essentia after a failed craft acceptance",
-                        this.getPos(), extracted.getValue() - restored, extracted.getKey().getTag());
+                    this.getPos(), extracted.getValue() - restored, extracted.getKey().getTag());
             }
         }
     }
@@ -606,8 +653,8 @@ public class TileArcaneAssembler extends AENetworkedTile
     private void setResourceDiagnostics(boolean nextHasEnoughVis, boolean nextMissingAspect,
                                         Map<String, Boolean> nextAspectExists) {
         boolean changed = this.hasEnoughVis != nextHasEnoughVis
-                || this.missingAspect != nextMissingAspect
-                || !this.aspectExists.equals(nextAspectExists);
+            || this.missingAspect != nextMissingAspect
+            || !this.aspectExists.equals(nextAspectExists);
         this.hasEnoughVis = nextHasEnoughVis;
         this.missingAspect = nextMissingAspect;
         this.aspectExists.clear();
@@ -715,23 +762,23 @@ public class TileArcaneAssembler extends AENetworkedTile
 
     private boolean isPublishedKnowledgeCorePattern(KnowledgeCoreUtil.KnowledgeCorePatternDetails candidate) {
         return KnowledgeCoreUtil.recipeStreamOf(this.coreInv.getStackInSlot(0))
-                .anyMatch(publishedRecipe -> this.isExactPublishedRecipe(candidate, publishedRecipe));
+            .anyMatch(publishedRecipe -> isExactPublishedRecipe(candidate, publishedRecipe));
     }
 
     static boolean isExactPublishedRecipe(
-            KnowledgeCoreUtil.KnowledgeCorePatternDetails candidate,
-            KnowledgeCoreUtil.Recipe publishedRecipe) {
+        KnowledgeCoreUtil.KnowledgeCorePatternDetails candidate,
+        KnowledgeCoreUtil.Recipe publishedRecipe) {
         KnowledgeCoreUtil.Recipe candidateRecipe = candidate.getRecipe();
         if (!candidate.getDefinition().equals(KnowledgeCoreUtil.getAEPattern(publishedRecipe).getDefinition())
-                || Float.compare(candidateRecipe.visCost(), publishedRecipe.visCost()) != 0
-                || !ItemStack.areItemStacksEqual(candidateRecipe.result(), publishedRecipe.result())
-                || candidateRecipe.ingredients().size() != publishedRecipe.ingredients().size()) {
+            || Float.compare(candidateRecipe.visCost(), publishedRecipe.visCost()) != 0
+            || !ItemStack.areItemStacksEqual(candidateRecipe.result(), publishedRecipe.result())
+            || candidateRecipe.ingredients().size() != publishedRecipe.ingredients().size()) {
             return false;
         }
         for (int slot = 0; slot < candidateRecipe.ingredients().size(); slot++) {
             if (!ItemStack.areItemStacksEqual(
-                    candidateRecipe.ingredients().getStackInSlot(slot),
-                    publishedRecipe.ingredients().getStackInSlot(slot))) {
+                candidateRecipe.ingredients().getStackInSlot(slot),
+                publishedRecipe.ingredients().getStackInSlot(slot))) {
                 return false;
             }
         }
@@ -786,9 +833,9 @@ public class TileArcaneAssembler extends AENetworkedTile
             return 0;
         }
         double extracted = grid.getEnergyService().extractAEPower(
-                ticksPassed * (double) speed * powerMultiplier,
-                Actionable.MODULATE,
-                PowerMultiplier.CONFIG);
+            ticksPassed * (double) speed * powerMultiplier,
+            Actionable.MODULATE,
+            PowerMultiplier.CONFIG);
         return (int) (extracted / powerMultiplier);
     }
 
@@ -826,40 +873,6 @@ public class TileArcaneAssembler extends AENetworkedTile
         return KnowledgeCoreUtil.recipeStreamOf(this.coreInv.getStackInSlot(0)).toList();
     }
 
-    private List<Boolean> getVisAvailabilityVector(List<KnowledgeCoreUtil.Recipe> recipes) {
-        if (recipes.isEmpty()) {
-            return List.of();
-        }
-        float availableVis = this.getWorld() == null ? 0.0F : this.getWorldVis();
-        List<Boolean> availability = new ArrayList<>(recipes.size());
-        for (KnowledgeCoreUtil.Recipe recipe : recipes) {
-            availability.add(recipe.visCost() <= 0.0F || availableVis >= recipe.visCost());
-        }
-        return List.copyOf(availability);
-    }
-
-    private void refreshVisAvailability() {
-        if (this.isClientSide() || !this.getMainNode().isActive()) {
-            return;
-        }
-        if (this.updateVisAvailabilityVector(this.getVisAvailabilityVector(this.getCoreRecipes()))) {
-            ICraftingProvider.requestUpdate(this.getMainNode());
-        }
-    }
-
-    private boolean updateVisAvailabilityVector(List<Boolean> nextAvailability) {
-        List<Boolean> snapshot = List.copyOf(nextAvailability);
-        boolean changed = !this.visAvailabilityInitialized || !this.advertisedVisAvailability.equals(snapshot);
-        this.advertisedVisAvailability = snapshot;
-        this.visAvailabilityInitialized = true;
-        return changed;
-    }
-
-    private void invalidateVisAvailability() {
-        this.visAvailabilityInitialized = false;
-        this.advertisedVisAvailability = List.of();
-    }
-
     private void rebuildTerminalPatternInventory() {
         List<ItemStack> snapshot = this.createTerminalPatternSnapshot();
         if (this.terminalPatternInventory == null || this.terminalPatternInventory.size() != snapshot.size()) {
@@ -874,13 +887,9 @@ public class TileArcaneAssembler extends AENetworkedTile
         if (knowledgeCore.isEmpty()) {
             return List.of();
         }
-        int slots = KnowledgeCoreUtil.getRecipeSlotCount(knowledgeCore);
-        List<ItemStack> patterns = new ArrayList<>(slots);
-        for (int slot = 0; slot < slots; slot++) {
-            KnowledgeCoreUtil.Recipe recipe = KnowledgeCoreUtil.getRecipe(knowledgeCore, slot);
-            patterns.add(recipe == null ? ItemStack.EMPTY : recipe.toAEPatternStack());
-        }
-        return List.copyOf(patterns);
+        return KnowledgeCoreUtil.indexedRecipeStreamOf(knowledgeCore)
+            .map(storedRecipe -> KnowledgeCorePatternProjection.INSTANCE.encode(storedRecipe.recipe()))
+            .toList();
     }
 
     private void updatePoweredState() {
@@ -889,8 +898,8 @@ public class TileArcaneAssembler extends AENetworkedTile
         }
         IGrid grid = this.getMainNode().getGrid();
         boolean nextPowered = grid != null
-                && this.getMainNode().isPowered()
-                && grid.getEnergyService().extractAEPower(1, Actionable.SIMULATE, PowerMultiplier.CONFIG) > 0.0001;
+            && this.getMainNode().isPowered()
+            && grid.getEnergyService().extractAEPower(1, Actionable.SIMULATE, PowerMultiplier.CONFIG) > 0.0001;
         if (this.powered != nextPowered) {
             this.powered = nextPowered;
             this.markForUpdate();
@@ -941,7 +950,8 @@ public class TileArcaneAssembler extends AENetworkedTile
 
         @Override
         public void setItemDirect(int slotIndex, ItemStack stack) {
-            // Pattern Access Terminal users can inspect this projection but cannot alter Knowledge Core recipes.
+            ThELog.error("Rejected direct write to read-only Arcane Assembler pattern projection slot {}: {}",
+                slotIndex, stack);
         }
 
         @Override
@@ -956,11 +966,19 @@ public class TileArcaneAssembler extends AENetworkedTile
 
         @Override
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            if (!simulate) {
+                ThELog.error("Rejected insertion into read-only Arcane Assembler pattern projection slot {}: {}",
+                    slot, stack);
+            }
             return stack;
         }
 
         @Override
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            if (!simulate) {
+                ThELog.error("Rejected extraction of {} item(s) from read-only Arcane Assembler pattern projection slot {}",
+                    amount, slot);
+            }
             return ItemStack.EMPTY;
         }
     }
@@ -996,7 +1014,7 @@ public class TileArcaneAssembler extends AENetworkedTile
                 ingredients.add(sourceIngredients.getStackInSlot(slot).copy());
             }
             if (ingredients.size() != INGREDIENT_SLOTS || recipe.result().isEmpty()
-                    || !Float.isFinite(recipe.visCost()) || recipe.visCost() < 0) {
+                || !Float.isFinite(recipe.visCost()) || recipe.visCost() < 0) {
                 throw new IllegalArgumentException("Knowledge Core pattern contains an invalid recipe snapshot");
             }
             return new CurrentRecipeSnapshot(ingredients, recipe.result(), recipe.visCost(), definition);
@@ -1008,15 +1026,15 @@ public class TileArcaneAssembler extends AENetworkedTile
             }
             NBTTagCompound recipeTag = data.getCompoundTag(NBT_CURRENT_RECIPE);
             if (!recipeTag.hasKey(NBT_INGREDIENTS, 9)
-                    || !recipeTag.hasKey(NBT_RESULT, 10)
-                    || !recipeTag.hasKey(NBT_DEFINITION, 10)) {
+                || !recipeTag.hasKey(NBT_RESULT, 10)
+                || !recipeTag.hasKey(NBT_DEFINITION, 10)) {
                 ThELog.error("Arcane Assembler saved current recipe is missing required fields");
                 return null;
             }
             NBTTagList ingredientTags = recipeTag.getTagList(NBT_INGREDIENTS, 10);
             if (ingredientTags.tagCount() != INGREDIENT_SLOTS) {
                 ThELog.error("Arcane Assembler saved current recipe has {} ingredients; expected {}",
-                        ingredientTags.tagCount(), INGREDIENT_SLOTS);
+                    ingredientTags.tagCount(), INGREDIENT_SLOTS);
                 return null;
             }
             List<ItemStack> ingredients = new ArrayList<>(INGREDIENT_SLOTS);
@@ -1063,7 +1081,7 @@ public class TileArcaneAssembler extends AENetworkedTile
         }
     }
 
-    private final class KnowledgeCoreFilter implements IAEItemFilter {
+    private static final class KnowledgeCoreFilter implements IAEItemFilter {
         @Override
         public boolean allowInsert(InternalInventory inventory, int slot, ItemStack stack) {
             return !stack.isEmpty() && stack.getItem() instanceof ItemKnowledgeCore;

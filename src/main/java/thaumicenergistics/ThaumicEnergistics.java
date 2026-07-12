@@ -20,7 +20,7 @@ import thaumicenergistics.init.internal.InitUpgrades;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.command.CommandAddVis;
 import thaumicenergistics.command.CommandDrainVis;
-import thaumicenergistics.init.ModGlobals;
+import thaumicenergistics.core.ModGlobals;
 import thaumicenergistics.integration.ThEIntegrationLoader;
 import thaumicenergistics.network.ThENetwork;
 import thaumicenergistics.core.ThELog;
@@ -156,4 +156,5 @@ public class ThaumicEnergistics {
     public static ResourceLocation id(String id) {
         return new ResourceLocation(Reference.MOD_ID, id);
     }
+
 }

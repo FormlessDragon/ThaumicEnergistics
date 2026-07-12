@@ -46,12 +46,13 @@ import thaumicenergistics.container.slot.SlotArmor;
 import thaumicenergistics.container.slot.SlotArcaneMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
+import thaumicenergistics.api.storage.IArcaneTerminalUpgradeHost;
 import thaumicenergistics.integration.jei.ArcaneRecipeTransferPayload;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.TCUtil;
 import thaumicenergistics.core.ThELog;
-import thaumicenergistics.util.inventory.ThEInternalInventory;
+import ae2.util.inv.AppEngInternalInventory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,21 +67,30 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     private static final int ACTION_JEI_RECIPE_TRANSFER_MAX_LENGTH = GuiActionPacket.MAX_JSON_PAYLOAD_LENGTH;
 
     protected final IArcaneTerminalHost host;
-    protected final ThEInternalInventory craftingResult;
+    private final IUpgradeInventory terminalUpgradeInventory;
+    protected final AppEngInternalInventory craftingResult;
     protected SlotArcaneResult resultSlot;
     protected IRecipe recipe;
     @GuiSync(102)
     private ArcaneTerminalVisState visState = ArcaneTerminalVisState.EMPTY;
     private boolean clearGridOnClose;
 
-    public ContainerArcaneTerm(InventoryPlayer ip, IArcaneTerminalHost host) {
-        this(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, host);
+    public ContainerArcaneTerm(InventoryPlayer ip, IArcaneTerminalUpgradeHost host) {
+        this(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, host, requireTerminalUpgradeInventory(host));
     }
 
     protected ContainerArcaneTerm(GuiIds.GuiKey guiKey, InventoryPlayer ip, IArcaneTerminalHost host) {
+        this(guiKey, ip, host, null);
+    }
+
+    private ContainerArcaneTerm(GuiIds.GuiKey guiKey,
+                                InventoryPlayer ip,
+                                IArcaneTerminalHost host,
+                                IUpgradeInventory terminalUpgradeInventory) {
         super(guiKey, ip, host);
         this.host = host;
-        this.craftingResult = new ThEInternalInventory("Result", 1, 64);
+        this.terminalUpgradeInventory = terminalUpgradeInventory;
+        this.craftingResult = new AppEngInternalInventory(1);
 
         this.addMatrixSlots(32, 36);
         this.addArcaneAuxiliarySlots(177, 54);
@@ -198,12 +208,12 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             return;
         }
 
-        this.craftingResult.setInventorySlotContents(0, ItemStack.EMPTY);
+        this.craftingResult.setItemDirect(0, ItemStack.EMPTY);
 
         IItemHandler matrix = this.getCraftingItemHandler();
         this.recipe = TCCraftingManager.findArcaneRecipe(matrix, this.getPlayer());
         if (this.recipe != null) {
-            this.craftingResult.setInventorySlotContents(0,
+            this.craftingResult.setItemDirect(0,
                     TCCraftingManager.getCraftingResult(matrix, (IArcaneRecipe) this.recipe));
             return;
         }
@@ -215,7 +225,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
         this.recipe = CraftingManager.findMatchingRecipe(inventory, this.getPlayer().world);
         if (this.recipe != null) {
-            this.craftingResult.setInventorySlotContents(0, this.recipe.getCraftingResult(inventory));
+            this.craftingResult.setItemDirect(0, this.recipe.getCraftingResult(inventory));
         }
     }
 
@@ -438,18 +448,27 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         return vis;
     }
 
-    protected final IUpgradeInventory getTypedArcaneUpgradeInventory() {
-        IUpgradeInventory inventory = this.host.getArcaneUpgradeInventory();
+    private static IUpgradeInventory requireTerminalUpgradeInventory(IArcaneTerminalUpgradeHost host) {
+        IUpgradeInventory inventory = host.getArcaneUpgradeInventory();
         if (inventory == null) {
-            ThELog.error("Arcane terminal host returned null arcane upgrade inventory: {}",
-                    this.host.getClass().getName());
-            throw new NullPointerException("arcane upgrade inventory");
+            ThELog.error("Arcane terminal upgrade host returned a null upgrade inventory: {}",
+                    host.getClass().getName());
+            throw new IllegalStateException("Arcane Terminal upgrade inventory must not be null");
         }
         return inventory;
     }
 
+    protected final IUpgradeInventory getTerminalUpgradeInventory() {
+        if (this.terminalUpgradeInventory == null) {
+            ThELog.error("Container {} requested terminal upgrades for non-terminal host {}",
+                    this.getClass().getName(), this.host.getClass().getName());
+            throw new IllegalStateException("This arcane container does not have a terminal upgrade inventory");
+        }
+        return this.terminalUpgradeInventory;
+    }
+
     boolean hasArcaneVisRangeUpgrade() {
-        return !this.getTypedArcaneUpgradeInventory().getStackInSlot(0).isEmpty();
+        return !this.getTerminalUpgradeInventory().getStackInSlot(0).isEmpty();
     }
 
     protected float getRequiredVis(IRecipe recipe, EntityPlayer player) {
@@ -509,7 +528,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         NBTBase normal = tag.getTag("normal");
         NBTBase crystals = tag.getTag("crystal");
 
-        if (!this.clearCraftingIntoNetworkForJEI()) {
+        if (!this.clearCraftingForJEI()) {
             this.onMatrixChanged();
             return;
         }
@@ -560,6 +579,9 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
         for (JEITransferSlot transferSlot : transferSlots) {
             ItemStack stack = this.findAvailableJEIAlternative(transferSlot.alternatives);
+            if (stack.isEmpty() && this.allowJEIIngredientFallback()) {
+                stack = transferSlot.alternatives.getFirst().copy();
+            }
             if (!stack.isEmpty()) {
                 this.fillJEISlot(crafting, transferSlot.slot, stack);
             }
@@ -626,26 +648,66 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     private void fillJEISlot(IItemHandler crafting, int slot, ItemStack stack) {
-        ThELog.debug("Adding {} for {}", stack.getDisplayName(), slot);
+        int slotLimit = this.getJEITransferSlotLimit(crafting, slot);
+        if (slotLimit <= 0) {
+            ThELog.error("JEI recipe transfer cannot write slot {}: invalid slot limit {}", slot, slotLimit);
+            throw new IllegalStateException("Invalid JEI transfer slot limit " + slotLimit + " for slot " + slot);
+        }
+
+        int requestedCount = Math.min(stack.getCount(), slotLimit);
+        ItemStack requested = stack.copy();
+        requested.setCount(requestedCount);
+        ThELog.debug("Adding {} for {}", requested.getDisplayName(), slot);
         ItemStack aeExtract = this.storage == null
                 ? ItemStack.EMPTY
-                : this.extractItem(this.storage, stack, stack.getCount(), Actionable.MODULATE);
+                : this.extractItem(this.storage, requested, requestedCount, Actionable.MODULATE);
         if (!aeExtract.isEmpty()) {
             crafting.insertItem(slot, aeExtract, false);
         }
 
-        if (crafting.getStackInSlot(slot).getCount() >= stack.getCount()) {
+        int insertedCount = crafting.getStackInSlot(slot).getCount();
+        if (insertedCount >= requestedCount) {
             return;
         }
 
         ThELog.debug("Failed to pull item from ae inv, trying unlocked player inventory");
-        ItemStack playerRequest = stack.copy();
-        playerRequest.shrink(crafting.getStackInSlot(slot).getCount());
+        ItemStack playerRequest = requested.copy();
+        playerRequest.shrink(insertedCount);
 
         ItemStack invExtract = this.extractUnlockedPlayerItem(playerRequest, false);
         if (!invExtract.isEmpty()) {
             crafting.insertItem(slot, invExtract, false);
         }
+
+        if (this.allowJEIIngredientFallback() && crafting.getStackInSlot(slot).getCount() < requestedCount) {
+            ItemStack fallback = requested.copy();
+            fallback.setCount(requestedCount - crafting.getStackInSlot(slot).getCount());
+            ThELog.debug("Using JEI ingredient as ghost fallback for slot {}", slot);
+            crafting.insertItem(slot, fallback, false);
+        }
+    }
+
+    /**
+     * Clears the current matrix before a server-side recipe transfer. Real terminals return items to ME; ghost
+     * matrices must only clear their display state and must never mutate storage.
+     */
+    protected boolean clearCraftingForJEI() {
+        return this.clearCraftingIntoNetworkForJEI();
+    }
+
+    /**
+     * Allows a ghost-only container to display a recipe even when no matching physical item is available.
+     */
+    protected boolean allowJEIIngredientFallback() {
+        return false;
+    }
+
+    /**
+     * Returns the amount that one recipe-transfer ingredient may write to a matrix slot. Subclasses with ghost
+     * slots can impose a lower semantic limit than the underlying inventory implementation.
+     */
+    protected int getJEITransferSlotLimit(IItemHandler crafting, int slot) {
+        return crafting.getSlotLimit(slot);
     }
 
     private boolean canSatisfyJEIAlternative(ItemStack stack) {
@@ -833,7 +895,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
     @SuppressWarnings("SameParameterValue")
     protected void addArcaneAuxiliarySlots(int offsetX, int offsetY) {
-        AppEngSlot upgradeSlot = new AppEngSlot(this.getTypedArcaneUpgradeInventory(), 0, offsetX, offsetY);
+        AppEngSlot upgradeSlot = new AppEngSlot(this.getTerminalUpgradeInventory(), 0, offsetX, offsetY);
         upgradeSlot.setBackgroundIcon(SlotBackgroundIcon.UPGRADE);
         this.addSlot(upgradeSlot, SlotSemantics.UPGRADE);
     }

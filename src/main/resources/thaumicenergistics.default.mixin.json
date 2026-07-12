@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "thaumicenergistics.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"target": "@env(DEFAULT)",
+	"mixins": [],
+	"client": [],
+	"server": [],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

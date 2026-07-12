@@ -9,7 +9,7 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thaumicenergistics.client.gui.GuiHandler;
-import thaumicenergistics.init.ModGUIs;
+import thaumicenergistics.core.ModGUIs;
 
 /**
  * Opens a ThE GUI on the client with AE2's full host locator payload.

@@ -5,13 +5,14 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
-import thaumicenergistics.api.storage.IArcaneTerminalHost;
+import thaumicenergistics.api.storage.IArcaneInscriberHost;
+import thaumicenergistics.api.storage.IArcaneTerminalUpgradeHost;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
-import thaumicenergistics.init.ModGUIs;
+import thaumicenergistics.core.ModGUIs;
 import thaumicenergistics.network.ThENetwork;
 import thaumicenergistics.network.packets.PacketOpenLocatorGUI;
 import thaumicenergistics.tile.TileArcaneAssembler;
@@ -123,7 +124,7 @@ public final class ThEGuiOpener {
                                                                      boolean returnedFromSubScreen,
                                                                      int windowId) {
         ContainerArcaneTerm container = new ContainerArcaneTerm(player.inventory,
-                locateArcaneTerminalHost(player, gui, locator));
+                locateArcaneTerminalUpgradeHost(player, gui, locator));
         container.setLocator(locator);
         container.setReturnedFromSubScreen(returnedFromSubScreen);
         container.windowId = windowId;
@@ -133,7 +134,7 @@ public final class ThEGuiOpener {
     private static ContainerArcaneInscriber createArcaneInscriberContainer(EntityPlayer player, ModGUIs gui,
                                                                            GuiHostLocator locator, int windowId) {
         ContainerArcaneInscriber container = new ContainerArcaneInscriber(player.inventory,
-                locateArcaneTerminalHost(player, gui, locator));
+                locateArcaneInscriberHost(player, gui, locator));
         container.setLocator(locator);
         container.windowId = windowId;
         return container;
@@ -183,13 +184,26 @@ public final class ThEGuiOpener {
         return host;
     }
 
-    private static IArcaneTerminalHost locateArcaneTerminalHost(EntityPlayer player, ModGUIs gui,
-                                                                GuiHostLocator locator) {
-        IArcaneTerminalHost host = locator.locate(player, IArcaneTerminalHost.class);
+    private static IArcaneTerminalUpgradeHost locateArcaneTerminalUpgradeHost(EntityPlayer player,
+                                                                               ModGUIs gui,
+                                                                               GuiHostLocator locator) {
+        IArcaneTerminalUpgradeHost host = locator.locate(player, IArcaneTerminalUpgradeHost.class);
         if (host == null) {
             throw new IllegalStateException("Cannot locate host for locator-aware gui " + gui
                     + " with locator " + locatorDescription(locator)
-                    + "; expected " + IArcaneTerminalHost.class.getName());
+                    + "; expected " + IArcaneTerminalUpgradeHost.class.getName());
+        }
+        return host;
+    }
+
+    private static IArcaneInscriberHost locateArcaneInscriberHost(EntityPlayer player,
+                                                                  ModGUIs gui,
+                                                                  GuiHostLocator locator) {
+        IArcaneInscriberHost host = locator.locate(player, IArcaneInscriberHost.class);
+        if (host == null) {
+            throw new IllegalStateException("Cannot locate host for locator-aware gui " + gui
+                    + " with locator " + locatorDescription(locator)
+                    + "; expected " + IArcaneInscriberHost.class.getName());
         }
         return host;
     }
@@ -206,7 +220,7 @@ public final class ThEGuiOpener {
     }
 
     public static ContainerArcaneTerm createWirelessArcaneContainer(InventoryPlayer inventory,
-                                                                    IArcaneTerminalHost host,
+                                                                    IArcaneTerminalUpgradeHost host,
                                                                     GuiHostLocator locator,
                                                                     boolean returnedFromSubScreen,
                                                                     int windowId) {
@@ -250,7 +264,7 @@ public final class ThEGuiOpener {
                     + "; parent " + parent);
         }
 
-        IArcaneTerminalHost parentHost = parent.getHost();
+        IArcaneInscriberHost parentHost = parent.getHost();
         if (parentHost == null) {
             throw new IllegalStateException("Cannot open Knowledge Core gui " + gui.name()
                     + " without parent host for player " + playerDescription(context.player())
@@ -258,7 +272,7 @@ public final class ThEGuiOpener {
                     + "; parent " + parent);
         }
 
-        IArcaneTerminalHost locatedHost = parentLocator.locate(context.player(), IArcaneTerminalHost.class);
+        IArcaneInscriberHost locatedHost = parentLocator.locate(context.player(), IArcaneInscriberHost.class);
         if (locatedHost != parentHost) {
             throw new IllegalStateException("Knowledge Core parent locator mismatch for gui " + gui.name()
                     + " player " + playerDescription(context.player())

@@ -25,11 +25,11 @@ final class EssentiaContainerStrategyUtil {
     }
 
     static AEEssentiaKey toEssentiaKey(AEKey key) {
-        if (key instanceof AEEssentiaKey) {
-            AEEssentiaKey essentiaKey = (AEEssentiaKey) key;
-            return essentiaKey.getAspect() == null ? null : essentiaKey;
+        if (!(key instanceof AEEssentiaKey essentiaKey)) {
+            return null;
         }
-        return null;
+
+        return essentiaKey.getAspect() == null ? null : essentiaKey;
     }
 
     static int clampRequested(long amount) {
@@ -88,6 +88,7 @@ final class EssentiaContainerStrategyUtil {
         return Math.max(0, boundary - alreadyInserted);
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     static boolean canAttemptInsert(IAspectContainer container, Aspect aspect) {
         return container != null
                 && aspect != null
@@ -113,89 +114,81 @@ final class EssentiaContainerStrategyUtil {
         return aspect == null ? "<null>" : aspect.getTag();
     }
 
-    private static final class EssentiaContainerStorage implements MEStorage {
-        private final IAspectContainer container;
-        private final boolean extractableOnly;
-        private final Runnable mutationCallback;
-
-        private EssentiaContainerStorage(IAspectContainer container, boolean extractableOnly, Runnable mutationCallback) {
-            this.container = container;
-            this.extractableOnly = extractableOnly;
-            this.mutationCallback = mutationCallback;
-        }
+    private record EssentiaContainerStorage(IAspectContainer container, boolean extractableOnly,
+                                            Runnable mutationCallback) implements MEStorage {
 
         @Override
-        public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
-            Objects.requireNonNull(mode, "mode");
-            Objects.requireNonNull(source, "source");
+            public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
+                Objects.requireNonNull(mode, "mode");
+                Objects.requireNonNull(source, "source");
 
-            AEEssentiaKey key = toEssentiaKey(what);
-            if (this.extractableOnly || key == null || amount <= 0 || !canAttemptInsert(this.container, key.getAspect())) {
-                return 0;
-            }
-
-            int requested = clampRequested(amount);
-            int inserted = mode == Actionable.SIMULATE
-                    ? simulateInsert(this.container, key.getAspect(), requested)
-                    : EssentiaContainerStrategyUtil.insert(this.container, key.getAspect(), requested);
-            if (mode == Actionable.MODULATE && inserted > 0) {
-                this.notifyMutation();
-            }
-            return inserted;
-        }
-
-        @Override
-        public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
-            Objects.requireNonNull(mode, "mode");
-            Objects.requireNonNull(source, "source");
-
-            AEEssentiaKey key = toEssentiaKey(what);
-            if (key == null || amount <= 0) {
-                return 0;
-            }
-
-            Aspect aspect = key.getAspect();
-            int available = this.container.containerContains(aspect);
-            if (available <= 0) {
-                return 0;
-            }
-
-            int extracted = (int) Math.min(available, Math.min(Integer.MAX_VALUE, amount));
-            if (mode == Actionable.MODULATE) {
-                if (!this.container.takeFromContainer(aspect, extracted)) {
+                AEEssentiaKey key = toEssentiaKey(what);
+                if (this.extractableOnly || key == null || amount <= 0 || !canAttemptInsert(this.container, key.getAspect())) {
                     return 0;
                 }
-                this.notifyMutation();
-            }
-            return extracted;
-        }
 
-        @Override
-        public void getAvailableStacks(KeyCounter out) {
-            AspectList aspects = this.container.getAspects();
-            if (aspects == null) {
-                return;
+                int requested = clampRequested(amount);
+                int inserted = mode == Actionable.SIMULATE
+                    ? simulateInsert(this.container, key.getAspect(), requested)
+                    : EssentiaContainerStrategyUtil.insert(this.container, key.getAspect(), requested);
+                if (mode == Actionable.MODULATE && inserted > 0) {
+                    this.notifyMutation();
+                }
+                return inserted;
             }
 
-            for (Aspect aspect : aspects.getAspects()) {
-                AEEssentiaKey key = AEEssentiaKey.of(aspect);
-                int amount = this.container.containerContains(aspect);
-                if (key != null && amount > 0) {
-                    out.add(key, amount);
+            @Override
+            public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
+                Objects.requireNonNull(mode, "mode");
+                Objects.requireNonNull(source, "source");
+
+                AEEssentiaKey key = toEssentiaKey(what);
+                if (key == null || amount <= 0) {
+                    return 0;
+                }
+
+                Aspect aspect = key.getAspect();
+                int available = this.container.containerContains(aspect);
+                if (available <= 0) {
+                    return 0;
+                }
+
+                int extracted = (int) Math.min(available, Math.min(Integer.MAX_VALUE, amount));
+                if (mode == Actionable.MODULATE) {
+                    if (!this.container.takeFromContainer(aspect, extracted)) {
+                        return 0;
+                    }
+                    this.notifyMutation();
+                }
+                return extracted;
+            }
+
+            @Override
+            public void getAvailableStacks(KeyCounter out) {
+                AspectList aspects = this.container.getAspects();
+                if (aspects == null) {
+                    return;
+                }
+
+                for (Aspect aspect : aspects.getAspects()) {
+                    AEEssentiaKey key = AEEssentiaKey.of(aspect);
+                    int amount = this.container.containerContains(aspect);
+                    if (key != null && amount > 0) {
+                        out.add(key, amount);
+                    }
+                }
+            }
+
+            @Override
+            public ITextComponent getDescription() {
+                return AEEssentiaKeys.INSTANCE.getDescription();
+            }
+
+            private void notifyMutation() {
+                if (this.mutationCallback != null) {
+                    this.mutationCallback.run();
                 }
             }
         }
-
-        @Override
-        public ITextComponent getDescription() {
-            return AEEssentiaKeys.INSTANCE.getDescription();
-        }
-
-        private void notifyMutation() {
-            if (this.mutationCallback != null) {
-                this.mutationCallback.run();
-            }
-        }
-    }
 
 }

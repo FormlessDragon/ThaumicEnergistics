@@ -15,8 +15,8 @@ import thaumicenergistics.core.definitions.GuiText;
 import java.util.List;
 
 /**
- * The singleton diagnostic key used to express that an arcane pattern has no Vis-capable assembler.
- * This key is intentionally not backed by an ME storage or emitter.
+ * The singleton synthetic key used to render used and missing Vis in crafting-plan statistics.
+ * This key is intentionally not backed by ME storage and is removed before a plan reaches a crafting CPU.
  */
 public final class ArcaneVisKey extends AEKey {
 
@@ -67,7 +67,7 @@ public final class ArcaneVisKey extends AEKey {
 
     @Override
     public void addDrops(long amount, List<ItemStack> drops, World world, BlockPos pos) {
-        // Diagnostic Vis requirements are not material resources and must never become drops.
+        // Plan-only Vis statistics are not material resources and must never become drops.
     }
 
     @Override

@@ -4,7 +4,7 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import thaumcraft.api.research.theorycraft.ResearchTableData;
 import thaumcraft.api.research.theorycraft.TheorycraftCard;
-import thaumicenergistics.init.ModGlobals;
+import thaumicenergistics.core.ModGlobals;
 
 import java.util.Random;
 

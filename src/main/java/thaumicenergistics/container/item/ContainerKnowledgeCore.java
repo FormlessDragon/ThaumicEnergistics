@@ -17,13 +17,13 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
-import thaumicenergistics.api.storage.IArcaneTerminalHost;
+import thaumicenergistics.api.storage.IArcaneInscriberHost;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.core.ThESounds;
 import thaumicenergistics.core.definitions.ThEItems;
-import thaumicenergistics.init.ModGUIs;
-import thaumicenergistics.util.KnowledgeCoreUtil;
+import thaumicenergistics.core.ModGUIs;
+import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
 import java.util.Objects;
 
@@ -40,7 +40,8 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
     private final ModGUIs GUIAction;
     private final ContainerArcaneInscriber parentContainer;
     private final GuiHostLocator parentLocator;
-    private final IArcaneTerminalHost parentHost;
+    private final IArcaneInscriberHost parentHost;
+    private final InternalInventory parentKnowledgeCoreInventory;
     private final ItemStack knowledgeCoreStack;
     private final int managedInventorySlot;
     private AppEngInternalInventory inventory;
@@ -60,12 +61,9 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
             throw new IllegalArgumentException("parent locator cannot be null for Knowledge Core gui " + GUIAction
                 + " player " + player + " parent " + parent);
         }
-        IArcaneTerminalHost parentHost = parent.getHost();
-        if (parentHost == null) {
-            throw new IllegalArgumentException("parent host cannot be null for Knowledge Core gui " + GUIAction
-                + " player " + player + " locator " + parentLocator + " parent " + parent);
-        }
-        IArcaneTerminalHost locatedHost = parentLocator.locate(player, IArcaneTerminalHost.class);
+        IArcaneInscriberHost parentHost = Objects.requireNonNull(parent.getHost(),
+            "Arcane Inscriber parent host for Knowledge Core gui " + GUIAction);
+        IArcaneInscriberHost locatedHost = parentLocator.locate(player, IArcaneInscriberHost.class);
         if (locatedHost != parentHost) {
             throw new IllegalStateException("Knowledge Core parent locator mismatch for gui " + GUIAction
                 + " player " + player
@@ -79,7 +77,14 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
         this.parentContainer = parent;
         this.parentLocator = parentLocator;
         this.parentHost = parentHost;
-        this.knowledgeCoreStack = this.parentHost.getArcaneUpgradeInventory().getStackInSlot(0);
+        this.parentKnowledgeCoreInventory = Objects.requireNonNull(parentHost.getKnowledgeCoreInventory(),
+            "Arcane Inscriber knowledge core inventory");
+        if (this.parentKnowledgeCoreInventory.size() != 1) {
+            throw new IllegalStateException("Arcane Inscriber knowledge core inventory must contain exactly one slot, got "
+                + this.parentKnowledgeCoreInventory.size());
+        }
+        this.knowledgeCoreStack = this.parentKnowledgeCoreInventory.getStackInSlot(0);
+        validateKnowledgeCoreStack(this.knowledgeCoreStack, "Arcane Inscriber knowledge core slot");
         this.managedInventorySlot = -1;
         this.upgradeInventory = KnowledgeCoreUtil.getUpgradeInventory(this.knowledgeCoreStack);
         this.initializeSharedSlots();
@@ -98,6 +103,7 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
         this.parentContainer = null;
         this.parentLocator = null;
         this.parentHost = null;
+        this.parentKnowledgeCoreInventory = null;
         this.managedInventorySlot = getManagedInventorySlot(player, locator);
         this.knowledgeCoreStack = player.inventory.getStackInSlot(this.managedInventorySlot);
         validateKnowledgeCoreStack(this.knowledgeCoreStack, "player inventory slot " + this.managedInventorySlot);
@@ -204,11 +210,14 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
                     this.playWriteSound(player);
                     AppEngInternalInventory ingredients = this.copyIngredients(parentContainer.getCraftingInventory());
                     ItemStack result = parentContainer.getCraftingResultInventory().getStackInSlot(0);
-                    KnowledgeCoreUtil.setRecipe(knowledgeCoreStack, slotId, new KnowledgeCoreUtil.Recipe(ingredients, result, parentContainer.getCurrentRequiredVis()));
+                    this.writeRecipeMutation(slotId,
+                        new KnowledgeCoreUtil.Recipe(ingredients, result, parentContainer.getCurrentRequiredVis()));
                 }
                 case ACTION_DELETE_RECIPE -> {
                     this.playWriteSound(player);
-                    KnowledgeCoreUtil.setRecipe(knowledgeCoreStack, slotId, null);
+                    if (KnowledgeCoreUtil.hasRecipe(this.knowledgeCoreStack, slotId)) {
+                        this.writeRecipeMutation(slotId, null);
+                    }
                 }
                 case ACTION_VIEW_RECIPE -> {
                 }
@@ -216,10 +225,17 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
                     throw new IllegalArgumentException("Unsupported Knowledge Core client action: " + actionName);
             }
         }
-        if (KnowledgeCoreUtil.isEmpty(knowledgeCoreStack)) {
-            parentHost.getArcaneUpgradeInventory().setItemDirect(0, ThEItems.BLANK_KNOWLEDGE_CORE.stack(1));
-        }
         parentHost.returnToMainContainer(player, this);
+    }
+
+    private void writeRecipeMutation(int slotId, KnowledgeCoreUtil.Recipe recipe) {
+        ItemStack updatedCore = this.knowledgeCoreStack.copy();
+        KnowledgeCoreUtil.setRecipe(updatedCore, slotId, recipe);
+        if (KnowledgeCoreUtil.hasNoRecipes(updatedCore)) {
+            updatedCore = KnowledgeCoreUtil.copyNonRecipeData(
+                updatedCore, ThEItems.BLANK_KNOWLEDGE_CORE.stack(1));
+        }
+        this.parentKnowledgeCoreInventory.setItemDirect(0, updatedCore);
     }
 
     @Override
@@ -376,7 +392,7 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
     }
 
     @Override
-    public IArcaneTerminalHost getHost() {
+    public IArcaneInscriberHost getHost() {
         if (this.parentHost == null) {
             throw new IllegalStateException("Knowledge Core inventory management does not have a parent GUI host");
         }

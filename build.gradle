@@ -4,7 +4,7 @@ plugins {
     id 'maven-publish'
     id 'com.gradleup.shadow' version '9.4.1'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.4.1'
-    id 'xyz.wagyourtail.unimined' version '1.4.23-kappa'
+    id 'xyz.wagyourtail.unimined' version '1.4.26-kappa'
     id 'net.kyori.blossom' version '2.2.0'
     id 'com.diffplug.spotless' version '8.4.0'
 }
@@ -73,6 +73,7 @@ unimined.minecraft {
         loader "0.5.17-alpha"
         runs.all {
             args += ['--username', minecraft_username]
+            systemProperty("crl.dev.mixin", "${mod_id}.default.mixin.json,${mod_id}.mod.mixin.json")
             def extraArgs = propertyString('extra_jvm_args')
             if (extraArgs != null && !extraArgs.trim().isEmpty()) {
                 jvmArgs += extraArgs.split { "\\s+" }.toList()
@@ -96,6 +97,7 @@ unimined.minecraft {
         mixinRemap {
             enableBaseMixin()
             enableMixinExtra()
+            disableRefmap()
         }
     }
 
@@ -228,6 +230,7 @@ jar {
         manifest {
             def attribute_map = [:]
             attribute_map['ModType'] = "CRL"
+            attribute_map['MixinConfigs'] = "${mod_id}.default.mixin.json,${mod_id}.mod.mixin.json"
             if (configurations.contain.size() > 0) {
                 attribute_map['ContainedDeps'] = configurations.contain.collect { it.name }.join(' ')
                 attribute_map['NonModDeps'] = true
@@ -249,6 +252,7 @@ jar {
 
 
 shadowJar {
+    //noinspection GroovyAssignabilityCheck,GroovyAccessibility
     configurations = [project.configurations.shadow]
     archiveClassifier = "shadow"
 }

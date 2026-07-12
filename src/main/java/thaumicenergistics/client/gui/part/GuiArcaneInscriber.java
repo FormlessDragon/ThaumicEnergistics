@@ -6,12 +6,11 @@ import ae2.client.gui.widgets.IconButton;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.core.definitions.GuiText;
 import thaumicenergistics.items.ItemKnowledgeCore;
-import thaumicenergistics.util.KnowledgeCoreUtil;
+import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
 /**
  * @author Alex811
@@ -136,10 +135,6 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
         button.setTooltip(tooltip);
     }
 
-    private ITextComponent tooltip(String text) {
-        return new TextComponentString(text);
-    }
-
     private boolean canAddKnowledgeCoreRecipe() {
         ItemStack knowledgeCore = this.getKnowledgeCore();
         ItemStack result = this.inscriberContainer.getCraftingResultInventory().getStackInSlot(0);
@@ -155,7 +150,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     }
 
     private ItemStack getKnowledgeCore() {
-        return this.inscriberContainer.getArcaneHost().getArcaneUpgradeInventory().getStackInSlot(0);
+        return this.inscriberContainer.getArcaneHost().getKnowledgeCoreInventory().getStackInSlot(0);
     }
 
     private boolean isKnowledgeCoreBlank(ItemStack knowledgeCore) {

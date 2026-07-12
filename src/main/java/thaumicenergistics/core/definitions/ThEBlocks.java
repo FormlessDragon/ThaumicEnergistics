@@ -7,7 +7,7 @@ import net.minecraftforge.event.RegistryEvent;
 import thaumicenergistics.api.ids.ThEBlockIds;
 import thaumicenergistics.block.BlockArcaneAssembler;
 import thaumicenergistics.block.BlockInfusionProvider;
-import thaumicenergistics.init.ModGlobals;
+import thaumicenergistics.core.ModGlobals;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.tile.TileInfusionProvider;
 

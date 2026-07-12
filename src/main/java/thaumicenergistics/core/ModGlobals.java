@@ -1,4 +1,4 @@
-package thaumicenergistics.init;
+package thaumicenergistics.core;
 
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;

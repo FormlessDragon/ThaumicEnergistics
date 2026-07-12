@@ -31,6 +31,7 @@ item.thaumicenergistics.arcane_p2p_tunnel.name=ME奥术P2P隧道
 
 item.thaumicenergistics.upgrade_arcane.name=奥术合成升级
 item.thaumicenergistics.knowledge_core_pattern_expansion_card.name=知识核心样板扩展卡
+item.thaumicenergistics.knowledge_core_pattern.name=知识核心样板
 item.thaumicenergistics.knowledge_core.name=知识核心
 item.thaumicenergistics.blank_knowledge_core.name=空白知识核心
 
@@ -48,7 +49,7 @@ tooltip.thaumicenergistics.arcane_assembler.no_vis=错误：缺少Vis
 
 # GUI
 gui.thaumicenergistics.Essentias=源质
-gui.thaumicenergistics.arcane_vis=奥术灵气
+gui.thaumicenergistics.arcane_vis=灵气
 gui.thaumicenergistics.arcane_terminal=奥术合成终端
 gui.thaumicenergistics.arcane_inscriber=奥术记录仪
 
@@ -68,6 +69,8 @@ gui.thaumicenergistics.out_of_vis=缺少Vis！
 
 card.tinkerae.name=修复物质/能量
 card.tinkerae.text=尝试将源质转化为与当前物质/能量网络类似的能量。获得10-25能量。
+
+gui.thaumicenergistics.essentia_smelt=源质冶炼
 
 # FROM THAUMCRAFT en_US.lang
 # BEST TO RECHECK THE LATEST LANG FILE FOR CHANGED FORMATTING
