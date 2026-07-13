@@ -1,4 +1,4 @@
-package thaumicenergistics.core;
+package thaumicenergistics.client.gui;
 
 /**
  * @author BrockWS

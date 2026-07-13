@@ -1,4 +1,4 @@
-package thaumicenergistics.mixin;
+package thaumicenergistics.mixin.ae2;
 
 import ae2.api.networking.crafting.ICraftingPlan;
 import ae2.crafting.CraftingPlan;

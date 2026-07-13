@@ -1,35 +1,28 @@
 package thaumicenergistics.integration.jei;
 
 import ae2.api.integrations.hei.IngredientConverters;
-import com.buuz135.thaumicjei.config.ThaumicConfig;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.IModRegistry;
 import mezz.jei.api.JEIPlugin;
 import mezz.jei.api.ingredients.VanillaTypes;
-import mezz.jei.api.recipe.IIngredientType;
 import mezz.jei.api.recipe.IRecipeCategoryRegistration;
 import mezz.jei.api.recipe.VanillaRecipeCategoryUid;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandler;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
 import net.minecraft.block.Block;
 import net.minecraft.inventory.Container;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
 import org.jetbrains.annotations.NotNull;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
-import thaumicenergistics.api.stacks.EssentiaStack;
 import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.core.ThELog;
 import thaumicenergistics.core.definitions.ThEParts;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 
 /**
@@ -51,13 +44,13 @@ public class ThEHeiPlugin implements IModPlugin {
     public void register(IModRegistry registry) {
         IRecipeTransferHandlerHelper rthh = registry.getJeiHelpers().recipeTransferHandlerHelper();
 
-        Optional.of(ThEParts.ARCANE_TERMINAL.stack(1)).ifPresent(stack -> registerWorkbenchCatalyst(registry, new ACTRecipeTransferHandler<>(rthh), stack));
-        Optional.of(ThEParts.ARCANE_INSCRIBER.stack(1)).ifPresent(stack -> registerWorkbenchCatalyst(registry, new ACIRecipeTransferHandler<>(rthh), stack));
+        registerWorkbenchCatalyst(registry, new ACTRecipeTransferHandler<>(rthh), ThEParts.ARCANE_TERMINAL.stack());
+        registerWorkbenchCatalyst(registry, new ACIRecipeTransferHandler<>(rthh), ThEParts.ARCANE_INSCRIBER.stack());
+        registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_basic").toString())), essentiaSmeltCategory.getUid());
+        registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_thaumium").toString())), essentiaSmeltCategory.getUid());
+        registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_void").toString())), essentiaSmeltCategory.getUid());
 
-        Optional.of(ThEParts.ARCANE_INSCRIBER.stack(1))
-                .ifPresent(_ -> registry.addGhostIngredientHandler(
-                        GuiArcaneInscriber.class,
-                        new GhostInscriberHandler()));
+        registry.addGhostIngredientHandler(GuiArcaneInscriber.class, new GhostInscriberHandler());
 
         if(Loader.isModLoaded("thaumicjei")) {
             IngredientConverters.register(new TCJeiConverter());
@@ -66,6 +59,9 @@ public class ThEHeiPlugin implements IModPlugin {
             List<EssentiaSmeltCategory.EssentiaSmeltWrapper> wrappers = new ArrayList<>();
             for(ItemStack item : new ArrayList<>(registry.getIngredientRegistry().getAllIngredients(VanillaTypes.ITEM))) {
                 AspectList list = new AspectList(item);
+                if(list.size() == 0) {
+                    continue;
+                }
                 List<AspectList> aspects = new ArrayList<>();
                 for(Aspect aspect : list.getAspects()) {
                     AspectList singleAspect = new AspectList();
@@ -75,10 +71,7 @@ public class ThEHeiPlugin implements IModPlugin {
                 wrappers.add(new EssentiaSmeltCategory.EssentiaSmeltWrapper(item, aspects));
             }
             registry.addRecipes(wrappers, essentiaSmeltCategory.getUid());
-            registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_basic").toString())), essentiaSmeltCategory.getUid());
-            registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_thaumium").toString())), essentiaSmeltCategory.getUid());
-            registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_void").toString())), essentiaSmeltCategory.getUid());
-            ThELog.info("essentiaSmelt category loaded in {} ms", System.currentTimeMillis() - time);
+            ThELog.info("Registered essentiaSmelt recipes in {} ms", System.currentTimeMillis() - time);
         }
     }
 

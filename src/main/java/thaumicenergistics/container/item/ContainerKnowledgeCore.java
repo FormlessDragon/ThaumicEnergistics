@@ -22,7 +22,7 @@ import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.core.ThESounds;
 import thaumicenergistics.core.definitions.ThEItems;
-import thaumicenergistics.core.ModGUIs;
+import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
 import java.util.Objects;

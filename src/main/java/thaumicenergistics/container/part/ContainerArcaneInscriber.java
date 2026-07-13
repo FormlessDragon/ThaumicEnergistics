@@ -25,7 +25,7 @@ import thaumicenergistics.container.slot.SlotArcaneGhostMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
 import thaumicenergistics.core.definitions.ThEItems;
-import thaumicenergistics.core.ModGUIs;
+import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.integration.jei.ArcaneInscriberGhostItemPayload;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.items.ItemKnowledgeCore;

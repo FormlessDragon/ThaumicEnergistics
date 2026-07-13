@@ -5,7 +5,7 @@ import ae2.api.storage.ITerminalHost;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import thaumicenergistics.core.ModGUIs;
+import thaumicenergistics.client.gui.ModGUIs;
 
 /**
  * Shared host contract for every arcane terminal-style GUI.

@@ -11,7 +11,7 @@ import ae2.util.inv.AppEngInternalInventory;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import thaumicenergistics.api.storage.IArcaneTerminalUpgradeHost;
-import thaumicenergistics.core.ModGUIs;
+import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.core.ModGlobals;
 import thaumicenergistics.thaumicenergistics.Reference;
 

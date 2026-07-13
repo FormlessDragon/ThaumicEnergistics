@@ -13,6 +13,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import thaumcraft.api.aspects.Aspect;
+import thaumcraft.api.aspects.AspectList;
 import thaumicenergistics.api.stacks.EssentiaStack;
 
 import java.util.List;
@@ -78,6 +79,12 @@ public final class AEEssentiaKey extends AEKey {
 
     public EssentiaStack toStack(int amount) {
         return new EssentiaStack(this.aspect, amount);
+    }
+
+    public AspectList toTCJEIStack(int amount) {
+        AspectList aspectStack = new AspectList();
+        aspectStack.add(this.aspect, amount);
+        return aspectStack;
     }
 
     @Override

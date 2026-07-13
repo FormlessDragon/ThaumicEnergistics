@@ -50,10 +50,6 @@ public class ContainerArcaneAssembler extends AEBaseContainer {
         return this.TE.getCoreInventory();
     }
 
-    public TileArcaneAssembler getTE() {
-        return TE;
-    }
-
     public ArcaneAssemblerGuiState getGuiState() {
         return this.guiState;
     }

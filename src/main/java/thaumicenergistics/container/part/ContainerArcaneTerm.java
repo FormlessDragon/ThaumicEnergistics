@@ -11,6 +11,7 @@ import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
 import ae2.container.me.common.ContainerMEStorage;
 import ae2.container.slot.AppEngSlot;
+import ae2.container.slot.RestrictedInputSlot;
 import ae2.container.slot.SlotBackgroundIcon;
 import ae2.core.network.serverbound.GuiActionPacket;
 import com.google.common.collect.Lists;
@@ -27,7 +28,6 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -119,14 +119,6 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         return this.host.getReturnPos();
     }
 
-    public EnumFacing getPartSide() {
-        return this.host.getReturnSide();
-    }
-
-    public IRecipe getCurrentRecipe() {
-        return this.recipe;
-    }
-
     public float getCurrentRequiredVis() {
         return this.getRequiredVis(this.recipe, this.getPlayer());
     }
@@ -183,10 +175,6 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
     protected IItemHandler getCraftingItemHandler() {
         return this.getCraftingInventory().toItemHandler();
-    }
-
-    protected IItemHandler getCraftingResultItemHandler() {
-        return this.getCraftingResultInventory().toItemHandler();
     }
 
     protected IItemHandler getPlayerItemHandler() {
@@ -294,8 +282,8 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         }
 
         float canCraft = amount;
-        if (this.recipe instanceof IArcaneRecipe) {
-            float visRequired = ((IArcaneRecipe) this.recipe).getVis() * (1f - this.getDiscount(this.getPlayer()));
+        if (this.recipe instanceof IArcaneRecipe arcaneRecipe) {
+            float visRequired = arcaneRecipe.getVis() * (1f - this.getDiscount(this.getPlayer()));
             if (visRequired <= 0) {
                 return amount;
             }
@@ -371,7 +359,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
     private NonNullList<ItemStack> getRemaining(IRecipe recipe, InventoryCrafting inv) {
         NonNullList<ItemStack> remaining = recipe.getRemainingItems(inv);
-        AspectList crystals = this.recipe instanceof IArcaneRecipe ? ((IArcaneRecipe) this.recipe).getCrystals() : null;
+        AspectList crystals = this.recipe instanceof IArcaneRecipe arcaneRecipe ? arcaneRecipe.getCrystals() : null;
 
         for (int i = 0; i < remaining.size(); i++) {
             if (i < 9) {
@@ -472,10 +460,10 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     protected float getRequiredVis(IRecipe recipe, EntityPlayer player) {
-        if (!(recipe instanceof IArcaneRecipe)) {
+        if (!(recipe instanceof IArcaneRecipe arcaneRecipe)) {
             return -1;
         }
-        return ((IArcaneRecipe) recipe).getVis() * (1f - this.getDiscount(player));
+        return arcaneRecipe.getVis() * (1f - this.getDiscount(player));
     }
 
     protected float getDiscount(EntityPlayer player) {
@@ -895,7 +883,8 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
     @SuppressWarnings("SameParameterValue")
     protected void addArcaneAuxiliarySlots(int offsetX, int offsetY) {
-        AppEngSlot upgradeSlot = new AppEngSlot(this.getTerminalUpgradeInventory(), 0, offsetX, offsetY);
+        AppEngSlot upgradeSlot = new RestrictedInputSlot(RestrictedInputSlot.PlacableItemType.UPGRADES,
+            this.getTerminalUpgradeInventory(), 0, offsetX, offsetY);
         upgradeSlot.setBackgroundIcon(SlotBackgroundIcon.UPGRADE);
         this.addSlot(upgradeSlot, SlotSemantics.UPGRADE);
     }

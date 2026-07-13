@@ -16,7 +16,10 @@ public enum GuiText implements LocalizationEnum {
     no_recipe,
     recipe_not_arcane,
     recipe_already_stored,
-    essentia_smelt;
+    essentia_smelt,
+
+    arcane_terminal,
+    arcane_inscriber;
 
     private final String translationKey;
 

@@ -6,7 +6,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
-import thaumicenergistics.core.ModGUIs;
+import thaumicenergistics.client.gui.ModGUIs;
 
 public class WirelessArcaneTermItem extends WirelessTerminalItem {
 

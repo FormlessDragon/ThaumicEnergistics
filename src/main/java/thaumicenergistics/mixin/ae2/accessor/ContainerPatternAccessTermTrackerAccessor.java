@@ -1,4 +1,4 @@
-package thaumicenergistics.mixin.accessor;
+package thaumicenergistics.mixin.ae2.accessor;
 
 import ae2.helpers.patternprovider.PatternContainer;
 import org.spongepowered.asm.mixin.Mixin;

@@ -6,7 +6,6 @@ import com.google.common.primitives.Ints;
 import mezz.jei.api.recipe.IIngredientType;
 import org.jspecify.annotations.Nullable;
 import thaumcraft.api.aspects.AspectList;
-import thaumicenergistics.api.stacks.EssentiaStack;
 import thaumicenergistics.common.me.key.AEEssentiaKey;
 
 import static com.buuz135.thaumicjei.ThaumcraftJEIPlugin.ASPECT_LIST;
@@ -21,20 +20,15 @@ public class TCJeiConverter implements IngredientConverter<AspectList> {
     @Override
     @Nullable
     public AspectList getIngredientFromStack(GenericStack stack) {
-        if(stack == null || stack.amount() <= 0) {
+        if(stack == null) {
             return null;
         }
 
-        if (stack.what() instanceof AEEssentiaKey essentiaKey) {
-            AspectList aspectList = new AspectList();
-            int amount = Ints.saturatedCast(stack.amount());
-            if (amount <= 0) {
-                return null;
-            }
-            EssentiaStack essentiaStack = essentiaKey.toStack(amount);
-            return aspectList.add(essentiaStack.getAspect(), amount);
+        if (!(stack.what() instanceof AEEssentiaKey essentiaKey)) {
+            return null;
         }
-        return null;
+
+        return essentiaKey.toTCJEIStack(Math.max(1, Ints.saturatedCast(stack.amount())));
     }
 
     @Override
@@ -45,10 +39,11 @@ public class TCJeiConverter implements IngredientConverter<AspectList> {
         }
 
         var aspect = ingredient.getAspects()[0];
-        if (aspect == null || ingredient.getAmount(aspect) <= 0) {
+        if (aspect == null) {
             return null;
         }
 
         return new GenericStack(AEEssentiaKey.of(aspect), ingredient.getAmount(aspect));
     }
+
 }

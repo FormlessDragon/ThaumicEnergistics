@@ -13,7 +13,7 @@ import thaumicenergistics.thaumicenergistics.Reference;
 public class ModGlobals {
 
     public static final String MOD_DEPENDENCIES =
-            "required-after:ae2;" +
+            "required-after:ae2@[1.0.9,);" +
             "required-after:thaumcraft@[6.1.BETA26,);" +
             "after:thaumicjei;" +
             "after:inventorytweaks;" +

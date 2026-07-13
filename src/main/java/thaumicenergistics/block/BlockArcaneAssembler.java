@@ -13,7 +13,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import thaumicenergistics.common.gui.ThEGuiOpener;
-import thaumicenergistics.core.ModGUIs;
+import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.tile.TileArcaneAssembler;
 
 import javax.annotation.ParametersAreNonnullByDefault;

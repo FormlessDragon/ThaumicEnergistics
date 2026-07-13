@@ -1,9 +1,6 @@
 {
-  "parent": "ae2:item/display_base",
+  "parent": "item/generated",
   "textures": {
-    "front": "ae2:item/wireless_terminal",
-    "front_bright": "thaumicenergistics:part/arcane_terminal/overlay1",
-    "front_medium": "thaumicenergistics:part/arcane_terminal/overlay4",
-    "front_dark": "thaumicenergistics:part/arcane_terminal/overlay3"
+    "layer0": "thaumicenergistics:item/wireless_arcane_terminal"
   }
 }

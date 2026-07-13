@@ -6,7 +6,6 @@ import ae2.client.gui.widgets.IconButton;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.core.definitions.GuiText;
 import thaumicenergistics.items.ItemKnowledgeCore;
@@ -24,9 +23,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     private final ContainerArcaneInscriber inscriberContainer;
 
     public GuiArcaneInscriber(ContainerArcaneInscriber container, InventoryPlayer playerInventory) {
-        super(container, playerInventory,
-                new TextComponentTranslation("gui.thaumicenergistics.arcane_inscriber"),
-                GuiStyleManager.loadStyleDoc(GuiArcaneInscriber.STYLE_PATH));
+        super(container, playerInventory, GuiText.arcane_inscriber.text(), GuiStyleManager.loadStyleDoc(GuiArcaneInscriber.STYLE_PATH));
         this.inscriberContainer = container;
 
         this.coreAddButton = new KnowledgeCoreButton(Icon.ARROW_DOWN, this::requestKnowledgeCoreAddIfAllowed);
@@ -59,7 +56,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
         this.fontRenderer.drawString(
                 GuiText.vis_required.getLocal(this.getVisIfSet(visRequired)),
                 80,
-                this.ySize - 180,
+                this.ySize - 178,
                 4210752);
     }
 

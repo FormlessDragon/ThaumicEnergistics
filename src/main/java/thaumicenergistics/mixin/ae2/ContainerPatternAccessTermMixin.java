@@ -1,4 +1,4 @@
-package thaumicenergistics.mixin;
+package thaumicenergistics.mixin.ae2;
 
 import ae2.api.stacks.AEItemKey;
 import ae2.container.implementations.ContainerPatternAccessTerm;
@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import thaumicenergistics.api.storage.ReadOnlyPatternContainer;
-import thaumicenergistics.mixin.accessor.ContainerPatternAccessTermTrackerAccessor;
+import thaumicenergistics.mixin.ae2.accessor.ContainerPatternAccessTermTrackerAccessor;
 
 /**
  * Enforces read-only Knowledge Core projections at AE2's authoritative Pattern Access Terminal mutation boundary.

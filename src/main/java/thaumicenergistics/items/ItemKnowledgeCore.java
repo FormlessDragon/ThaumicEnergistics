@@ -12,7 +12,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import ae2.core.gui.locator.GuiHostLocators;
 import thaumicenergistics.common.gui.ThEGuiOpener;
-import thaumicenergistics.core.ModGUIs;
+import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
 /**

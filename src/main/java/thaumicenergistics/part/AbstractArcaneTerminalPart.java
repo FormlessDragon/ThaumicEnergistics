@@ -19,7 +19,7 @@ import net.minecraft.world.World;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.core.ThELog;
-import thaumicenergistics.core.ModGUIs;
+import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.util.AEUtil;
 import thaumicenergistics.util.ForgeUtil;
 

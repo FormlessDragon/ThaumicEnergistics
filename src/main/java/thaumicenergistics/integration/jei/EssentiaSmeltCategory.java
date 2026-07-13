@@ -59,7 +59,7 @@ public class EssentiaSmeltCategory implements IRecipeCategory<EssentiaSmeltCateg
 
     @Override
     public void setRecipe(@NotNull IRecipeLayout iRecipeLayout, @NotNull EssentiaSmeltWrapper essentiaSmeltWrapper, @NotNull IIngredients iIngredients) {
-        iRecipeLayout.getItemStacks().init(0, true, 79, 8);
+        iRecipeLayout.getItemStacks().init(0, true, 79, 7);
         iRecipeLayout.getItemStacks().set(0, iIngredients.getInputs(VanillaTypes.ITEM).getFirst());
         int slot = 0;
         int row = 9;

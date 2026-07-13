@@ -47,7 +47,7 @@ import thaumicenergistics.core.ThEConfig;
 import thaumicenergistics.core.ThELog;
 import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.core.definitions.ThEItems;
-import thaumicenergistics.core.ModGUIs;
+import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
@@ -222,10 +222,6 @@ public class TileArcaneAssembler extends AENetworkedTile
 
     public IUpgradeInventory getUpgradeInventory() {
         return this.upgradeInv;
-    }
-
-    public AppEngInternalInventory getOutputBuffer() {
-        return this.outputBuffer;
     }
 
     public ItemStack getCurrentOutput() {
@@ -598,7 +594,7 @@ public class TileArcaneAssembler extends AENetworkedTile
                 }
                 this.restoreExtractedAspects(inventory, extractedAspects);
                 availability.put(requirement.getKey().getTag(), false);
-                this.setResourceDiagnostics(visAvailable, true, availability);
+                this.setResourceDiagnostics(true, true, availability);
                 ThELog.trace("Arcane Assembler @ {} lost an essentia race while accepting a craft", this.getPos());
                 return false;
             }
@@ -669,7 +665,7 @@ public class TileArcaneAssembler extends AENetworkedTile
             return false;
         }
         for (int index = 0; index < this.cachedOutputs.size(); index++) {
-            ItemStack remaining = this.insertIntoOutputBuffer(this.cachedOutputs.get(index), false);
+            ItemStack remaining = this.insertIntoInventory(this.outputBuffer, this.cachedOutputs.get(index), false);
             if (!remaining.isEmpty()) {
                 List<ItemStack> unbuffered = new ArrayList<>();
                 unbuffered.add(remaining);
@@ -726,10 +722,6 @@ public class TileArcaneAssembler extends AENetworkedTile
             injected = true;
         }
         return injected;
-    }
-
-    private ItemStack insertIntoOutputBuffer(ItemStack stack, boolean simulate) {
-        return this.insertIntoInventory(this.outputBuffer, stack, simulate);
     }
 
     private ItemStack insertIntoInventory(InternalInventory inventory, ItemStack stack, boolean simulate) {
@@ -864,9 +856,7 @@ public class TileArcaneAssembler extends AENetworkedTile
     }
 
     private void updateTickingState() {
-        this.getMainNode().ifPresent((grid, node) -> {
-            grid.getTickManager().wakeDevice(node);
-        });
+        this.getMainNode().ifPresent((grid, node) -> grid.getTickManager().wakeDevice(node));
     }
 
     private List<KnowledgeCoreUtil.Recipe> getCoreRecipes() {

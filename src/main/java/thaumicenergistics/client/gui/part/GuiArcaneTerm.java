@@ -8,7 +8,6 @@ import ae2.client.gui.widgets.ActionButton;
 import ae2.core.AEConfig;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
 import thaumicenergistics.container.part.ArcaneTerminalVisState;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.core.definitions.GuiText;
@@ -17,8 +16,7 @@ public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
     public static final String STYLE_PATH = "/screens/terminals/thaumicenergistics_arcane_terminal.json";
 
     public GuiArcaneTerm(ContainerArcaneTerm container, InventoryPlayer playerInventory) {
-        this(container, playerInventory, getDefaultTerminalTitle(),
-                GuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH));
+        this(container, playerInventory, GuiText.arcane_terminal.text(), GuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH));
     }
 
     public GuiArcaneTerm(ContainerArcaneTerm container, InventoryPlayer playerInventory, ITextComponent title, GuiStyle style) {
@@ -28,14 +26,6 @@ public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
         clearBtn.setHalfSize(true);
         clearBtn.setDisableBackground(true);
         widgets.add("clearCraftingGrid", clearBtn);
-    }
-
-    protected ITextComponent getTerminalTitle() {
-        return getDefaultTerminalTitle();
-    }
-
-    private static ITextComponent getDefaultTerminalTitle() {
-        return new TextComponentTranslation("gui.thaumicenergistics.arcane_terminal");
     }
 
     @Override
@@ -67,8 +57,8 @@ public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
                     getVisIfSet(visState.getVisRequired()),
                     (int) getVisIfSet(visState.getVisAvailable())
                 ),
-                35,
-                this.ySize - 168,
+                80,
+                this.ySize - 178,
                 visState.getVisRequired() > visState.getVisAvailable() ? 0xFF0000 : 4210752);
     }
 

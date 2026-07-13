@@ -19,7 +19,6 @@ import thaumicenergistics.container.item.ContainerKnowledgeCore;
 import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
-import thaumicenergistics.core.ModGUIs;
 import thaumicenergistics.network.packets.PacketOpenLocatorGUI;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.core.ThELog;

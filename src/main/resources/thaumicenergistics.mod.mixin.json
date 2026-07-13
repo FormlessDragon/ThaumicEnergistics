@@ -3,14 +3,17 @@
   "minVersion": "0.8",
   "package": "thaumicenergistics.mixin",
   "compatibilityLevel": "JAVA_25",
+	"plugin": "thaumicenergistics.core.ThEMixinConfigPlugin",
   "target": "@env(MOD)",
   "mixins": [
-    "ContainerPatternAccessTermMixin",
-    "CraftingCalculationMixin",
-    "CraftingServiceMixin",
-    "accessor.ContainerPatternAccessTermTrackerAccessor"
+		"ae2.ContainerPatternAccessTermMixin",
+		"ae2.CraftingCalculationMixin",
+		"ae2.CraftingServiceMixin",
+		"ae2.accessor.ContainerPatternAccessTermTrackerAccessor"
   ],
-  "client": [],
+  "client": [
+		"hei.MixinBookmarkItem"
+	],
   "server": [],
   "injectors": {
     "defaultRequire": 1
