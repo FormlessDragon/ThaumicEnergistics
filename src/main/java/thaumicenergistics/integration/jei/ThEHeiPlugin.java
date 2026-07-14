@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
+import thaumicenergistics.container.part.ContainerArcaneInscriber;
+import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.core.ThELog;
 import thaumicenergistics.core.definitions.ThEParts;
 
@@ -44,8 +46,8 @@ public class ThEHeiPlugin implements IModPlugin {
     public void register(IModRegistry registry) {
         IRecipeTransferHandlerHelper rthh = registry.getJeiHelpers().recipeTransferHandlerHelper();
 
-        registerWorkbenchCatalyst(registry, new ACTRecipeTransferHandler<>(rthh), ThEParts.ARCANE_TERMINAL.stack());
-        registerWorkbenchCatalyst(registry, new ACIRecipeTransferHandler<>(rthh), ThEParts.ARCANE_INSCRIBER.stack());
+        registerWorkbenchCatalyst(registry, new ACTRecipeTransferHandler<>(ContainerArcaneTerm.class, rthh), ThEParts.ARCANE_TERMINAL.stack());
+        registerWorkbenchCatalyst(registry, new ACIRecipeTransferHandler<>(ContainerArcaneInscriber.class, rthh), ThEParts.ARCANE_INSCRIBER.stack());
         registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_basic").toString())), essentiaSmeltCategory.getUid());
         registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_thaumium").toString())), essentiaSmeltCategory.getUid());
         registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_void").toString())), essentiaSmeltCategory.getUid());

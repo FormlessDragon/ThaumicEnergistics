@@ -3,7 +3,7 @@
   "defaults": {
     "model": "forge:multi-layer",
     "custom": {
-      "base": "thaumicenergistics:arcane_assembler#base",
+      "base": "thaumicenergistics:arcane_assembler#particle",
       "Solid": "thaumicenergistics:arcane_assembler#base",
       "Translucent": "thaumicenergistics:arcane_assembler#windows"
     },
@@ -14,7 +14,18 @@
       {}
     ],
     "inventory": [
-      {}
+      {
+        "custom": {
+          "base": "thaumicenergistics:arcane_assembler#particle",
+          "Solid": "thaumicenergistics:arcane_assembler#base",
+          "Translucent": "thaumicenergistics:arcane_assembler#windows"
+        }
+      }
+    ],
+    "particle": [
+      {
+        "model": "thaumicenergistics:arcane_assembler_particle"
+      }
     ],
     "base": [
       {

@@ -132,20 +132,20 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
             return;
         }
 
-        ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_ADD, this.getLocator(), false);
+        ThEGuiOpener.openPartLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_ADD, this.getLocator(), false);
     }
 
     private void openKnowledgeCoreDel() {
         ItemStack knowledgeCore = this.getKnowledgeCoreInventory().getStackInSlot(0);
         if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
-            ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_DEL, this.getLocator(), false);
+            ThEGuiOpener.openPartLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_DEL, this.getLocator(), false);
         }
     }
 
     private void openKnowledgeCoreView() {
         ItemStack knowledgeCore = this.getKnowledgeCoreInventory().getStackInSlot(0);
         if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
-            ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_VIEW, this.getLocator(), false);
+            ThEGuiOpener.openPartLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_VIEW, this.getLocator(), false);
         }
     }
 

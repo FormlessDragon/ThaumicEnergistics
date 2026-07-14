@@ -4,7 +4,10 @@ import ae2.api.config.Actionable;
 import ae2.api.implementations.IPowerChannelState;
 import ae2.api.networking.GridFlags;
 import ae2.api.networking.IGrid;
+import ae2.api.networking.IGridNodeListener;
+import ae2.api.networking.IStackWatcher;
 import ae2.api.networking.security.IActionSource;
+import ae2.api.networking.storage.IStorageWatcherNode;
 import ae2.api.stacks.AEKey;
 import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
@@ -12,12 +15,14 @@ import ae2.tile.grid.AENetworkedPoweredTile;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import java.util.Objects;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectSource;
+import thaumicenergistics.block.BlockInfusionProvider;
 import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.common.me.key.AEEssentiaKey;
 import thaumicenergistics.util.ForgeUtil;
@@ -26,19 +31,23 @@ import thaumicenergistics.util.ForgeUtil;
  * @author BrockWS
  */
 public class TileInfusionProvider extends AENetworkedPoweredTile
-        implements IPowerChannelState, IAspectSource {
+        implements IPowerChannelState, IAspectSource, IStorageWatcherNode {
+
     private static final String TAG_STORED_ASPECTS = "storedAspects";
 
     protected final IActionSource src = IActionSource.ofMachine(this);
 
     // Client side only, for rendering aspect icons with goggles
     private AspectList clientAspects = new AspectList();
+    private AspectList lastSyncedAspects = new AspectList();
+    private IStackWatcher storageWatcher;
 
     public TileInfusionProvider() {
         super();
         this.getMainNode()
                 .setIdlePowerUsage(1.0)
-                .setFlags(GridFlags.REQUIRE_CHANNEL);
+                .setFlags(GridFlags.REQUIRE_CHANNEL)
+                .addService(IStorageWatcherNode.class, this);
     }
 
     @Override
@@ -54,6 +63,15 @@ public class TileInfusionProvider extends AENetworkedPoweredTile
     @Override
     public boolean isActive() {
         return this.getMainNode().isActive();
+    }
+
+    @Override
+    public void onMainNodeStateChanged(IGridNodeListener.State reason) {
+        boolean blockStateChanged = this.isBlockNetworkStateOutdated();
+        boolean aspectsChanged = this.updateSyncedAspectSnapshot();
+        if (blockStateChanged || aspectsChanged) {
+            this.sendVisualStateUpdate();
+        }
     }
 
     private MEStorage getNetworkStorage() {
@@ -98,7 +116,9 @@ public class TileInfusionProvider extends AENetworkedPoweredTile
     protected void writeToStream(ByteBuf data) {
         super.writeToStream(data);
         NBTTagCompound tag = new NBTTagCompound();
-        this.getStoredAspectSnapshot().writeToNBT(tag, TAG_STORED_ASPECTS);
+        AspectList storedAspectSnapshot = this.getStoredAspectSnapshot();
+        this.rememberSyncedAspectSnapshot(storedAspectSnapshot);
+        storedAspectSnapshot.writeToNBT(tag, TAG_STORED_ASPECTS);
         ByteBufUtils.writeTag(data, tag);
     }
 
@@ -114,6 +134,32 @@ public class TileInfusionProvider extends AENetworkedPoweredTile
     }
 
     public void refreshVisualState() {
+        if (!this.isClientTile()) {
+            this.rememberSyncedAspectSnapshot(this.getStoredAspectSnapshot());
+        }
+        this.sendVisualStateUpdate();
+    }
+
+    @Override
+    public void updateWatcher(IStackWatcher newWatcher) {
+        this.storageWatcher = Objects.requireNonNull(newWatcher, "newWatcher");
+        this.configureStorageWatcher();
+        if (this.updateSyncedAspectSnapshot()) {
+            this.sendVisualStateUpdate();
+        }
+    }
+
+    @Override
+    public void onStackChange(AEKey what, long amount) {
+        if (!(what instanceof AEEssentiaKey)) {
+            return;
+        }
+        if (this.updateSyncedAspectSnapshot()) {
+            this.sendVisualStateUpdate();
+        }
+    }
+
+    private void sendVisualStateUpdate() {
         this.saveChanges();
         this.markForUpdate();
     }
@@ -145,10 +191,48 @@ public class TileInfusionProvider extends AENetworkedPoweredTile
     @Override
     protected void loadVisualState(NBTTagCompound tag) {
         super.loadVisualState(tag);
+        this.clientAspects = new AspectList();
         if (tag.hasKey(TAG_STORED_ASPECTS)) {
-            this.clientAspects = new AspectList();
             this.clientAspects.readFromNBT(tag, TAG_STORED_ASPECTS);
         }
+    }
+
+    private void configureStorageWatcher() {
+        if (this.storageWatcher == null) {
+            return;
+        }
+        this.storageWatcher.reset();
+        this.storageWatcher.setWatchAll(true);
+    }
+
+    private boolean updateSyncedAspectSnapshot() {
+        if (this.isClientTile()) {
+            return false;
+        }
+        AspectList nextAspects = this.getStoredAspectSnapshot();
+        if (aspectListsEqual(this.lastSyncedAspects, nextAspects)) {
+            return false;
+        }
+        this.rememberSyncedAspectSnapshot(nextAspects);
+        return true;
+    }
+
+    private void rememberSyncedAspectSnapshot(AspectList aspects) {
+        this.lastSyncedAspects = aspects.copy();
+    }
+
+    private boolean isBlockNetworkStateOutdated() {
+        if (this.isClientTile()) {
+            return false;
+        }
+        IBlockState currentState = this.getBlockState();
+        if (currentState == null
+                || !currentState.getPropertyKeys().contains(BlockInfusionProvider.ACTIVE)
+                || !currentState.getPropertyKeys().contains(BlockInfusionProvider.POWERED)) {
+            return false;
+        }
+        return currentState.getValue(BlockInfusionProvider.ACTIVE) != this.getMainNode().isActive()
+                || currentState.getValue(BlockInfusionProvider.POWERED) != this.getMainNode().isPowered();
     }
 
     private static boolean aspectListsEqual(AspectList first, AspectList second) {
@@ -209,4 +293,5 @@ public class TileInfusionProvider extends AENetworkedPoweredTile
     public boolean doesContainerContain(AspectList aspectList) {
         return false;
     }
+
 }

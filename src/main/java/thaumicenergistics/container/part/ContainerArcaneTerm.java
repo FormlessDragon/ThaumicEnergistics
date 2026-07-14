@@ -437,7 +437,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     private static IUpgradeInventory requireTerminalUpgradeInventory(IArcaneTerminalUpgradeHost host) {
-        IUpgradeInventory inventory = host.getArcaneUpgradeInventory();
+        IUpgradeInventory inventory = host.getUpgrades();
         if (inventory == null) {
             ThELog.error("Arcane terminal upgrade host returned a null upgrade inventory: {}",
                     host.getClass().getName());

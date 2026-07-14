@@ -51,7 +51,7 @@ public final class ThEItems {
     public static final ItemDefinition<Item> UPGRADE_ARCANE = new ItemDefinition<>(ThEItemIds.UPGRADE_ARCANE,
             Upgrades.createUpgradeCardItem(), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<Item> KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD = new ItemDefinition<>(
-            ThEItemIds.KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD, new Item(), ModGlobals.CREATIVE_TAB);
+            ThEItemIds.KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD, Upgrades.createUpgradeCardItem(), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<Item> KNOWLEDGE_CORE_PATTERN = new ItemDefinition<>(
             ThEItemIds.KNOWLEDGE_CORE_PATTERN,
             PatternDetailsHelper.encodedPatternItemBuilder(KnowledgeCorePatternProjection.INSTANCE::decode).build(),

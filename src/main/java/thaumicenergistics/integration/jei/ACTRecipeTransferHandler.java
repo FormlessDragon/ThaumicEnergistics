@@ -32,17 +32,18 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
 
     private static final String MISSING_INGREDIENTS = "Missing ingredients";
 
+    protected final Class<C> containerClass;
     private final IRecipeTransferHandlerHelper recipeTransferHelper;
 
-    public ACTRecipeTransferHandler(IRecipeTransferHandlerHelper helper) {
+    public ACTRecipeTransferHandler(Class<C> containerClass, IRecipeTransferHandlerHelper helper) {
+        this.containerClass = containerClass;
         this.recipeTransferHelper = helper;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     @MethodsReturnNonnullByDefault
     public Class<C> getContainerClass() {
-        return (Class<C>) ContainerArcaneTerm.class;
+        return this.containerClass;
     }
 
     @Nullable
@@ -284,4 +285,5 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
             return false;
         }
     }
+
 }

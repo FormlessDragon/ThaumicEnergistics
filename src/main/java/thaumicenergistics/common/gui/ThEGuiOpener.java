@@ -1,334 +1,264 @@
 package thaumicenergistics.common.gui;
 
+import ae2.api.parts.IPartHost;
+import ae2.core.gui.locator.BaublesItemLocator;
 import ae2.core.gui.locator.GuiHostLocator;
+import ae2.core.gui.locator.ItemGuiHostLocator;
+import ae2.core.gui.locator.PartLocator;
+import ae2.parts.AEBasePart;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.inventory.Container;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import thaumicenergistics.ThaumicEnergistics;
 import thaumicenergistics.api.storage.IArcaneInscriberHost;
+import thaumicenergistics.api.storage.IArcaneTerminalHost;
 import thaumicenergistics.api.storage.IArcaneTerminalUpgradeHost;
-import thaumicenergistics.container.block.ContainerArcaneAssembler;
-import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
-import thaumicenergistics.container.item.ContainerKnowledgeCore;
-import thaumicenergistics.container.part.ContainerArcaneInscriber;
-import thaumicenergistics.container.part.ContainerArcaneTerm;
+import thaumicenergistics.client.gui.GuiIds;
 import thaumicenergistics.client.gui.ModGUIs;
-import thaumicenergistics.network.ThENetwork;
-import thaumicenergistics.network.packets.PacketOpenLocatorGUI;
-import thaumicenergistics.tile.TileArcaneAssembler;
+import thaumicenergistics.core.ThELog;
 
 /**
- * Opens ThE GUI routes that need AE2's full host locator payload.
+ * Encodes ThE standard Forge GUI routes into tile, part, or item coordinate payloads.
  */
 public final class ThEGuiOpener {
 
     private ThEGuiOpener() {
     }
 
-    /**
-     * Provides the server-side operations needed to open a locator-aware GUI.
-     *
-     * <p>The abstraction keeps GUI routing testable without constructing a real {@link EntityPlayerMP}. Production
-     * implementations must preserve Minecraft's open order: close the current container, allocate the next window id,
-     * send the open packet, then install the server container and add the player as listener.</p>
-     */
-    public interface ServerOpenContext {
-
-        /**
-         * Returns the player that owns the GUI route and supplies inventory/world context for host lookup.
-         */
-        EntityPlayer player();
-
-        /**
-         * Returns the currently open container before replacement; Knowledge Core routes use this to capture their
-         * parent inscriber context before {@link #closeContainer()} mutates it.
-         */
-        Container openContainer();
-
-        /**
-         * Closes the currently open container before a new locator-aware container is installed.
-         */
-        void closeContainer();
-
-        /**
-         * Allocates and returns the window id for the new server/client container pair.
-         */
-        int nextWindowId();
-
-        /**
-         * Sends the client packet that carries the GUI id, locator and window id.
-         */
-        void send(PacketOpenLocatorGUI packet);
-
-        /**
-         * Installs the completed server container for the allocated window id.
-         */
-        void install(Container container, int windowId);
+    public static void openGui(EntityPlayer player, ModGUIs gui, TileEntity tile) {
+        openGui(player, gui, tile, false);
     }
 
-    public static void openLocatorGui(EntityPlayer player, ModGUIs gui, GuiHostLocator locator,
-                                      boolean returnedFromSubScreen) {
-        validateLocatorRoute(player, gui, locator);
-        if (!(player instanceof EntityPlayerMP serverPlayer)) {
-            throw new IllegalArgumentException("Cannot open locator-aware gui " + gui
-                    + " with locator " + locatorDescription(locator)
-                    + " for non-server player " + player.getClass().getName()
-                    + "; expected " + EntityPlayerMP.class.getName());
+    public static void openGui(EntityPlayer player, ModGUIs gui, TileEntity tile, boolean returnedFromSubScreen) {
+        validateTileOpenRoute(player, gui, tile);
+        BlockPos pos = tile.getPos();
+        openGui(player, gui, returnedFromSubScreen, tile.getWorld(), pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    public static void openPartGui(EntityPlayer player, ModGUIs gui, AEBasePart part) {
+        openPartGui(player, gui, part, false);
+    }
+
+    public static void openPartGui(EntityPlayer player, ModGUIs gui, AEBasePart part, boolean returnedFromSubScreen) {
+        validatePartOpenRoute(player, gui);
+        if (part == null) {
+            throw rejectArgument("part cannot be null for part gui " + gui + " player " + playerDescription(player));
+        }
+        IPartHost host = part.getHost();
+        if (host == null) {
+            throw rejectState("Cannot open part gui " + gui + " without a part host for "
+                    + part.getClass().getName() + " player " + playerDescription(player));
+        }
+        openPartGui(player, gui, host, part.getSide(), returnedFromSubScreen);
+    }
+
+    public static void openPartGui(EntityPlayer player, ModGUIs gui, IPartHost host, EnumFacing side) {
+        openPartGui(player, gui, host, side, false);
+    }
+
+    public static void openPartGui(EntityPlayer player, ModGUIs gui, IPartHost host, EnumFacing side,
+                                   boolean returnedFromSubScreen) {
+        validatePartOpenRoute(player, gui);
+        if (host == null) {
+            throw rejectArgument("part host cannot be null for part gui " + gui + " player " + playerDescription(player));
+        }
+        if (host.getLocation() == null || host.getLocation().getPos() == null) {
+            throw rejectState("Cannot open part gui " + gui + " because host " + host.getClass().getName()
+                    + " has no location for player " + playerDescription(player));
+        }
+        BlockPos pos = host.getLocation().getPos();
+        openPartGui(player, gui, pos, side, returnedFromSubScreen);
+    }
+
+    public static void openPartLocatorGui(EntityPlayer player, ModGUIs gui, GuiHostLocator locator,
+                                          boolean returnedFromSubScreen) {
+        validatePartOpenRoute(player, gui);
+        if (!(locator instanceof PartLocator)) {
+            throw rejectArgument("Cannot encode non-part locator " + locatorDescription(locator)
+                    + " for part gui " + gui + " player " + playerDescription(player));
         }
 
-        openLocatorGui(new ServerPlayerOpenContext(serverPlayer), gui, locator, returnedFromSubScreen);
-    }
-
-    static void openLocatorGui(ServerOpenContext context, ModGUIs gui, GuiHostLocator locator,
-                               boolean returnedFromSubScreen) {
-        validateLocatorRoute(context, gui, locator);
-
-        GuiHostLocator packetLocator = locator;
-        ContainerArcaneInscriber knowledgeCoreParent = null;
-        if (isKnowledgeCoreGui(gui)) {
-            knowledgeCoreParent = getKnowledgeCoreParent(context, gui);
-            packetLocator = getKnowledgeCoreParentLocator(context, gui, knowledgeCoreParent);
+        IArcaneTerminalHost host = locatePartHost(player, gui, locator);
+        BlockPos pos = host.getReturnPos();
+        if (pos == null) {
+            throw rejectState("Cannot encode part locator " + locatorDescription(locator)
+                    + " for part gui " + gui + " because host " + host.getClass().getName()
+                    + " returned null position");
         }
-
-        context.closeContainer();
-        int windowId = context.nextWindowId();
-        Container container = createServerContainer(context.player(), gui, packetLocator, returnedFromSubScreen,
-                windowId, knowledgeCoreParent);
-
-        context.send(new PacketOpenLocatorGUI(gui, packetLocator, returnedFromSubScreen, windowId));
-        context.install(container, windowId);
+        openPartGui(player, gui, pos, host.getReturnSide(), returnedFromSubScreen);
     }
 
-    private static Container createServerContainer(EntityPlayer player, ModGUIs gui, GuiHostLocator locator,
-                                                   boolean returnedFromSubScreen, int windowId,
-                                                   ContainerArcaneInscriber knowledgeCoreParent) {
+    public static void openItemGui(EntityPlayer player, ModGUIs gui, ItemGuiHostLocator locator) {
+        openItemGui(player, gui, locator, false);
+    }
+
+    public static void openItemGui(EntityPlayer player, ModGUIs gui, ItemGuiHostLocator locator,
+                                   boolean returnedFromSubScreen) {
+        validateItemOpenRoute(player, gui, locator);
+        int encodedSlot = encodeItemSlot(player, gui, locator);
+        openGui(player, gui, returnedFromSubScreen, player.world, encodedSlot, 0, 0);
+    }
+
+    private static void openPartGui(EntityPlayer player, ModGUIs gui, BlockPos pos, EnumFacing side,
+                                    boolean returnedFromSubScreen) {
+        if (pos == null) {
+            throw rejectArgument("part position cannot be null for part gui " + gui
+                    + " player " + playerDescription(player));
+        }
+        openGui(player, gui, returnedFromSubScreen, player.world, pos.getX(), encodePartY(pos, side), pos.getZ());
+    }
+
+    private static void openGui(EntityPlayer player, ModGUIs gui, boolean returnedFromSubScreen, World world,
+                                int x, int y, int z) {
+        validateCommonOpenRoute(player, gui, world);
+        player.openGui(ThaumicEnergistics.instance(), GuiIds.getGuiId(gui, returnedFromSubScreen), world, x, y, z);
+    }
+
+    private static int encodePartY(BlockPos pos, EnumFacing side) {
+        return (encodePartSide(side) << 8) | (pos.getY() & 255);
+    }
+
+    private static int encodePartSide(EnumFacing side) {
+        return side == null ? EnumFacing.VALUES.length : side.ordinal();
+    }
+
+    private static int encodeItemSlot(EntityPlayer player, ModGUIs gui, ItemGuiHostLocator locator) {
+        Integer slot = locator.getPlayerInventorySlot();
+        if (slot != null) {
+            return encodeInventorySlot(player, gui, locator, slot);
+        }
+        if (locator instanceof BaublesItemLocator baublesLocator) {
+            return encodeBaublesSlot(player, gui, baublesLocator);
+        }
+        throw rejectArgument("Cannot encode unknown item locator " + locatorDescription(locator)
+                + " for item gui " + gui + " player " + playerDescription(player));
+    }
+
+    private static int encodeInventorySlot(EntityPlayer player, ModGUIs gui, ItemGuiHostLocator locator, int slot) {
+        if (slot == Integer.MIN_VALUE) {
+            throw rejectArgument("Cannot encode invalid inventory slot Integer.MIN_VALUE from locator "
+                    + locatorDescription(locator) + " for item gui " + gui + " player " + playerDescription(player));
+        }
+        int inventorySize = player.inventory.getSizeInventory();
+        if (slot < 0 || slot >= inventorySize) {
+            throw rejectArgument("Cannot encode invalid inventory slot " + slot + " from locator "
+                    + locatorDescription(locator) + " for item gui " + gui + " player " + playerDescription(player)
+                    + "; valid range 0.." + (inventorySize - 1));
+        }
+        return slot;
+    }
+
+    private static int encodeBaublesSlot(EntityPlayer player, ModGUIs gui, BaublesItemLocator locator) {
+        int baubleSlot = locator.baubleSlot();
+        if (baubleSlot == Integer.MIN_VALUE) {
+            throw rejectArgument("Cannot encode invalid Baubles slot Integer.MIN_VALUE from locator "
+                    + locatorDescription(locator) + " for item gui " + gui + " player " + playerDescription(player));
+        }
+        if (baubleSlot < 0) {
+            throw rejectArgument("Cannot encode negative Baubles slot " + baubleSlot + " from locator "
+                    + locatorDescription(locator) + " for item gui " + gui + " player " + playerDescription(player));
+        }
+        int encodedSlot = -1 - baubleSlot;
+        if (encodedSlot == Integer.MIN_VALUE) {
+            throw rejectArgument("Cannot encode Baubles slot " + baubleSlot + " as Integer.MIN_VALUE from locator "
+                    + locatorDescription(locator) + " for item gui " + gui + " player " + playerDescription(player));
+        }
+        return encodedSlot;
+    }
+
+    private static IArcaneTerminalHost locatePartHost(EntityPlayer player, ModGUIs gui, GuiHostLocator locator) {
+        Class<? extends IArcaneTerminalHost> hostType = getPartLocatorHostType(gui);
+        IArcaneTerminalHost host = locator.locate(player, hostType);
+        if (host == null) {
+            throw rejectState("Cannot locate " + hostType.getName() + " from part locator "
+                    + locatorDescription(locator) + " for part gui " + gui + " player " + playerDescription(player));
+        }
+        return host;
+    }
+
+    private static Class<? extends IArcaneTerminalHost> getPartLocatorHostType(ModGUIs gui) {
         return switch (gui) {
-            case ARCANE_TERMINAL -> createArcaneTerminalContainer(player, gui, locator, returnedFromSubScreen,
-                    windowId);
-            case ARCANE_INSCRIBER -> createArcaneInscriberContainer(player, gui, locator, windowId);
-            case ARCANE_ASSEMBLER -> createArcaneAssemblerContainer(player, gui, locator, windowId);
-            case KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW ->
-                    createKnowledgeCoreContainer(player, gui, locator, knowledgeCoreParent, windowId);
-            case KNOWLEDGE_CORE_MANAGE -> createKnowledgeCoreManagementContainer(player, locator, windowId);
-            case WIRELESS_ARCANE_TERMINAL -> createWirelessArcaneContainer(
-                    player.inventory, locateWirelessArcaneHost(player, gui, locator), locator,
-                    returnedFromSubScreen, windowId);
-            default -> throw new IllegalArgumentException("Unsupported locator-aware gui " + gui
-                    + " with locator " + locatorDescription(locator)
-                    + " for player " + playerDescription(player));
+            case ARCANE_TERMINAL -> IArcaneTerminalUpgradeHost.class;
+            case ARCANE_INSCRIBER, KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW ->
+                    IArcaneInscriberHost.class;
+            default -> throw rejectArgument("Unsupported part locator gui " + gui);
         };
     }
 
-    private static ContainerArcaneTerm createArcaneTerminalContainer(EntityPlayer player, ModGUIs gui,
-                                                                     GuiHostLocator locator,
-                                                                     boolean returnedFromSubScreen,
-                                                                     int windowId) {
-        ContainerArcaneTerm container = new ContainerArcaneTerm(player.inventory,
-                locateArcaneTerminalUpgradeHost(player, gui, locator));
-        container.setLocator(locator);
-        container.setReturnedFromSubScreen(returnedFromSubScreen);
-        container.windowId = windowId;
-        return container;
-    }
-
-    private static ContainerArcaneInscriber createArcaneInscriberContainer(EntityPlayer player, ModGUIs gui,
-                                                                           GuiHostLocator locator, int windowId) {
-        ContainerArcaneInscriber container = new ContainerArcaneInscriber(player.inventory,
-                locateArcaneInscriberHost(player, gui, locator));
-        container.setLocator(locator);
-        container.windowId = windowId;
-        return container;
-    }
-
-    private static ContainerArcaneAssembler createArcaneAssemblerContainer(EntityPlayer player, ModGUIs gui,
-                                                                           GuiHostLocator locator, int windowId) {
-        ContainerArcaneAssembler container = new ContainerArcaneAssembler(player,
-                locateArcaneAssembler(player, gui, locator));
-        container.setLocator(locator);
-        container.windowId = windowId;
-        return container;
-    }
-
-    private static ContainerKnowledgeCore createKnowledgeCoreContainer(EntityPlayer player, ModGUIs gui,
-                                                                       GuiHostLocator parentLocator,
-                                                                       ContainerArcaneInscriber parent,
-                                                                       int windowId) {
-        if (parent == null) {
-            throw new IllegalStateException("Cannot open Knowledge Core gui " + gui.name()
-                    + " without parent " + ContainerArcaneInscriber.class.getName()
-                    + "; player " + playerDescription(player)
-                    + "; locator " + locatorDescription(parentLocator));
+    private static void validateTileOpenRoute(EntityPlayer player, ModGUIs gui, TileEntity tile) {
+        if (tile == null) {
+            throw rejectArgument("tile cannot be null for tile gui " + gui + " player " + playerDescription(player));
         }
-        ContainerKnowledgeCore container = new ContainerKnowledgeCore(player, gui, parent, parentLocator);
-        container.windowId = windowId;
-        return container;
-    }
-
-    private static ContainerKnowledgeCore createKnowledgeCoreManagementContainer(EntityPlayer player,
-                                                                                   GuiHostLocator locator,
-                                                                                   int windowId) {
-        ContainerKnowledgeCore container = new ContainerKnowledgeCore(player, locator);
-        container.windowId = windowId;
-        return container;
-    }
-
-    public static WirelessArcaneTerminalGuiHost locateWirelessArcaneHost(EntityPlayer player, ModGUIs gui,
-                                                                         GuiHostLocator locator) {
-        validateWirelessArcaneRoute(player, gui, locator);
-        WirelessArcaneTerminalGuiHost host = locator.locate(player, WirelessArcaneTerminalGuiHost.class);
-        if (host == null) {
-            throw new IllegalStateException("Cannot locate host for locator-aware gui " + gui
-                    + " with locator " + locatorDescription(locator)
-                    + "; expected " + WirelessArcaneTerminalGuiHost.class.getName());
+        if (gui != ModGUIs.ARCANE_ASSEMBLER) {
+            throw rejectArgument("Unsupported tile gui " + gui + " for tile " + tile.getClass().getName()
+                    + " player " + playerDescription(player));
         }
-        return host;
+        if (tile.getWorld() == null) {
+            throw rejectState("Cannot open tile gui " + gui + " for tile " + tile.getClass().getName()
+                    + " at " + tile.getPos() + " because the tile has no world");
+        }
     }
 
-    private static IArcaneTerminalUpgradeHost locateArcaneTerminalUpgradeHost(EntityPlayer player,
-                                                                               ModGUIs gui,
-                                                                               GuiHostLocator locator) {
-        IArcaneTerminalUpgradeHost host = locator.locate(player, IArcaneTerminalUpgradeHost.class);
-        if (host == null) {
-            throw new IllegalStateException("Cannot locate host for locator-aware gui " + gui
-                    + " with locator " + locatorDescription(locator)
-                    + "; expected " + IArcaneTerminalUpgradeHost.class.getName());
+    private static void validatePartOpenRoute(EntityPlayer player, ModGUIs gui) {
+        validateOpenPlayerAndGui(player, gui, "part");
+        if (!isPartGui(gui)) {
+            throw rejectArgument("Unsupported part gui " + gui + " for player " + playerDescription(player));
         }
-        return host;
     }
 
-    private static IArcaneInscriberHost locateArcaneInscriberHost(EntityPlayer player,
-                                                                  ModGUIs gui,
-                                                                  GuiHostLocator locator) {
-        IArcaneInscriberHost host = locator.locate(player, IArcaneInscriberHost.class);
-        if (host == null) {
-            throw new IllegalStateException("Cannot locate host for locator-aware gui " + gui
-                    + " with locator " + locatorDescription(locator)
-                    + "; expected " + IArcaneInscriberHost.class.getName());
-        }
-        return host;
-    }
-
-    private static TileArcaneAssembler locateArcaneAssembler(EntityPlayer player, ModGUIs gui,
-                                                             GuiHostLocator locator) {
-        TileArcaneAssembler host = locator.locate(player, TileArcaneAssembler.class);
-        if (host == null) {
-            throw new IllegalStateException("Cannot locate host for locator-aware gui " + gui
-                    + " with locator " + locatorDescription(locator)
-                    + "; expected " + TileArcaneAssembler.class.getName());
-        }
-        return host;
-    }
-
-    public static ContainerArcaneTerm createWirelessArcaneContainer(InventoryPlayer inventory,
-                                                                    IArcaneTerminalUpgradeHost host,
-                                                                    GuiHostLocator locator,
-                                                                    boolean returnedFromSubScreen,
-                                                                    int windowId) {
-        if (inventory == null) {
-            throw new IllegalArgumentException("inventory cannot be null");
-        }
-        if (host == null) {
-            throw new IllegalArgumentException("host cannot be null");
+    private static void validateItemOpenRoute(EntityPlayer player, ModGUIs gui, ItemGuiHostLocator locator) {
+        validateOpenPlayerAndGui(player, gui, "item");
+        if (!isItemGui(gui)) {
+            throw rejectArgument("Unsupported item gui " + gui + " for player " + playerDescription(player)
+                    + " locator " + locatorDescription(locator));
         }
         if (locator == null) {
-            throw new IllegalArgumentException("locator cannot be null");
+            throw rejectArgument("item locator cannot be null for item gui " + gui
+                    + " player " + playerDescription(player));
         }
-        if (windowId < 0) {
-            throw new IllegalArgumentException("windowId cannot be negative: " + windowId);
-        }
-
-        ContainerArcaneTerm container = new ContainerArcaneTerm(inventory, host);
-        container.setLocator(locator);
-        container.setReturnedFromSubScreen(returnedFromSubScreen);
-        container.windowId = windowId;
-        return container;
     }
 
-    private static ContainerArcaneInscriber getKnowledgeCoreParent(ServerOpenContext context, ModGUIs gui) {
-        Container openContainer = context.openContainer();
-        if (!(openContainer instanceof ContainerArcaneInscriber parent)) {
-            throw new IllegalStateException("Cannot open Knowledge Core gui " + gui.name()
-                    + " without parent " + ContainerArcaneInscriber.class.getName()
-                    + "; player " + playerDescription(context.player())
-                    + "; openContainer " + openContainer);
+    private static void validateCommonOpenRoute(EntityPlayer player, ModGUIs gui, World world) {
+        validateOpenPlayerAndGui(player, gui, "Forge");
+        if (world == null) {
+            throw rejectState("Cannot open gui " + gui + " for player " + playerDescription(player)
+                    + " because the target world is null");
         }
-        return parent;
+        if (ThaumicEnergistics.instance() == null) {
+            throw rejectState("Cannot open gui " + gui + " because the Thaumic Energistics mod instance is null");
+        }
     }
 
-    private static GuiHostLocator getKnowledgeCoreParentLocator(ServerOpenContext context, ModGUIs gui,
-                                                                ContainerArcaneInscriber parent) {
-        GuiHostLocator parentLocator = parent.getLocator();
-        if (parentLocator == null) {
-            throw new IllegalStateException("Cannot open Knowledge Core gui " + gui.name()
-                    + " without parent locator for player " + playerDescription(context.player())
-                    + "; parent " + parent);
-        }
-
-        IArcaneInscriberHost parentHost = parent.getHost();
-        if (parentHost == null) {
-            throw new IllegalStateException("Cannot open Knowledge Core gui " + gui.name()
-                    + " without parent host for player " + playerDescription(context.player())
-                    + "; locator " + locatorDescription(parentLocator)
-                    + "; parent " + parent);
-        }
-
-        IArcaneInscriberHost locatedHost = parentLocator.locate(context.player(), IArcaneInscriberHost.class);
-        if (locatedHost != parentHost) {
-            throw new IllegalStateException("Knowledge Core parent locator mismatch for gui " + gui.name()
-                    + " player " + playerDescription(context.player())
-                    + " locator " + locatorDescription(parentLocator)
-                    + " parent " + parent
-                    + " parentHost " + parentHost
-                    + " locatedHost " + locatedHost);
-        }
-        return parentLocator;
-    }
-
-    private static void validateLocatorRoute(ServerOpenContext context, ModGUIs gui, GuiHostLocator locator) {
-        if (context == null) {
-            throw new IllegalArgumentException("server open context cannot be null for locator-aware gui " + gui
-                    + " with locator " + locatorDescription(locator));
-        }
-        validateLocatorRoute(context.player(), gui, locator);
-    }
-
-    private static void validateLocatorRoute(EntityPlayer player, ModGUIs gui, GuiHostLocator locator) {
+    private static void validateOpenPlayerAndGui(EntityPlayer player, ModGUIs gui, String route) {
         if (gui == null) {
-            throw new IllegalArgumentException("gui cannot be null for locator-aware opener"
-                    + " with locator " + locatorDescription(locator)
-                    + " for player " + playerDescription(player));
-        }
-        if (locator == null) {
-            throw new IllegalArgumentException("locator cannot be null for locator-aware gui " + gui
-                    + " for player " + playerDescription(player));
+            throw rejectArgument(route + " gui cannot be null for player " + playerDescription(player));
         }
         if (player == null) {
-            throw new IllegalArgumentException("player cannot be null for locator-aware gui " + gui
-                    + " with locator " + locatorDescription(locator));
-        }
-        if (!isSupportedLocatorGui(gui)) {
-            throw new IllegalArgumentException("Unsupported locator-aware gui " + gui
-                    + " with locator " + locatorDescription(locator)
-                    + " for player " + player.getClass().getName());
+            throw rejectArgument("player cannot be null for " + route + " gui " + gui);
         }
     }
 
-    private static void validateWirelessArcaneRoute(EntityPlayer player, ModGUIs gui, GuiHostLocator locator) {
-        validateLocatorRoute(player, gui, locator);
-        if (gui != ModGUIs.WIRELESS_ARCANE_TERMINAL) {
-            throw new IllegalArgumentException("Unsupported locator-aware gui " + gui
-                    + " with locator " + locatorDescription(locator)
-                    + " for player " + player.getClass().getName());
-        }
-    }
-
-    private static boolean isSupportedLocatorGui(ModGUIs gui) {
+    private static boolean isPartGui(ModGUIs gui) {
         return gui == ModGUIs.ARCANE_TERMINAL
                 || gui == ModGUIs.ARCANE_INSCRIBER
-                 || gui == ModGUIs.ARCANE_ASSEMBLER
-                 || gui == ModGUIs.WIRELESS_ARCANE_TERMINAL
-                 || gui == ModGUIs.KNOWLEDGE_CORE_MANAGE
-                 || isKnowledgeCoreGui(gui);
+                || isKnowledgeCoreGui(gui);
+    }
+
+    private static boolean isItemGui(ModGUIs gui) {
+        return gui == ModGUIs.KNOWLEDGE_CORE_MANAGE
+                || gui == ModGUIs.WIRELESS_ARCANE_TERMINAL;
+    }
+
+    private static IllegalArgumentException rejectArgument(String diagnostic) {
+        ThELog.error(diagnostic);
+        return new IllegalArgumentException(diagnostic);
+    }
+
+    private static IllegalStateException rejectState(String diagnostic) {
+        ThELog.error(diagnostic);
+        return new IllegalStateException(diagnostic);
     }
 
     private static boolean isKnowledgeCoreGui(ModGUIs gui) {
@@ -346,47 +276,5 @@ public final class ThEGuiOpener {
 
     private static String playerDescription(EntityPlayer player) {
         return player == null ? "null" : player.getClass().getName();
-    }
-
-    private static final class ServerPlayerOpenContext implements ServerOpenContext {
-
-        private final EntityPlayerMP player;
-
-        private ServerPlayerOpenContext(EntityPlayerMP player) {
-            this.player = player;
-        }
-
-        @Override
-        public EntityPlayer player() {
-            return this.player;
-        }
-
-        @Override
-        public Container openContainer() {
-            return this.player.openContainer;
-        }
-
-        @Override
-        public void closeContainer() {
-            this.player.closeContainer();
-        }
-
-        @Override
-        public int nextWindowId() {
-            this.player.getNextWindowId();
-            return this.player.currentWindowId;
-        }
-
-        @Override
-        public void send(PacketOpenLocatorGUI packet) {
-            ThENetwork.sendOpenLocatorGui(this.player, packet);
-        }
-
-        @Override
-        public void install(Container container, int windowId) {
-            this.player.openContainer = container;
-            this.player.openContainer.windowId = windowId;
-            this.player.openContainer.addListener(this.player);
-        }
     }
 }

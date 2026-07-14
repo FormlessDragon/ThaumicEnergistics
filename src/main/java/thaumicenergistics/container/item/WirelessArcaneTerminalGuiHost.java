@@ -84,7 +84,7 @@ public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<Wirel
     }
 
     @Override
-    public IUpgradeInventory getArcaneUpgradeInventory() {
+    public IUpgradeInventory getUpgrades() {
         return this.upgradeInventory;
     }
 

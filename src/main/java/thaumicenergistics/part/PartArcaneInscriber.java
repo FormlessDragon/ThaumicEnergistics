@@ -91,4 +91,5 @@ public class PartArcaneInscriber extends AbstractArcaneTerminalPart implements I
             return !stack.isEmpty() && stack.getItem() instanceof ItemKnowledgeCore;
         }
     }
+
 }

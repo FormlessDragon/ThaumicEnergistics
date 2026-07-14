@@ -72,4 +72,5 @@ public abstract class CraftingCalculationMixin {
         }
         callback.setReturnValue(THEENG$VIS_ACCOUNTING.decorate(plan, this.theeng$visSnapshot));
     }
+
 }

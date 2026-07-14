@@ -14,5 +14,7 @@ public interface IArcaneTerminalUpgradeHost extends IArcaneTerminalHost {
     /**
      * Returns the AE2-native upgrade inventory that controls Arcane Terminal upgrade behavior.
      */
-    IUpgradeInventory getArcaneUpgradeInventory();
+    @Override
+    IUpgradeInventory getUpgrades();
+
 }

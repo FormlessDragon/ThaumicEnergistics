@@ -8,21 +8,22 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import thaumicenergistics.client.gui.GuiHandler;
 import thaumicenergistics.core.ThEConfig;
 import thaumicenergistics.core.CommonProxy;
 import thaumicenergistics.core.ThESounds;
 import thaumicenergistics.core.registries.AERegistries;
 import thaumicenergistics.init.internal.InitStorageCells;
 import thaumicenergistics.init.internal.InitUpgrades;
+import thaumicenergistics.integration.thaumcraft.ThEThaumcraft;
 import thaumicenergistics.thaumicenergistics.Reference;
 import thaumicenergistics.command.CommandAddVis;
 import thaumicenergistics.command.CommandDrainVis;
 import thaumicenergistics.core.ModGlobals;
-import thaumicenergistics.integration.ThEIntegrationLoader;
-import thaumicenergistics.network.ThENetwork;
 import thaumicenergistics.core.ThELog;
 
 import java.util.Objects;
@@ -124,9 +125,8 @@ public class ThaumicEnergistics {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(ThEConfig.instance());
         AERegistries.init();
-        ThENetwork.register();
+        NetworkRegistry.INSTANCE.registerGuiHandler(ThaumicEnergistics.instance(), new GuiHandler());
         ThESounds.init();
-        ThEIntegrationLoader.preInit();
 
         this.commonBootstrapInitialized = true;
     }
@@ -136,7 +136,7 @@ public class ThaumicEnergistics {
             return;
         }
 
-        ThEIntegrationLoader.init();
+        ThEThaumcraft.init();
 
         this.commonSetupInitialized = true;
     }
@@ -148,7 +148,6 @@ public class ThaumicEnergistics {
 
         InitStorageCells.init();
         InitUpgrades.init();
-        ThEIntegrationLoader.postInit();
 
         this.postRegistrationInitialized = true;
     }

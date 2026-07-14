@@ -52,6 +52,11 @@ public class BlockInfusionProvider extends AEBaseTileBlock<TileInfusionProvider>
 
     @Override
     protected IBlockState updateBlockStateFromTileEntity(IBlockState currentState, TileInfusionProvider tileEntity) {
+        World world = tileEntity.getWorld();
+        if (world != null && world.isRemote) {
+            return currentState;
+        }
+
         return currentState
             .withProperty(ACTIVE, tileEntity.getMainNode().isActive())
             .withProperty(POWERED, tileEntity.getMainNode().isPowered());
@@ -59,10 +64,20 @@ public class BlockInfusionProvider extends AEBaseTileBlock<TileInfusionProvider>
 
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-        if (world.isRemote || hand != EnumHand.MAIN_HAND)
-            return super.onBlockActivated(world, pos, state, player, hand, facing, hitX, hitY, hitZ);
+        if (super.onBlockActivated(world, pos, state, player, hand, facing, hitX, hitY, hitZ)) {
+            return true;
+        }
+
+        if (hand != EnumHand.MAIN_HAND) {
+            return false;
+        }
+
         TileInfusionProvider tile = this.getTileEntity(world, pos);
         if (tile != null) {
+            if (world.isRemote) {
+                return true;
+            }
+
             if (player.isSneaking()) {
                 KeyCounter storedAspects = tile.getStoredAspects();
                 if (!storedAspects.isEmpty()) {

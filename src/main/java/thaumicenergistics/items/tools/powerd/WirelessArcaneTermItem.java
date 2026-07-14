@@ -23,7 +23,7 @@ public class WirelessArcaneTermItem extends WirelessTerminalItem {
 
     @Override
     protected boolean openFromInventory(EntityPlayer player, ItemGuiHostLocator locator, boolean returningFromSubmenu) {
-        ThEGuiOpener.openLocatorGui(player, ModGUIs.WIRELESS_ARCANE_TERMINAL, locator, returningFromSubmenu);
+        ThEGuiOpener.openItemGui(player, ModGUIs.WIRELESS_ARCANE_TERMINAL, locator, returningFromSubmenu);
         return true;
     }
 

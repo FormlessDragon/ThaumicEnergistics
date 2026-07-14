@@ -1,7 +1,7 @@
 package thaumicenergistics.client.gui.block;
 
-import ae2.api.inventories.InternalInventory;
 import ae2.client.gui.AEBaseGui;
+import ae2.client.gui.implementations.GuiUpgradeable;
 import ae2.client.gui.style.GuiStyleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -18,20 +18,18 @@ import java.awt.Color;
 /**
  * @author Alex811
  */
-public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
+public class GuiArcaneAssembler extends GuiUpgradeable<ContainerArcaneAssembler> {
 
     private static final String STYLE_PATH = "/screens/thaumicenergistics_arcane_assembler.json";
     private static final String[] aspects = {"aer", "terra", "ignis", "aqua", "ordo", "perditio"};
     private static final int[][] aspectGUILoc = {{69, 2}, {21, 82}, {21, 25}, {117, 25}, {117, 82}, {69, 106}};
     private static final ResourceLocation BACKGROUND_ACTIVE = new ResourceLocation(Reference.MOD_ID, "textures/gui/arcane_assembler/active.png");
     private static final ResourceLocation ASPECTS = new ResourceLocation(Reference.MOD_ID, "textures/gui/arcane_assembler/aspects.png");
-    private final InternalInventory coreInventory;
     private float enAlpha;
 
     public GuiArcaneAssembler(ContainerArcaneAssembler container, InventoryPlayer playerInventory) {
         super(container, playerInventory, GuiStyleManager.loadStyleDoc(STYLE_PATH));
-        this.coreInventory = container.getCoreInventory();
-        this.enAlpha = this.coreInventory.getStackInSlot(0).isEmpty() ? 0.0F : 1.0F;
+        this.enAlpha = this.hasKnowledgeCore() ? 1.0F : 0.0F;
         this.setTextContent(AEBaseGui.TEXT_ID_DIALOG_TITLE,
                 new TextComponentTranslation("tile.thaumicenergistics.arcane_assembler.name"));
     }
@@ -39,7 +37,7 @@ public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
     @Override
     public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
         super.drawFG(offsetX, offsetY, mouseX, mouseY);
-        if (!this.coreInventory.getStackInSlot(0).isEmpty()) {
+        if (this.hasKnowledgeCore()) {
             if (this.container.getGuiState().getAspectExists().containsValue(false))
                 this.fontRenderer.drawString(GuiText.out_of_aspect.getLocal(), 100, this.getYSize() - 92, Color.RED.getRGB());
             if (!this.container.getGuiState().hasEnoughVis())
@@ -51,10 +49,10 @@ public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
     public void drawBG(int offsetX, int offsetY, int mouseX, int mouseY, float partialTicks) {
         super.drawBG(offsetX, offsetY, mouseX, mouseY, partialTicks);
 
-        if (this.coreInventory.getStackInSlot(0).isEmpty()) {
-            if (this.enAlpha > 0.0F) this.enAlpha -= 0.05F * partialTicks;
-        } else {
+        if (this.hasKnowledgeCore()) {
             if (this.enAlpha < 1.0F) this.enAlpha += 0.05F * partialTicks;
+        } else {
+            if (this.enAlpha > 0.0F) this.enAlpha -= 0.05F * partialTicks;
         }
 
         if (this.enAlpha > 0.0F) {
@@ -69,7 +67,7 @@ public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
             Boolean haveAspect = this.container.getGuiState().getAspectExists().get(aspects[i]);
             int x = aspectGUILoc[i][0];
             int y = aspectGUILoc[i][1];
-            if (haveAspect != null && !this.coreInventory.getStackInSlot(0).isEmpty()) {   // recipe needs this aspect & we have a KCore
+            if (haveAspect != null && this.hasKnowledgeCore()) {   // recipe needs this aspect & we have a KCore
                 if (!haveAspect) {       // we don't have enough of this aspect
                     float alpha = (float) ((MathHelper.sin((Minecraft.getSystemTime() / 200.0) % (2 * MathHelper.pi)) + 1.0) / 2.0);
                     GL11.glColor4f(1.0F, 1.0F, 1.0F, alpha * this.enAlpha);
@@ -82,6 +80,10 @@ public class GuiArcaneAssembler extends AEBaseGui<ContainerArcaneAssembler> {
             drawModalRectWithCustomSizedTexture(offsetX + x, offsetY + y, x, y, 40, 40, this.xSize, this.ySize);
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         }
+    }
+
+    private boolean hasKnowledgeCore() {
+        return !this.getContainer().getHost().getCoreInventory().getStackInSlot(0).isEmpty();
     }
 
 }

@@ -1,19 +1,19 @@
 package thaumicenergistics.block;
 
 import ae2.block.AEBaseTileBlock;
-import ae2.core.gui.locator.GuiHostLocators;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.client.gui.ModGUIs;
+import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.tile.TileArcaneAssembler;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -33,6 +33,8 @@ public class BlockArcaneAssembler extends AEBaseTileBlock<TileArcaneAssembler> {
             .withProperty(ACTIVE, Boolean.FALSE)
             .withProperty(POWERED, Boolean.FALSE));
         this.blockSoundType = SoundType.GLASS;
+        this.setOpaque();
+        this.setFullSize();
         this.fullBlock = false;
         this.lightOpacity = 1;
         this.translucent = true;
@@ -65,6 +67,11 @@ public class BlockArcaneAssembler extends AEBaseTileBlock<TileArcaneAssembler> {
     }
 
     @Override
+    public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
+        return layer == BlockRenderLayer.SOLID || layer == BlockRenderLayer.TRANSLUCENT;
+    }
+
+    @Override
     @ParametersAreNonnullByDefault
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
         if (super.onBlockActivated(world, pos, state, player, hand, facing, hitX, hitY, hitZ)) {
@@ -78,8 +85,7 @@ public class BlockArcaneAssembler extends AEBaseTileBlock<TileArcaneAssembler> {
         TileArcaneAssembler tile = this.getTileEntity(world, pos);
         if (tile != null) {
             if(!world.isRemote) {
-                ThEGuiOpener.openLocatorGui(player, ModGUIs.ARCANE_ASSEMBLER,
-                    GuiHostLocators.forTile(tile), false);
+                ThEGuiOpener.openGui(player, ModGUIs.ARCANE_ASSEMBLER, tile, false);
             }
             return true;
         }

@@ -64,4 +64,5 @@ public abstract class CraftingServiceMixin {
             plan == null ? "null" : plan.getClass().getName());
         return plan;
     }
+
 }

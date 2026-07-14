@@ -70,4 +70,5 @@ public final class ArcaneInscriberGhostItemPayload {
         }
         return stack.copy();
     }
+
 }

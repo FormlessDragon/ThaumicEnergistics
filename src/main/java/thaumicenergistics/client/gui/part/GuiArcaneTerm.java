@@ -13,6 +13,7 @@ import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.core.definitions.GuiText;
 
 public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
+
     public static final String STYLE_PATH = "/screens/terminals/thaumicenergistics_arcane_terminal.json";
 
     public GuiArcaneTerm(ContainerArcaneTerm container, InventoryPlayer playerInventory) {

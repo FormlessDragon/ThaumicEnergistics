@@ -20,4 +20,5 @@ public interface ContainerPatternAccessTermTrackerAccessor {
      */
     @Accessor("container")
     PatternContainer theeng$getPatternContainer();
+
 }

@@ -19,14 +19,16 @@ import ae2.api.stacks.AEItemKey;
 import ae2.api.stacks.KeyCounter;
 import ae2.api.storage.MEStorage;
 import ae2.api.upgrades.IUpgradeInventory;
+import ae2.api.upgrades.IUpgradeableObject;
 import ae2.api.upgrades.Upgrades;
 import ae2.core.definitions.AEItems;
-import ae2.core.gui.locator.GuiHostLocators;
 import ae2.tile.grid.AENetworkedTile;
 import ae2.util.inv.AppEngInternalInventory;
 import ae2.util.inv.InternalInventoryHost;
 import ae2.util.inv.filter.IAEItemFilter;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -35,8 +37,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aura.AuraHelper;
+import thaumicenergistics.block.BlockArcaneAssembler;
 import thaumicenergistics.common.crafting.ArcaneVisAccounting;
 import thaumicenergistics.common.crafting.ArcaneVisAccountingImpl;
 import thaumicenergistics.common.gui.ThEGuiOpener;
@@ -70,7 +74,7 @@ import java.util.Objects;
  * resulting stacks remain in a persistent output buffer until the grid accepts them.</p>
  */
 public class TileArcaneAssembler extends AENetworkedTile
-    implements ArcaneVisProvider, IGridTickable, InternalInventoryHost, ReadOnlyPatternContainer {
+    implements ArcaneVisProvider, IGridTickable, IUpgradeableObject, InternalInventoryHost, ReadOnlyPatternContainer {
 
     private static final String NBT_CORE = "core";
     private static final String NBT_UPGRADES = "upgrades";
@@ -119,7 +123,11 @@ public class TileArcaneAssembler extends AENetworkedTile
 
     @Override
     public void onMainNodeStateChanged(IGridNodeListener.State reason) {
-        this.updatePoweredState();
+        boolean blockStateChanged = this.isBlockNetworkStateOutdated();
+        boolean poweredStateChanged = this.updatePoweredState();
+        if (blockStateChanged || poweredStateChanged) {
+            this.markForUpdate();
+        }
         ICraftingProvider.requestUpdate(this.getMainNode());
         this.updateTickingState();
     }
@@ -132,6 +140,7 @@ public class TileArcaneAssembler extends AENetworkedTile
         data.writeBoolean(this.hasJob());
         data.writeBoolean(this.isCrafting());
         data.writeInt(this.getProgress());
+        ByteBufUtils.writeItemStack(data, this.currentOutput);
     }
 
     @Override
@@ -142,14 +151,17 @@ public class TileArcaneAssembler extends AENetworkedTile
         boolean nextHasJob = data.readBoolean();
         boolean nextIsCrafting = data.readBoolean();
         int nextProgress = data.readInt();
+        ItemStack nextCurrentOutput = ByteBufUtils.readItemStack(data);
         changed = changed
             || nextMissingAspect != this.missingAspect
             || nextHasEnoughVis != this.hasEnoughVis
             || nextHasJob != this.hasJob()
             || nextIsCrafting != this.isCrafting()
-            || nextProgress != this.progress;
+            || nextProgress != this.progress
+            || !ItemStack.areItemStacksEqual(this.currentOutput, nextCurrentOutput);
         this.missingAspect = nextMissingAspect;
         this.hasEnoughVis = nextHasEnoughVis;
+        this.currentOutput = nextCurrentOutput.isEmpty() ? ItemStack.EMPTY : nextCurrentOutput;
         this.pendingCrafts = nextHasJob ? Math.max(1, this.pendingCrafts) : 0;
         this.progress = MathHelper.clamp(nextProgress, 0, MAX_CRAFT_PROGRESS);
         return changed;
@@ -220,7 +232,8 @@ public class TileArcaneAssembler extends AENetworkedTile
         return this.coreInv;
     }
 
-    public IUpgradeInventory getUpgradeInventory() {
+    @Override
+    public IUpgradeInventory getUpgrades() {
         return this.upgradeInv;
     }
 
@@ -300,9 +313,8 @@ public class TileArcaneAssembler extends AENetworkedTile
     }
 
     @Override
-    public void openTerminalPatternContainerGui(net.minecraft.entity.player.EntityPlayer player) {
-        ThEGuiOpener.openLocatorGui(Objects.requireNonNull(player, "player"), ModGUIs.ARCANE_ASSEMBLER,
-            GuiHostLocators.forTile(this), false);
+    public void openTerminalPatternContainerGui(EntityPlayer player) {
+        ThEGuiOpener.openGui(player, ModGUIs.ARCANE_ASSEMBLER, this, false);
     }
 
     @Override
@@ -411,7 +423,9 @@ public class TileArcaneAssembler extends AENetworkedTile
             return TickRateModulation.SLEEP;
         }
 
-        this.updatePoweredState();
+        if (this.updatePoweredState()) {
+            this.markForUpdate();
+        }
         boolean injectedOutput = this.injectOutputBuffer();
         if (this.pendingCrafts <= 0) {
             this.updateTickingState();
@@ -882,9 +896,9 @@ public class TileArcaneAssembler extends AENetworkedTile
             .toList();
     }
 
-    private void updatePoweredState() {
+    private boolean updatePoweredState() {
         if (this.isClientSide()) {
-            return;
+            return false;
         }
         IGrid grid = this.getMainNode().getGrid();
         boolean nextPowered = grid != null
@@ -892,8 +906,23 @@ public class TileArcaneAssembler extends AENetworkedTile
             && grid.getEnergyService().extractAEPower(1, Actionable.SIMULATE, PowerMultiplier.CONFIG) > 0.0001;
         if (this.powered != nextPowered) {
             this.powered = nextPowered;
-            this.markForUpdate();
+            return true;
         }
+        return false;
+    }
+
+    private boolean isBlockNetworkStateOutdated() {
+        if (this.isClientSide()) {
+            return false;
+        }
+        IBlockState currentState = this.getBlockState();
+        if (currentState == null
+            || !currentState.getPropertyKeys().contains(BlockArcaneAssembler.ACTIVE)
+            || !currentState.getPropertyKeys().contains(BlockArcaneAssembler.POWERED)) {
+            return false;
+        }
+        return currentState.getValue(BlockArcaneAssembler.ACTIVE) != this.getMainNode().isActive()
+            || currentState.getValue(BlockArcaneAssembler.POWERED) != this.getMainNode().isPowered();
     }
 
     private MEStorage getNetworkStorage() {

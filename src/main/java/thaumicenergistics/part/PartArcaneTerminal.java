@@ -53,7 +53,7 @@ public class PartArcaneTerminal extends AbstractArcaneTerminalPart implements IA
     }
 
     @Override
-    public final IUpgradeInventory getArcaneUpgradeInventory() {
+    public final IUpgradeInventory getUpgrades() {
         return this.upgradeInventory;
     }
 

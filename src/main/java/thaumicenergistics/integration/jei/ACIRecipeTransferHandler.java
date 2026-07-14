@@ -12,15 +12,15 @@ import javax.annotation.Nullable;
  * @author Alex811
  */
 public class ACIRecipeTransferHandler<C extends ContainerArcaneInscriber> extends ACTRecipeTransferHandler<C> implements IRecipeTransferHandler<C> {
-    public ACIRecipeTransferHandler(IRecipeTransferHandlerHelper helper) {
-        super(helper);
+
+    public ACIRecipeTransferHandler(Class<C> containerClass, IRecipeTransferHandlerHelper helper) {
+        super(containerClass, helper);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     @MethodsReturnNonnullByDefault
     public Class<C> getContainerClass() {
-        return (Class<C>) ContainerArcaneInscriber.class;
+        return this.containerClass;
     }
 
     @Nullable
@@ -28,4 +28,5 @@ public class ACIRecipeTransferHandler<C extends ContainerArcaneInscriber> extend
     protected IRecipeTransferError preflightTransfer(C container, ExtractedArcaneRecipe recipe) {
         return null;
     }
+
 }

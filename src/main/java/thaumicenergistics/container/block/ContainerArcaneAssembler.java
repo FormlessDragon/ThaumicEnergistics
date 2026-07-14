@@ -1,11 +1,9 @@
 package thaumicenergistics.container.block;
 
-import ae2.container.AEBaseContainer;
-import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
-import ae2.container.slot.RestrictedInputSlot;
-import ae2.util.inv.AppEngInternalInventory;
+import ae2.container.implementations.UpgradeableContainer;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.IInventory;
@@ -23,31 +21,23 @@ import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.core.ThELog;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.util.Objects;
 
 /**
  * @author Alex811
  */
-public class ContainerArcaneAssembler extends AEBaseContainer {
-    protected TileArcaneAssembler TE;
+public class ContainerArcaneAssembler extends UpgradeableContainer<TileArcaneAssembler> {
+
     @GuiSync(20)
     private ArcaneAssemblerGuiState guiState = ArcaneAssemblerGuiState.EMPTY;
 
-    public ContainerArcaneAssembler(EntityPlayer player, TileArcaneAssembler TE) {
-        super(Objects.requireNonNull(player, "player").inventory, null);
-        this.TE = Objects.requireNonNull(TE, "TE");
-        this.addSlot(new SlotKnowledgeCore(this.TE.getCoreInventory(), 0, 81, 66), ThESlotSemantics.KNOWLEDGE_CORE);
-        var typedUpgradeInventory = this.TE.getUpgradeInventory();
-        for (int i = 0; i < typedUpgradeInventory.size(); i++)
-            this.addSlot(new RestrictedInputSlot(RestrictedInputSlot.PlacableItemType.UPGRADES,
-                    typedUpgradeInventory, i, 186, 8 + i * 18), SlotSemantics.UPGRADE);
-        this.addPlayerInventorySlots(8, 149);
+    public ContainerArcaneAssembler(InventoryPlayer ip, TileArcaneAssembler host) {
+        super(ip, host);
+
+        this.addSlot(
+            new SlotKnowledgeCore(this.getHost().getCoreInventory(), 0, 81, 66),
+            ThESlotSemantics.KNOWLEDGE_CORE);
         this.addListener(new KnowledgeCoreSlotListener());
         this.refreshGuiState();
-    }
-
-    public AppEngInternalInventory getCoreInventory() {
-        return this.TE.getCoreInventory();
     }
 
     public ArcaneAssemblerGuiState getGuiState() {
@@ -68,15 +58,15 @@ public class ContainerArcaneAssembler extends AEBaseContainer {
     }
 
     private void refreshGuiState() {
-        this.guiState = ArcaneAssemblerGuiState.from(this.TE);
+        this.guiState = ArcaneAssemblerGuiState.from(this.getHost());
     }
 
     public void playCoreSound(EntityPlayer player) { // plays the right sound, when the Knowledge Core gets removed or placed in the slot
-        ResourceLocation sound = this.TE.getCoreInventory().getStackInSlot(0).isEmpty()
+        ResourceLocation sound = this.getHost().getCoreInventory().getStackInSlot(0).isEmpty()
                 ? ThESounds.instance().knowledgeCorePowerDown()
                 : ThESounds.instance().knowledgeCorePowerUp();
         SoundEvent soundEvent = this.resolveCoreSound(sound);
-        player.world.playSound(null, TE.getPos(), soundEvent, SoundCategory.BLOCKS, 1, 1);
+        player.world.playSound(null, getHost().getPos(), soundEvent, SoundCategory.BLOCKS, 1, 1);
     }
 
     protected SoundEvent resolveCoreSound(ResourceLocation sound) {
@@ -116,7 +106,7 @@ public class ContainerArcaneAssembler extends AEBaseContainer {
         public void sendSlotContents(Container containerToSend, int slotInd, ItemStack stack) {
             if (slotInd == 0 && opened && ForgeUtil.isServer()) {
                 ContainerArcaneAssembler.this.playCoreSound(ContainerArcaneAssembler.this.getPlayer());
-                ContainerArcaneAssembler.this.TE.init();
+                ContainerArcaneAssembler.this.getHost().init();
             }
             opened = true;
         }

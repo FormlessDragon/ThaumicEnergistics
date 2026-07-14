@@ -40,7 +40,7 @@ public class ItemKnowledgeCore extends Item implements IUpgradeableItem {
             throw new IllegalStateException("Knowledge Core item use did not resolve to its invoking stack");
         }
         if (!world.isRemote) {
-            ThEGuiOpener.openLocatorGui(player, ModGUIs.KNOWLEDGE_CORE_MANAGE,
+            ThEGuiOpener.openItemGui(player, ModGUIs.KNOWLEDGE_CORE_MANAGE,
                 GuiHostLocators.forHand(player, hand), false);
         }
         return new ActionResult<>(EnumActionResult.SUCCESS, stack);

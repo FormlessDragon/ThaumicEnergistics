@@ -28,7 +28,6 @@ import thaumcraft.api.research.ResearchCategories;
 import thaumcraft.api.research.ScanningManager;
 import thaumcraft.api.research.theorycraft.TheorycraftManager;
 import thaumicenergistics.core.ModGlobals;
-import thaumicenergistics.integration.IThEIntegration;
 import thaumicenergistics.integration.thaumcraft.research.AidMEController;
 import thaumicenergistics.integration.thaumcraft.research.AidMEDrive;
 import thaumicenergistics.integration.thaumcraft.research.CardTinkerAE;
@@ -47,10 +46,13 @@ import java.util.Optional;
  * @author BrockWS
  * @author Alex811
  */
-public class ThEThaumcraft implements IThEIntegration {
+public final class ThEThaumcraft {
 
-    @Override
-    public void init() {
+    private ThEThaumcraft() {
+
+    }
+
+    public static void init() {
         ThELog.info("Registering Research Category");
         ResearchCategories.registerCategory(
                 ModGlobals.RESEARCH_CATEGORY,
@@ -76,19 +78,19 @@ public class ThEThaumcraft implements IThEIntegration {
             TheorycraftManager.registerAid(new AidMEController());
         else if (AEBlocks.DRIVE.block() != null)
             TheorycraftManager.registerAid(new AidMEDrive());
-        this.registerArcaneRecipes();
-        this.registerInfusionRecipes();
+        registerArcaneRecipes();
+        registerInfusionRecipes();
     }
 
-    private void registerArcaneRecipes() {
+    private static void registerArcaneRecipes() {
         ResourceLocation recipeGroup = new ResourceLocation("");
 
         List<ItemStack> certusQuartz = new ArrayList<>(Arrays.asList(CraftingHelper.getIngredient("crystalCertusQuartz").getMatchingStacks()));
         certusQuartz.add(AEItems.CERTUS_QUARTZ_CRYSTAL_CHARGED.stack());
-        certusQuartz.add(this.aeItemStack(AEItemIds.PURIFIED_CERTUS_QUARTZ_CRYSTAL));
+        certusQuartz.add(asItemStack(AEItemIds.PURIFIED_CERTUS_QUARTZ_CRYSTAL));
 
         List<ItemStack> netherQuartz = new ArrayList<>(Arrays.asList(CraftingHelper.getIngredient("gemQuartz").getMatchingStacks()));
-        netherQuartz.add(this.aeItemStack(AEItemIds.PURIFIED_NETHER_QUARTZ_CRYSTAL));
+        netherQuartz.add(asItemStack(AEItemIds.PURIFIED_NETHER_QUARTZ_CRYSTAL));
 
         Optional.of(ThEItems.COALESCENCE_CORE.stack(2)).ifPresent(stack ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "coalescence_core"), new ShapedArcaneRecipe(
@@ -145,7 +147,7 @@ public class ThEThaumcraft implements IThEIntegration {
                 'P',
                 AEItems.LOGIC_PROCESSOR.stack()
         ));
-        this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_1k"));
+        addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_1k"));
 
         ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_4k"), new ShapedArcaneRecipe(
                 recipeGroup,
@@ -165,7 +167,7 @@ public class ThEThaumcraft implements IThEIntegration {
                 'G',
                 AEBlocks.QUARTZ_GLASS.block()
         ));
-        this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_4k"));
+        addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_4k"));
 
         ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_16k"), new ShapedArcaneRecipe(
                 recipeGroup,
@@ -185,7 +187,7 @@ public class ThEThaumcraft implements IThEIntegration {
                 'G',
                 AEBlocks.QUARTZ_GLASS.block()
         ));
-        this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_16k"));
+        addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_16k"));
 
         ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "essentia_component_64k"), new ShapedArcaneRecipe(
                 recipeGroup,
@@ -205,7 +207,7 @@ public class ThEThaumcraft implements IThEIntegration {
                 'G',
                 AEBlocks.QUARTZ_GLASS.block()
         ));
-        this.addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_64k"));
+        addFakeCrafting(new ResourceLocation(Reference.MOD_ID, "cells/essentia_cell_64k"));
         Optional.of(Objects.requireNonNull(ThEParts.ARCANE_TERMINAL.item())).ifPresent(arcane ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "arcane_terminal"), new ShapelessArcaneRecipe(
                         recipeGroup,
@@ -282,7 +284,7 @@ public class ThEThaumcraft implements IThEIntegration {
                 )));
     }
 
-    private void registerInfusionRecipes() {
+    private static void registerInfusionRecipes() {
         ThaumcraftApi.addInfusionCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "infusion_provider"), new InfusionRecipe(
                 "INFUSIONPROVIDER@2",
                 ThEBlocks.INFUSION_PROVIDER.stack(1),
@@ -313,13 +315,13 @@ public class ThEThaumcraft implements IThEIntegration {
         ));
     }
 
-    private void addFakeCrafting(ResourceLocation resourceLocation) {
-        IForgeRegistryEntry entry = ForgeUtil.getRegistryEntry(IRecipe.class, resourceLocation);
+    private static void addFakeCrafting(ResourceLocation resourceLocation) {
+        IForgeRegistryEntry<?> entry = ForgeUtil.getRegistryEntry(IRecipe.class, resourceLocation);
         Preconditions.checkNotNull(entry);
         ThaumcraftApi.addFakeCraftingRecipe(entry.getRegistryName(), entry);
     }
 
-    private ItemStack aeItemStack(ResourceLocation id) {
+    private static ItemStack asItemStack(ResourceLocation id) {
         Item item = Item.REGISTRY.getObject(id);
         return item == null ? ItemStack.EMPTY : new ItemStack(item);
     }

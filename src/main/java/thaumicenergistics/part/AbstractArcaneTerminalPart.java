@@ -3,7 +3,6 @@ package thaumicenergistics.part;
 import ae2.api.inventories.InternalInventory;
 import ae2.api.parts.IPartItem;
 import ae2.container.ISubGui;
-import ae2.core.gui.locator.GuiHostLocators;
 import ae2.parts.reporting.AbstractTerminalPart;
 import ae2.util.inv.AppEngInternalInventory;
 import ae2.util.inv.InternalInventoryHost;
@@ -163,7 +162,7 @@ public abstract class AbstractArcaneTerminalPart extends AbstractTerminalPart im
 
     @Override
     public final void returnToMainContainer(EntityPlayer player, ISubGui subGui) {
-        ThEGuiOpener.openLocatorGui(player, this.getGui(), GuiHostLocators.forPart(this), true);
+        ThEGuiOpener.openPartGui(player, this.getGui(), this, true);
     }
 
     @Override
@@ -189,7 +188,7 @@ public abstract class AbstractArcaneTerminalPart extends AbstractTerminalPart im
 
     private boolean openTerminalGui(EntityPlayer player) {
         if (ForgeUtil.isServer()) {
-            ThEGuiOpener.openLocatorGui(player, this.getGui(), GuiHostLocators.forPart(this), false);
+            ThEGuiOpener.openPartGui(player, this.getGui(), this, false);
         }
         this.getHost().markForUpdate();
         return true;

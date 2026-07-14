@@ -75,4 +75,5 @@ public class GhostInscriberHandler implements IGhostIngredientHandler<GuiArcaneI
     public void onComplete() {
 
     }
+
 }
