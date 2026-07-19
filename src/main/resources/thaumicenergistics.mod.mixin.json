@@ -1,21 +1,21 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "thaumicenergistics.mixin",
-  "compatibilityLevel": "JAVA_25",
+	"required": true,
+	"minVersion": "0.8",
+	"package": "thaumicenergistics.mixin",
+	"compatibilityLevel": "JAVA_25",
 	"plugin": "thaumicenergistics.core.ThEMixinConfigPlugin",
-  "target": "@env(MOD)",
-  "mixins": [
-		"ae2.ContainerPatternAccessTermMixin",
+	"target": "@env(MOD)",
+	"mixins": [
 		"ae2.CraftingCalculationMixin",
 		"ae2.CraftingServiceMixin",
-		"ae2.accessor.ContainerPatternAccessTermTrackerAccessor"
-  ],
-  "client": [
+		"ae2.PatternAccessSupportMixin",
+		"ae2.accessor.PatternAccessSupportTrackerAccessor"
+	],
+	"client": [
 		"hei.MixinBookmarkItem"
 	],
-  "server": [],
-  "injectors": {
-    "defaultRequire": 1
-  }
+	"server": [],
+	"injectors": {
+		"defaultRequire": 1
+	}
 }
