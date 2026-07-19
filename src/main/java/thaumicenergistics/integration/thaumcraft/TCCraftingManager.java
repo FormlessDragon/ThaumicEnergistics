@@ -3,16 +3,15 @@ package thaumicenergistics.integration.thaumcraft;
 import baubles.api.BaublesApi;
 import baubles.api.cap.IBaublesItemHandler;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraftforge.items.IItemHandler;
 import thaumcraft.api.capabilities.ThaumcraftCapabilities;
 import thaumcraft.api.crafting.IArcaneRecipe;
-import thaumcraft.api.crafting.IArcaneWorkbench;
 import thaumcraft.api.items.IVisDiscountGear;
 import thaumcraft.api.potions.PotionVisExhaust;
+import thaumcraft.common.container.InventoryArcaneWorkbench;
 import thaumcraft.common.lib.potions.PotionInfectiousVisExhaust;
 import thaumicenergistics.container.DummyContainer;
 
@@ -24,11 +23,11 @@ import java.util.Objects;
 public class TCCraftingManager {
 
     public static IArcaneRecipe findArcaneRecipe(IItemHandler handler, EntityPlayer player) {
-        ArcaneInventoryCrafting inventory = TCCraftingManager.getInvFromItemHandler(handler);
+        InventoryArcaneWorkbench inventory = TCCraftingManager.getInvFromItemHandler(handler);
         IRecipe recipe = CraftingManager.findMatchingRecipe(inventory, player.world);
-        return recipe instanceof IArcaneRecipe
-                && ThaumcraftCapabilities.knowsResearch(player, ((IArcaneRecipe) recipe).getResearch()) ?
-                (IArcaneRecipe) recipe :
+        return recipe instanceof IArcaneRecipe arcaneRecipe
+                && ThaumcraftCapabilities.knowsResearch(player, arcaneRecipe.getResearch()) ?
+                arcaneRecipe :
                 null;
     }
 
@@ -36,7 +35,7 @@ public class TCCraftingManager {
         return recipe.getCraftingResult(TCCraftingManager.getInvFromItemHandler(handler));
     }
 
-    public static ArcaneInventoryCrafting getInvFromItemHandler(IItemHandler handler) {
+    public static InventoryArcaneWorkbench getInvFromItemHandler(IItemHandler handler) {
         ArcaneInventoryCrafting inventory = new ArcaneInventoryCrafting();
         for (int i = 0; i < handler.getSlots(); i++) {
             inventory.setInventorySlotContents(i, handler.getStackInSlot(i).copy());
@@ -51,9 +50,8 @@ public class TCCraftingManager {
 
         for (int i = 0; i < 4; i++) {
             ItemStack stack = player.inventory.getStackInSlot(36 + i);
-            if (stack.isEmpty() || !(stack.getItem() instanceof IVisDiscountGear))
+            if (stack.isEmpty() || !(stack.getItem() instanceof IVisDiscountGear gear))
                 continue;
-            IVisDiscountGear gear = (IVisDiscountGear) stack.getItem();
             discount += gear.getVisDiscount(stack, player);
         }
 
@@ -63,10 +61,9 @@ public class TCCraftingManager {
             if (bauble.isEmpty()) {
                 continue;
             }
-            if (!(bauble.getItem() instanceof IVisDiscountGear)) {
+            if (!(bauble.getItem() instanceof IVisDiscountGear visBauble)) {
                 continue;
             }
-            IVisDiscountGear visBauble = (IVisDiscountGear) bauble.getItem();
             discount += visBauble.getVisDiscount(bauble, player);
         }
 
@@ -83,9 +80,9 @@ public class TCCraftingManager {
         return discount / 100f;
     }
 
-    private static class ArcaneInventoryCrafting extends InventoryCrafting implements IArcaneWorkbench {
+    private static class ArcaneInventoryCrafting extends InventoryArcaneWorkbench {
         public ArcaneInventoryCrafting() {
-            super(new DummyContainer(), 5, 3);
+            super(null, new DummyContainer());
         }
     }
 

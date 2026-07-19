@@ -9,7 +9,6 @@ import thaumcraft.api.research.theorycraft.TheorycraftCard;
  */
 public class AidMEController implements ITheorycraftAid {
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Override
     public Object getAidObject() {
         return AEBlocks.CONTROLLER.block();
@@ -20,4 +19,5 @@ public class AidMEController implements ITheorycraftAid {
     public Class<TheorycraftCard>[] getCards() {
         return new Class[]{CardTinkerAE.class};
     }
+
 }

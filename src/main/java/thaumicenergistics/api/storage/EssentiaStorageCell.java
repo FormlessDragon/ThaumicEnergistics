@@ -11,6 +11,7 @@ public class EssentiaStorageCell extends BasicStorageCell {
         super(1, kilobytes, BYTES_PER_TYPE, 12, AEEssentiaKeys.INSTANCE);
     }
 
+    @SuppressWarnings("unused")
     public EssentiaStorageCell(int kilobytes, int totalTypes) {
         super(1, kilobytes, BYTES_PER_TYPE, totalTypes, AEEssentiaKeys.INSTANCE);
     }

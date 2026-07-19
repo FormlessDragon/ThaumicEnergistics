@@ -34,7 +34,7 @@ public class ForgeUtil {
         return GameRegistry.findRegistry(reg);
     }
 
-    public static <K extends IForgeRegistryEntry<K>> IForgeRegistryEntry getRegistryEntry(Class<K> reg, ResourceLocation resourceLocation) {
+    public static <K extends IForgeRegistryEntry<K>> IForgeRegistryEntry<K> getRegistryEntry(Class<K> reg, ResourceLocation resourceLocation) {
         return ForgeUtil.getRegistry(reg).getValue(resourceLocation);
     }
 

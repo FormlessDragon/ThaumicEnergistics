@@ -19,7 +19,7 @@ import thaumicenergistics.thaumicenergistics.Reference;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Makes custom particles!
@@ -34,6 +34,7 @@ import java.awt.*;
  */
 @SideOnly(Side.CLIENT)
 public class ThEParticle extends Particle {
+
     private static final VertexFormat VERTEX_FORMAT = (new VertexFormat()).addElement(DefaultVertexFormats.POSITION_3F).addElement(DefaultVertexFormats.TEX_2F).addElement(DefaultVertexFormats.COLOR_4UB).addElement(DefaultVertexFormats.TEX_2S).addElement(DefaultVertexFormats.NORMAL_3B).addElement(DefaultVertexFormats.PADDING_1B);
     private double[][] texMap = {{1.0F, 1.0F}, {1.0F, 0.0F}, {0.0F, 0.0F}, {0.0F, 1.0F}};
     private float frameHeight;
@@ -56,27 +57,13 @@ public class ThEParticle extends Particle {
      * @param xCoordIn    x coordinate to spawn in
      * @param yCoordIn    y coordinate to spawn in
      * @param zCoordIn    z coordinate to spawn in
-     * @param xSpeedIn    initial speed in x axis
-     * @param ySpeedIn    initial speed in y axis
-     * @param zSpeedIn    initial speed in z axis
+     * @param xSpeedIn    initial speed in x-axis
+     * @param ySpeedIn    initial speed in y-axis
+     * @param zSpeedIn    initial speed in z-axis
      */
     public ThEParticle(String textureName, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn) {
         super(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
         this.motionY -= 0.10000000149011612D;
-        init(textureName);
-    }
-
-    /**
-     * Use this for particles that spawn motionless
-     *
-     * @param textureName texture filename, should be inside textures/particle
-     * @param worldIn     world to spawn in
-     * @param xCoordIn    x coordinate to spawn in
-     * @param yCoordIn    y coordinate to spawn in
-     * @param zCoordIn    z coordinate to spawn in
-     */
-    public ThEParticle(String textureName, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn) {
-        super(worldIn, xCoordIn, yCoordIn, zCoordIn);
         init(textureName);
     }
 
@@ -207,11 +194,6 @@ public class ThEParticle extends Particle {
         GlStateManager.popMatrix();
     }
 
-    public ThEParticle setGravity(float gravity) {
-        this.particleGravity = gravity;
-        return this;
-    }
-
     /**
      * Set opacity
      *
@@ -295,7 +277,7 @@ public class ThEParticle extends Particle {
      * @return the passed float, forced into the range 0 - 1
      */
     protected float safeFloat(float x) {
-        return Math.max(Math.min(x, 1), 0);
+        return Math.clamp(x, 0, 1);
     }
 
     /**
@@ -304,9 +286,11 @@ public class ThEParticle extends Particle {
      *
      * @param frameCount the number of frames contained in the texture
      */
+    @SuppressWarnings("unused")
     public void setFrameCount(int frameCount) {
         this.frameHeight = 1.0F / frameCount;
         this.frameCount = frameCount;
         this.frameCurr = 0;
     }
+
 }

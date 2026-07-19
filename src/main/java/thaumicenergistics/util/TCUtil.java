@@ -3,7 +3,6 @@ package thaumicenergistics.util;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import thaumcraft.api.ThaumcraftApi;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
@@ -52,14 +51,11 @@ public class TCUtil {
         return ((IEssentiaContainerItem) stack.getItem()).getAspects(stack).getAspects()[0];
     }
 
-    public static AspectList getItemAspects(ItemStack stack) {
-        return ThaumcraftApi.internalMethods.getObjectAspects(stack);
-    }
-
     public static ItemStack getCrystalWithAspect(Aspect aspect) {
         ItemStack crystalStack = new ItemStack(ItemsTC.crystalEssence);
         IEssentiaContainerItem crystal = (IEssentiaContainerItem) crystalStack.getItem();
         crystal.setAspects(crystalStack, new AspectList().add(aspect, 1));
         return crystalStack;
     }
+
 }

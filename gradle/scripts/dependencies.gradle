@@ -8,10 +8,6 @@ repositories {
         url = 'https://cursemaven.com'
     }
     maven {
-        name = 'CleanroomCurseMaven'
-        url = 'https://curse.cleanroommc.com'
-    }
-    maven {
         name = 'Modrinth'
         url = 'https://api.modrinth.com/maven'
     }
@@ -33,7 +29,7 @@ dependencies {
     runtimeOnly 'curse.maven:fugue-1005815:8403977'
     runtimeOnly 'curse.maven:scalar-legacy-1235372:6842491'
 
-    modImplementation 'curse.maven:hei-557549:8081514'
+    modImplementation "mezz:jei:4.32.0"
     modImplementation 'curse.maven:hwyla-253449:2568753'
     modImplementation 'curse.maven:thaumic-jei-285492:5646810'
 

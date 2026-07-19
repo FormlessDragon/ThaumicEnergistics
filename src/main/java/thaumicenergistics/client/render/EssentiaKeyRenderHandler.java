@@ -14,7 +14,7 @@ import thaumcraft.api.aspects.Aspect;
 import thaumicenergistics.common.me.key.AEEssentiaKey;
 import thaumicenergistics.common.me.key.AEEssentiaKeys;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKey> {
 

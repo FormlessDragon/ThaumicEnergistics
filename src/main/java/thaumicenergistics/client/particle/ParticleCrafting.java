@@ -4,13 +4,14 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Alex811
  */
 @SideOnly(Side.CLIENT)
 public class ParticleCrafting extends ThEParticle {
+
     protected static final Color[] colors = { // (ﾉ´ヮ´)ﾉ
             new Color(112, 239, 253),
             new Color(126, 150, 248),
@@ -29,4 +30,5 @@ public class ParticleCrafting extends ThEParticle {
         Color color = colors[this.rand.nextInt(6)];
         setTint(color, color, 0.001F);
     }
+
 }
