@@ -27,6 +27,7 @@ public final class ThEItemIds {
     /// MISC
     ///
     public static final ResourceLocation WIRELESS_ARCANE_TERMINAL = id("wireless_arcane_terminal");
+    public static final ResourceLocation WIRELESS_ARCANE_INSCRIBER = id("wireless_arcane_inscriber");
     public static final ResourceLocation BLANK_KNOWLEDGE_CORE = id("blank_knowledge_core");
     public static final ResourceLocation KNOWLEDGE_CORE = id("knowledge_core");
     public static final ResourceLocation UPGRADE_ARCANE = id("upgrade_arcane");

@@ -10,7 +10,6 @@ import ae2.parts.PartModel;
 import ae2.util.inv.AppEngInternalInventory;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
-import thaumicenergistics.api.storage.IArcaneTerminalUpgradeHost;
 import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.core.ModGlobals;
 import thaumicenergistics.thaumicenergistics.Reference;
@@ -23,7 +22,7 @@ import javax.annotation.Nonnull;
  * @author BrockWS
  * @author Alex811
  */
-public class PartArcaneTerminal extends AbstractArcaneTerminalPart implements IArcaneTerminalUpgradeHost {
+public class PartArcaneTerminal extends AbstractArcaneTerminalPart {
 
     private static final String TAG_UPGRADES = "upgrades";
 

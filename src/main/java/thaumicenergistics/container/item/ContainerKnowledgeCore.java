@@ -61,17 +61,15 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
             throw new IllegalArgumentException("parent locator cannot be null for Knowledge Core gui " + GUIAction
                 + " player " + player + " parent " + parent);
         }
-        IArcaneInscriberHost parentHost = Objects.requireNonNull(parent.getHost(),
-            "Arcane Inscriber parent host for Knowledge Core gui " + GUIAction);
-        IArcaneInscriberHost locatedHost = parentLocator.locate(player, IArcaneInscriberHost.class);
-        if (locatedHost != parentHost) {
+        if (parent.getLocator() != parentLocator) {
             throw new IllegalStateException("Knowledge Core parent locator mismatch for gui " + GUIAction
                 + " player " + player
                 + " locator " + parentLocator
                 + " parent " + parent
-                + " parentHost " + parentHost
-                + " locatedHost " + locatedHost);
+                + " parentLocator " + parent.getLocator());
         }
+        IArcaneInscriberHost parentHost = Objects.requireNonNull(parent.getHost(),
+            "Arcane Inscriber resolved host for Knowledge Core gui " + GUIAction);
 
         this.GUIAction = GUIAction;
         this.parentContainer = parent;
@@ -303,10 +301,6 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
 
     public boolean hasNextPage() {
         return this.page + 1 < this.getPageCount();
-    }
-
-    public int getPage() {
-        return this.page;
     }
 
     /**

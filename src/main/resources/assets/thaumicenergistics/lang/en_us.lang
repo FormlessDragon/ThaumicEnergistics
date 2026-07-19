@@ -27,6 +27,7 @@ item.thaumicenergistics.essentia_terminal.name=ME Essentia Terminal
 item.thaumicenergistics.arcane_terminal.name=Arcane Crafting Terminal
 item.thaumicenergistics.wireless_arcane_terminal.name=Wireless Arcane Crafting Terminal
 item.thaumicenergistics.arcane_inscriber.name=Arcane Inscriber
+item.thaumicenergistics.wireless_arcane_inscriber.name=Wireless Arcane Inscriber
 item.thaumicenergistics.arcane_p2p_tunnel.name=ME Arcane P2P Tunnel
 
 item.thaumicenergistics.upgrade_arcane.name=Arcane Charging Upgrade
@@ -161,3 +162,4 @@ research.knowledgecore.stage.2=Eureka! I don't need to have the Arcane Assembler
 research.arcaneinscriber.title=Arcane Inscriber
 research.arcaneinscriber.stage.1=It appears the undead are not very bright. I've been trying to teach this Knowledge Core how to craft for a while now, yet it hasn't learned anything. I need to find a way to force the Knowledge Core to learn.
 research.arcaneinscriber.stage.2=Basing my design off of an ME Pattern Terminal, I have managed to design a kind of terminal that can teach recipes to a Knowledge Core. I simply load the recipe into the grid and then save it! I can also examine what recipes I have saved to a Knowledge Core, and if so desired, erase recipes from the zombie's memory. While a single zombie brain is limited in how many recipes it can remember, zombies are plentiful.
+research.arcaneinscriber.addenda.1=Combining the Arcane Inscriber with wireless pattern encoding lets me manage Knowledge Core recipes away from a fixed terminal, provided it remains linked to a stable network.

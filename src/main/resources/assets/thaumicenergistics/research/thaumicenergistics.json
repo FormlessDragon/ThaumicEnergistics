@@ -546,6 +546,17 @@
             "thaumicenergistics:arcane_inscriber"
           ]
         }
+      ],
+      "addenda": [
+        {
+          "text": "research.arcaneinscriber.addenda.1",
+          "recipes": [
+            "thaumicenergistics:wireless_arcane_inscriber"
+          ],
+          "required_research": [
+            "WORKBENCHCHARGER"
+          ]
+        }
       ]
     }
   ]

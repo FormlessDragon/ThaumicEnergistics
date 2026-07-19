@@ -241,6 +241,17 @@ public final class ThEThaumcraft {
                         BlocksTC.arcaneWorkbench,
                         AEItems.ENGINEERING_PROCESSOR.stack()
                 )));
+        Optional.of(Objects.requireNonNull(ThEItems.WIRELESS_ARCANE_INSCRIBER.item())).ifPresent(wireless ->
+                ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "wireless_arcane_inscriber"), new ShapelessArcaneRecipe(
+                        recipeGroup,
+                        "ARCANEINSCRIBER@2&&WORKBENCHCHARGER",
+                        75,
+                        new AspectList().add(Aspect.AURA, 1).add(Aspect.MECHANISM, 1),
+                        wireless,
+                        AEItems.WIRELESS_PATTERN_ENCODING_TERMINAL.stack(),
+                        ThEParts.ARCANE_INSCRIBER.stack(1),
+                        BlocksTC.arcaneWorkbenchCharger
+                )));
         Optional.of(Objects.requireNonNull(ThEParts.ARCANE_P2P_TUNNEL.item())).ifPresent(arcaneP2P ->
                 ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Reference.MOD_ID, "arcane_p2p_tunnel"), new ShapelessArcaneRecipe(
                         recipeGroup,

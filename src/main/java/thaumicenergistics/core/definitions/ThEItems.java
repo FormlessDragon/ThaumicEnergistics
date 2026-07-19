@@ -16,6 +16,7 @@ import thaumicenergistics.core.ThELog;
 import thaumicenergistics.core.ModGlobals;
 import thaumicenergistics.items.CreativeEssentiaCell;
 import thaumicenergistics.items.ItemKnowledgeCore;
+import thaumicenergistics.items.tools.powerd.WirelessArcaneInscriberItem;
 import thaumicenergistics.items.tools.powerd.WirelessArcaneTermItem;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCorePatternProjection;
 
@@ -44,6 +45,8 @@ public final class ThEItems {
 
     public static final ItemDefinition<WirelessArcaneTermItem> WIRELESS_ARCANE_TERMINAL = new ItemDefinition<>(ThEItemIds.WIRELESS_ARCANE_TERMINAL,
             new WirelessArcaneTermItem(getWirelessTerminalBattery()), ModGlobals.CREATIVE_TAB);
+    public static final ItemDefinition<WirelessArcaneInscriberItem> WIRELESS_ARCANE_INSCRIBER = new ItemDefinition<>(ThEItemIds.WIRELESS_ARCANE_INSCRIBER,
+            new WirelessArcaneInscriberItem(getWirelessTerminalBattery()), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<ItemKnowledgeCore> BLANK_KNOWLEDGE_CORE = new ItemDefinition<>(ThEItemIds.BLANK_KNOWLEDGE_CORE,
             new ItemKnowledgeCore(true), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<ItemKnowledgeCore> KNOWLEDGE_CORE = new ItemDefinition<>(ThEItemIds.KNOWLEDGE_CORE,
@@ -73,6 +76,7 @@ public final class ThEItems {
             ESSENTIA_COMPONENT_64K,
 
             WIRELESS_ARCANE_TERMINAL,
+            WIRELESS_ARCANE_INSCRIBER,
             BLANK_KNOWLEDGE_CORE,
             KNOWLEDGE_CORE,
             UPGRADE_ARCANE,
@@ -88,6 +92,7 @@ public final class ThEItems {
         return getConfiguredBattery(() -> AEConfig.instance().getWirelessTerminalBattery(), 1600000);
     }
 
+    @SuppressWarnings("SameParameterValue")
     private static double getConfiguredBattery(IntSupplier supplier, double fallback) {
         try {
             return supplier.getAsInt();

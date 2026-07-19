@@ -36,7 +36,9 @@ public class PatternAccessSupportMixin {
     @Inject(method = "doAction", at = @At("HEAD"), cancellable = true, require = 1)
     private void theeng$rejectReadOnlyAction(EntityPlayerMP player, InventoryAction action, int slot, long id, CallbackInfoReturnable<Boolean> cir) {
         if (Util.isReadOnlyTracker(this.byId.get(id))) {
-            cir.setReturnValue(false);
+            // ContainerPEATerm delegates to its parent when this action is not handled. A read-only
+            // provider must consume the request here so that the parent cannot mutate its slot.
+            cir.setReturnValue(true);
         }
     }
 

@@ -2,18 +2,19 @@ package thaumicenergistics.client.gui;
 
 import ae2.api.implementations.guiobjects.IGuiItem;
 import ae2.api.implementations.guiobjects.ItemGuiHost;
+import ae2.api.implementations.items.WirelessTerminalDefinition;
 import ae2.container.AEBaseContainer;
 import ae2.core.gui.PatternContainerGuiReturnContext;
 import ae2.core.gui.locator.GuiHostLocator;
 import ae2.core.gui.locator.GuiHostLocators;
 import ae2.core.gui.locator.ItemGuiHostLocator;
 import ae2.core.gui.locator.PartLocator;
+import ae2.helpers.WirelessTerminalGuiHost;
 import ae2.items.tools.powered.WirelessTerminalRegistry;
 import ae2.items.tools.powered.WirelessUniversalTerminalItem;
 import ae2.parts.AEBasePart;
 import ae2.tile.AEBaseTile;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -30,15 +31,14 @@ import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.client.gui.part.GuiArcaneTerm;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
-import thaumicenergistics.container.item.WirelessArcaneTerminalGuiHost;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.part.PartArcaneInscriber;
 import thaumicenergistics.part.PartArcaneTerminal;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.core.ThELog;
+import thaumicenergistics.core.definitions.ThEItems;
 
-import java.util.Locale;
 import java.util.function.Function;
 
 /**
@@ -48,17 +48,14 @@ public final class GuiHandler implements IGuiHandler {
 
     private static boolean isItemGui(ModGUIs bridge) {
         return bridge == ModGUIs.KNOWLEDGE_CORE_MANAGE
-            || bridge == ModGUIs.WIRELESS_ARCANE_TERMINAL;
+            || bridge == ModGUIs.WIRELESS_ARCANE_TERMINAL
+            || bridge == ModGUIs.WIRELESS_ARCANE_INSCRIBER;
     }
 
     private static boolean isPartGui(ModGUIs bridge) {
         return bridge == ModGUIs.ARCANE_TERMINAL
             || bridge == ModGUIs.ARCANE_INSCRIBER
-            || isKnowledgeCorePartGui(bridge);
-    }
-
-    private static boolean isKnowledgeCorePartGui(ModGUIs bridge) {
-        return bridge == ModGUIs.KNOWLEDGE_CORE_ADD
+            || bridge == ModGUIs.KNOWLEDGE_CORE_ADD
             || bridge == ModGUIs.KNOWLEDGE_CORE_DEL
             || bridge == ModGUIs.KNOWLEDGE_CORE_VIEW;
     }
@@ -72,16 +69,6 @@ public final class GuiHandler implements IGuiHandler {
             return null;
         }
         return new PartLocator(new BlockPos(x, y & 255, z), EnumFacing.VALUES[side]);
-    }
-
-    private static @Nullable ItemGuiHostLocator wirelessItemLocator(int encodedSlot) {
-        if (encodedSlot == Integer.MIN_VALUE) {
-            ThELog.warn("Cannot create wireless Arcane Terminal locator from invalid encoded slot {}", encodedSlot);
-            return null;
-        }
-        return encodedSlot < 0
-            ? GuiHostLocators.forBaubleSlot(-1 - encodedSlot)
-            : GuiHostLocators.forInventorySlot(encodedSlot);
     }
 
     private static <H, C extends AEBaseContainer> @Nullable C createPartContainer(EntityPlayer player, GuiHostLocator locator,
@@ -148,7 +135,7 @@ public final class GuiHandler implements IGuiHandler {
                 }
             }
             case KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW -> {
-                return createKnowledgeCoreContainer(player, partLocator(x, y, z), ID, bridge);
+                return createKnowledgeCoreContainer(player, ID, bridge);
             }
             case KNOWLEDGE_CORE_MANAGE -> {
                 return createKnowledgeCoreManagementContainer(player, x, ID);
@@ -163,6 +150,9 @@ public final class GuiHandler implements IGuiHandler {
             }
             case WIRELESS_ARCANE_TERMINAL -> {
                 return createWirelessArcaneTermContainer(player, x, ID);
+            }
+            case WIRELESS_ARCANE_INSCRIBER -> {
+                return createWirelessArcaneInscriberContainer(player, x, ID);
             }
         }
 
@@ -189,8 +179,7 @@ public final class GuiHandler implements IGuiHandler {
                 }
             }
             case KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW -> {
-                ContainerKnowledgeCore knowledgeCoreContainer = createKnowledgeCoreContainer(player,
-                    partLocator(x, y, z), ID, bridge);
+                ContainerKnowledgeCore knowledgeCoreContainer = createKnowledgeCoreContainer(player, ID, bridge);
                 if (knowledgeCoreContainer != null) {
                     return new GuiKnowledgeCore(knowledgeCoreContainer);
                 }
@@ -224,7 +213,20 @@ public final class GuiHandler implements IGuiHandler {
             case WIRELESS_ARCANE_TERMINAL -> {
                 ContainerArcaneTerm wirelessArcaneTermContainer = createWirelessArcaneTermContainer(player, x, ID);
                 if(wirelessArcaneTermContainer != null) {
-                    return new GuiArcaneTerm(wirelessArcaneTermContainer, player.inventory);
+                    WirelessTerminalDefinition definition = WirelessTerminalRegistry.ofItem(
+                        ThEItems.WIRELESS_ARCANE_TERMINAL.item());
+                    return definition == null ? null
+                        : definition.screenFactory().create(definition, wirelessArcaneTermContainer, player.inventory);
+                }
+                return null;
+            }
+            case WIRELESS_ARCANE_INSCRIBER -> {
+                ContainerArcaneInscriber wirelessArcaneInscriberContainer = createWirelessArcaneInscriberContainer(player, x, ID);
+                if(wirelessArcaneInscriberContainer != null) {
+                    WirelessTerminalDefinition definition = WirelessTerminalRegistry.ofItem(
+                        ThEItems.WIRELESS_ARCANE_INSCRIBER.item());
+                    return definition == null ? null
+                        : definition.screenFactory().create(definition, wirelessArcaneInscriberContainer, player.inventory);
                 }
                 return null;
             }
@@ -233,34 +235,23 @@ public final class GuiHandler implements IGuiHandler {
         return null;
     }
 
-    private @Nullable ContainerArcaneTerm createWirelessArcaneTermContainer(EntityPlayer player, int slot, int guiId) {
-        ItemGuiHostLocator locator = wirelessItemLocator(slot);
-        if (locator == null) {
-            return null;
-        }
-        ItemGuiHost<?> host = createWirelessArcaneItemGuiHost(player, locator);
-        if(!(host instanceof WirelessArcaneTerminalGuiHost wirelessHost)) {
-            return null;
-        }
-
-        return initContainer(new ContainerArcaneTerm(player.inventory, wirelessHost), locator, guiId);
-    }
-
     private static @Nullable ContainerKnowledgeCore createKnowledgeCoreContainer(EntityPlayer player,
-                                                                                GuiHostLocator locator,
-                                                                                int guiId,
-                                                                                ModGUIs bridge) {
+                                                                                  int guiId,
+                                                                                  ModGUIs bridge) {
+        if (!(player.openContainer instanceof ContainerArcaneInscriber parent)) {
+            return null;
+        }
+        GuiHostLocator locator = parent.getLocator();
         if (locator == null) {
             return null;
         }
-        ContainerArcaneInscriber parent = getKnowledgeCoreParent(player, bridge, player.openContainer);
         ContainerKnowledgeCore container = new ContainerKnowledgeCore(player, bridge, parent, locator);
         return initContainer(container, locator, guiId);
     }
 
     private static @Nullable ContainerKnowledgeCore createKnowledgeCoreManagementContainer(EntityPlayer player,
-                                                                                          int slot,
-                                                                                          int guiId) {
+                                                                                           int slot,
+                                                                                           int guiId) {
         if (slot < 0 || slot >= player.inventory.getSizeInventory()) {
             ThELog.warn("Cannot create Knowledge Core management container for invalid player inventory slot {}", slot);
             return null;
@@ -269,7 +260,54 @@ public final class GuiHandler implements IGuiHandler {
         return initContainer(new ContainerKnowledgeCore(player, locator), locator, guiId);
     }
 
-    private @Nullable ItemGuiHost<?> createWirelessArcaneItemGuiHost(EntityPlayer player, ItemGuiHostLocator locator) {
+    private @Nullable ContainerArcaneTerm createWirelessArcaneTermContainer(EntityPlayer player, int slot, int guiId) {
+        ItemGuiHostLocator locator = wirelessItemLocator(player, slot);
+        WirelessTerminalDefinition definition = WirelessTerminalRegistry.ofItem(
+            ThEItems.WIRELESS_ARCANE_TERMINAL.item());
+        ItemGuiHost<?> host = createItemGuiHost(player, locator, definition);
+        if (!(host instanceof WirelessTerminalGuiHost<?> wirelessHost)) {
+            return null;
+        }
+
+        AEBaseContainer container = definition.containerFactory().create(definition, player.inventory, wirelessHost);
+        return container instanceof ContainerArcaneTerm arcaneTerm
+            ? initContainer(arcaneTerm, locator, guiId)
+            : null;
+    }
+
+    private @Nullable ContainerArcaneInscriber createWirelessArcaneInscriberContainer(EntityPlayer player, int slot, int guiId) {
+        ItemGuiHostLocator locator = wirelessItemLocator(player, slot);
+        WirelessTerminalDefinition definition = WirelessTerminalRegistry.ofItem(
+            ThEItems.WIRELESS_ARCANE_INSCRIBER.item());
+        ItemGuiHost<?> host = createItemGuiHost(player, locator, definition);
+        if (!(host instanceof WirelessTerminalGuiHost<?> wirelessHost)) {
+            return null;
+        }
+
+        AEBaseContainer container = definition.containerFactory().create(definition, player.inventory, wirelessHost);
+        return container instanceof ContainerArcaneInscriber arcaneInscriber
+            ? initContainer(arcaneInscriber, locator, guiId)
+            : null;
+    }
+
+    private static @Nullable ItemGuiHostLocator wirelessItemLocator(EntityPlayer player, int encodedSlot) {
+        if (encodedSlot == Integer.MIN_VALUE) {
+            return null;
+        }
+        if (encodedSlot >= 0) {
+            return encodedSlot < player.inventory.getSizeInventory()
+                ? GuiHostLocators.forInventorySlot(encodedSlot)
+                : null;
+        }
+        int baubleSlot = -1 - encodedSlot;
+        return GuiHostLocators.forBaubleSlot(baubleSlot);
+    }
+
+    private @Nullable ItemGuiHost<?> createItemGuiHost(EntityPlayer player, ItemGuiHostLocator locator,
+                                                       WirelessTerminalDefinition definition) {
+        if (locator == null || definition == null) {
+            return null;
+        }
         Integer slot = locator.getPlayerInventorySlot();
         if (slot != null && (slot < 0 || slot >= player.inventory.getSizeInventory())) {
             return null;
@@ -280,33 +318,16 @@ public final class GuiHandler implements IGuiHandler {
             return null;
         }
 
-        selectUniversalTerminalForGui(stack);
+        if (stack.getItem() instanceof WirelessUniversalTerminalItem universalTerminal) {
+            if (!universalTerminal.hasTerminal(stack, definition.item())
+                    || !universalTerminal.selectTerminal(stack, definition.id())) {
+                return null;
+            }
+        } else if (stack.getItem() != definition.item()) {
+            return null;
+        }
+
         return guiItem.getGuiHost(player, locator, locator.hitResult());
     }
 
-    private void selectUniversalTerminalForGui(ItemStack stack) {
-        if (!(stack.getItem() instanceof WirelessUniversalTerminalItem universalTerminal)) {
-            return;
-        }
-        WirelessTerminalRegistry.allDefinitions()
-            .stream()
-            .filter(definition -> definition.id().equals(ModGUIs.WIRELESS_ARCANE_TERMINAL.toString().toLowerCase(Locale.ROOT)))
-            .findFirst()
-            .ifPresent(definition -> universalTerminal.selectTerminal(stack, definition.id()));
-    }
-
-    private static ContainerArcaneInscriber getKnowledgeCoreParent(EntityPlayer player, ModGUIs gui,
-                                                                   Container openContainer) {
-        if (!(openContainer instanceof ContainerArcaneInscriber parent)) {
-            throw new IllegalStateException("Cannot open Knowledge Core gui " + gui.name()
-                    + " without parent " + ContainerArcaneInscriber.class.getName()
-                    + "; player " + playerDescription(player)
-                    + "; openContainer " + openContainer);
-        }
-        return parent;
-    }
-
-    private static String playerDescription(EntityPlayer player) {
-        return player == null ? "null" : player.getClass().getName();
-    }
 }

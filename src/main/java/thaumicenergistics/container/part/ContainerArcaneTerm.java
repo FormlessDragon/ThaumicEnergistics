@@ -10,9 +10,6 @@ import ae2.container.GuiIds;
 import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
 import ae2.container.me.common.ContainerMEStorage;
-import ae2.container.slot.AppEngSlot;
-import ae2.container.slot.RestrictedInputSlot;
-import ae2.container.slot.SlotBackgroundIcon;
 import ae2.core.network.serverbound.GuiActionPacket;
 import com.google.common.collect.Lists;
 import net.minecraft.entity.player.EntityPlayer;
@@ -22,6 +19,7 @@ import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
@@ -46,9 +44,9 @@ import thaumicenergistics.container.slot.SlotArmor;
 import thaumicenergistics.container.slot.SlotArcaneMatrix;
 import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
-import thaumicenergistics.api.storage.IArcaneTerminalUpgradeHost;
 import thaumicenergistics.integration.jei.ArcaneRecipeTransferPayload;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
+import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.TCUtil;
 import thaumicenergistics.core.ThELog;
@@ -75,8 +73,8 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     private ArcaneTerminalVisState visState = ArcaneTerminalVisState.EMPTY;
     private boolean clearGridOnClose;
 
-    public ContainerArcaneTerm(InventoryPlayer ip, IArcaneTerminalUpgradeHost host) {
-        this(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, host, requireTerminalUpgradeInventory(host));
+    public ContainerArcaneTerm(InventoryPlayer ip, IArcaneTerminalHost host) {
+        this(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, host, host.getUpgrades());
     }
 
     protected ContainerArcaneTerm(GuiIds.GuiKey guiKey, InventoryPlayer ip, IArcaneTerminalHost host) {
@@ -93,7 +91,6 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         this.craftingResult = new AppEngInternalInventory(1);
 
         this.addMatrixSlots(32, 36);
-        this.addArcaneAuxiliarySlots(177, 54);
         this.addArmorSlots(ip.player, new PlayerArmorInvWrapper(ip), 8, 19);
         this.registerClientAction(ACTION_CLEAR_GRID, this::clearCraftingGrid);
         this.registerClientAction(ACTION_SET_CLEAR_ON_CLOSE, Boolean.class, this::setClearGridOnClose);
@@ -102,17 +99,9 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         this.updateCraftingResult();
     }
 
-    public IArcaneTerminalHost getArcaneHost() {
-        return this.host;
-    }
-
+    @Override
     public IArcaneTerminalHost getHost() {
         return this.host;
-    }
-
-    @Override
-    public EntityPlayer getPlayer() {
-        return this.getPlayerInventory().player;
     }
 
     public BlockPos getPartPos() {
@@ -436,16 +425,6 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         return vis;
     }
 
-    private static IUpgradeInventory requireTerminalUpgradeInventory(IArcaneTerminalUpgradeHost host) {
-        IUpgradeInventory inventory = host.getUpgrades();
-        if (inventory == null) {
-            ThELog.error("Arcane terminal upgrade host returned a null upgrade inventory: {}",
-                    host.getClass().getName());
-            throw new IllegalStateException("Arcane Terminal upgrade inventory must not be null");
-        }
-        return inventory;
-    }
-
     protected final IUpgradeInventory getTerminalUpgradeInventory() {
         if (this.terminalUpgradeInventory == null) {
             ThELog.error("Container {} requested terminal upgrades for non-terminal host {}",
@@ -456,7 +435,11 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     boolean hasArcaneVisRangeUpgrade() {
-        return !this.getTerminalUpgradeInventory().getStackInSlot(0).isEmpty();
+        return hasArcaneVisRangeUpgrade(this.getTerminalUpgradeInventory(), ThEItems.UPGRADE_ARCANE.item());
+    }
+
+    static boolean hasArcaneVisRangeUpgrade(IUpgradeInventory upgrades, Item arcaneUpgrade) {
+        return upgrades.getInstalledUpgrades(arcaneUpgrade) > 0;
     }
 
     protected float getRequiredVis(IRecipe recipe, EntityPlayer player) {
@@ -879,14 +862,6 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         this.addSlot(new SlotArmor(player, inventory, 2, offsetX, offsetY + 18), ThESlotSemantics.PLAYER_ARMOR);
         this.addSlot(new SlotArmor(player, inventory, 1, offsetX, offsetY + 18 * 2), ThESlotSemantics.PLAYER_ARMOR);
         this.addSlot(new SlotArmor(player, inventory, 0, offsetX, offsetY + 18 * 3), ThESlotSemantics.PLAYER_ARMOR);
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    protected void addArcaneAuxiliarySlots(int offsetX, int offsetY) {
-        AppEngSlot upgradeSlot = new RestrictedInputSlot(RestrictedInputSlot.PlacableItemType.UPGRADES,
-            this.getTerminalUpgradeInventory(), 0, offsetX, offsetY);
-        upgradeSlot.setBackgroundIcon(SlotBackgroundIcon.UPGRADE);
-        this.addSlot(upgradeSlot, SlotSemantics.UPGRADE);
     }
 
     private record NetworkReservation(int slot, ItemStack stack) {

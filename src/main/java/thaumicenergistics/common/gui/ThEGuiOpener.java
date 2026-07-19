@@ -14,7 +14,6 @@ import net.minecraft.world.World;
 import thaumicenergistics.ThaumicEnergistics;
 import thaumicenergistics.api.storage.IArcaneInscriberHost;
 import thaumicenergistics.api.storage.IArcaneTerminalHost;
-import thaumicenergistics.api.storage.IArcaneTerminalUpgradeHost;
 import thaumicenergistics.client.gui.GuiIds;
 import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.core.ThELog;
@@ -27,18 +26,10 @@ public final class ThEGuiOpener {
     private ThEGuiOpener() {
     }
 
-    public static void openGui(EntityPlayer player, ModGUIs gui, TileEntity tile) {
-        openGui(player, gui, tile, false);
-    }
-
     public static void openGui(EntityPlayer player, ModGUIs gui, TileEntity tile, boolean returnedFromSubScreen) {
         validateTileOpenRoute(player, gui, tile);
         BlockPos pos = tile.getPos();
         openGui(player, gui, returnedFromSubScreen, tile.getWorld(), pos.getX(), pos.getY(), pos.getZ());
-    }
-
-    public static void openPartGui(EntityPlayer player, ModGUIs gui, AEBasePart part) {
-        openPartGui(player, gui, part, false);
     }
 
     public static void openPartGui(EntityPlayer player, ModGUIs gui, AEBasePart part, boolean returnedFromSubScreen) {
@@ -52,10 +43,6 @@ public final class ThEGuiOpener {
                     + part.getClass().getName() + " player " + playerDescription(player));
         }
         openPartGui(player, gui, host, part.getSide(), returnedFromSubScreen);
-    }
-
-    public static void openPartGui(EntityPlayer player, ModGUIs gui, IPartHost host, EnumFacing side) {
-        openPartGui(player, gui, host, side, false);
     }
 
     public static void openPartGui(EntityPlayer player, ModGUIs gui, IPartHost host, EnumFacing side,
@@ -90,8 +77,16 @@ public final class ThEGuiOpener {
         openPartGui(player, gui, pos, host.getReturnSide(), returnedFromSubScreen);
     }
 
-    public static void openItemGui(EntityPlayer player, ModGUIs gui, ItemGuiHostLocator locator) {
-        openItemGui(player, gui, locator, false);
+    public static void openLocatorGui(EntityPlayer player, ModGUIs gui, GuiHostLocator locator,
+                                      boolean returnedFromSubScreen) {
+        if (locator instanceof PartLocator) {
+            openPartLocatorGui(player, gui, locator, returnedFromSubScreen);
+        } else if (locator instanceof ItemGuiHostLocator) {
+            openItemGui(player, gui, (ItemGuiHostLocator) locator, returnedFromSubScreen);
+        } else {
+            throw rejectArgument("Cannot encode unsupported locator " + locatorDescription(locator)
+                    + " for gui " + gui + " player " + playerDescription(player));
+        }
     }
 
     public static void openItemGui(EntityPlayer player, ModGUIs gui, ItemGuiHostLocator locator,
@@ -180,7 +175,7 @@ public final class ThEGuiOpener {
 
     private static Class<? extends IArcaneTerminalHost> getPartLocatorHostType(ModGUIs gui) {
         return switch (gui) {
-            case ARCANE_TERMINAL -> IArcaneTerminalUpgradeHost.class;
+            case ARCANE_TERMINAL -> IArcaneTerminalHost.class;
             case ARCANE_INSCRIBER, KNOWLEDGE_CORE_ADD, KNOWLEDGE_CORE_DEL, KNOWLEDGE_CORE_VIEW ->
                     IArcaneInscriberHost.class;
             default -> throw rejectArgument("Unsupported part locator gui " + gui);
@@ -240,15 +235,21 @@ public final class ThEGuiOpener {
         }
     }
 
-    private static boolean isPartGui(ModGUIs gui) {
-        return gui == ModGUIs.ARCANE_TERMINAL
-                || gui == ModGUIs.ARCANE_INSCRIBER
-                || isKnowledgeCoreGui(gui);
-    }
-
     private static boolean isItemGui(ModGUIs gui) {
         return gui == ModGUIs.KNOWLEDGE_CORE_MANAGE
-                || gui == ModGUIs.WIRELESS_ARCANE_TERMINAL;
+            || gui == ModGUIs.WIRELESS_ARCANE_TERMINAL
+            || gui == ModGUIs.WIRELESS_ARCANE_INSCRIBER
+            || gui == ModGUIs.KNOWLEDGE_CORE_ADD
+            || gui == ModGUIs.KNOWLEDGE_CORE_DEL
+            || gui == ModGUIs.KNOWLEDGE_CORE_VIEW;
+    }
+
+    private static boolean isPartGui(ModGUIs gui) {
+        return gui == ModGUIs.ARCANE_TERMINAL
+            || gui == ModGUIs.ARCANE_INSCRIBER
+            || gui == ModGUIs.KNOWLEDGE_CORE_ADD
+            || gui == ModGUIs.KNOWLEDGE_CORE_DEL
+            || gui == ModGUIs.KNOWLEDGE_CORE_VIEW;
     }
 
     private static IllegalArgumentException rejectArgument(String diagnostic) {
@@ -259,12 +260,6 @@ public final class ThEGuiOpener {
     private static IllegalStateException rejectState(String diagnostic) {
         ThELog.error(diagnostic);
         return new IllegalStateException(diagnostic);
-    }
-
-    private static boolean isKnowledgeCoreGui(ModGUIs gui) {
-        return gui == ModGUIs.KNOWLEDGE_CORE_ADD
-                || gui == ModGUIs.KNOWLEDGE_CORE_DEL
-                || gui == ModGUIs.KNOWLEDGE_CORE_VIEW;
     }
 
     private static String locatorDescription(GuiHostLocator locator) {

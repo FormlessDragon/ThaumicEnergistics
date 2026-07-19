@@ -50,12 +50,13 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
 
     public ContainerArcaneInscriber(InventoryPlayer ip, IArcaneInscriberHost host) {
         super(GuiIds.GuiKey.ME_STORAGE_TERMINAL, ip, host);
-        this.registerInscriberActions();
-    }
-
-    @Override
-    public IArcaneInscriberHost getArcaneHost() {
-        return (IArcaneInscriberHost) super.getArcaneHost();
+        this.addSlot(new SlotKnowledgeCore(this.getKnowledgeCoreInventory(), 0, 177, 54),
+            ThESlotSemantics.KNOWLEDGE_CORE);
+        this.registerClientAction(ACTION_KNOWLEDGE_CORE_ADD, this::requestKnowledgeCoreAdd);
+        this.registerClientAction(ACTION_KNOWLEDGE_CORE_DEL, this::requestKnowledgeCoreDel);
+        this.registerClientAction(ACTION_KNOWLEDGE_CORE_VIEW, this::requestKnowledgeCoreView);
+        this.registerClientAction(ACTION_GHOST_ITEM_MOVE, ArcaneInscriberGhostItemPayload.class,
+            ACTION_GHOST_ITEM_MOVE_MAX_LENGTH, this::receiveGhostItemMove);
     }
 
     @Override
@@ -64,10 +65,10 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     private InternalInventory getKnowledgeCoreInventory() {
-        InternalInventory inventory = this.getArcaneHost().getKnowledgeCoreInventory();
+        InternalInventory inventory = this.getHost().getKnowledgeCoreInventory();
         if (inventory == null) {
             ThELog.error("Arcane Inscriber host returned a null knowledge-core inventory: {}",
-                    this.getArcaneHost().getClass().getName());
+                    this.getHost().getClass().getName());
             throw new IllegalStateException("Arcane Inscriber knowledge-core inventory must not be null");
         }
         return inventory;
@@ -75,14 +76,6 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
 
     public boolean isRecipeArcane() {
         return this.recipeIsArcane;
-    }
-
-    private void registerInscriberActions() {
-        this.registerClientAction(ACTION_KNOWLEDGE_CORE_ADD, this::requestKnowledgeCoreAdd);
-        this.registerClientAction(ACTION_KNOWLEDGE_CORE_DEL, this::requestKnowledgeCoreDel);
-        this.registerClientAction(ACTION_KNOWLEDGE_CORE_VIEW, this::requestKnowledgeCoreView);
-        this.registerClientAction(ACTION_GHOST_ITEM_MOVE, ArcaneInscriberGhostItemPayload.class,
-                ACTION_GHOST_ITEM_MOVE_MAX_LENGTH, this::receiveGhostItemMove);
     }
 
     public void requestKnowledgeCoreAdd() {
@@ -119,12 +112,11 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
             return;
         }
 
-        if (!(knowledgeCore.getItem() instanceof ItemKnowledgeCore)) {
+        if (!(knowledgeCore.getItem() instanceof ItemKnowledgeCore itemKnowledgeCore)) {
             return;
         }
 
-        boolean currentIsBlank = ((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
-        if (currentIsBlank) {
+        if (itemKnowledgeCore.isBlank()) {
             ItemStack convertedCore =
                     KnowledgeCoreUtil.copyNonRecipeData(knowledgeCore, ThEItems.KNOWLEDGE_CORE.stack(1));
             this.getKnowledgeCoreInventory().setItemDirect(0, convertedCore);
@@ -132,20 +124,20 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
             return;
         }
 
-        ThEGuiOpener.openPartLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_ADD, this.getLocator(), false);
+        ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_ADD, this.getLocator(), false);
     }
 
     private void openKnowledgeCoreDel() {
         ItemStack knowledgeCore = this.getKnowledgeCoreInventory().getStackInSlot(0);
         if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
-            ThEGuiOpener.openPartLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_DEL, this.getLocator(), false);
+            ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_DEL, this.getLocator(), false);
         }
     }
 
     private void openKnowledgeCoreView() {
         ItemStack knowledgeCore = this.getKnowledgeCoreInventory().getStackInSlot(0);
         if (this.isNonBlankKnowledgeCore(knowledgeCore)) {
-            ThEGuiOpener.openPartLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_VIEW, this.getLocator(), false);
+            ThEGuiOpener.openLocatorGui(this.getPlayer(), ModGUIs.KNOWLEDGE_CORE_VIEW, this.getLocator(), false);
         }
     }
 
@@ -366,12 +358,6 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
         offsetX -= 104;
         this.addSlot(this.resultSlot = new SlotArcaneResult(this, this.getPlayer(), 0, offsetX + 84, offsetY + 18),
                 SlotSemantics.CRAFTING_RESULT);
-    }
-
-    @Override
-    protected void addArcaneAuxiliarySlots(int offsetX, int offsetY) {
-        this.addSlot(new SlotKnowledgeCore(this.getKnowledgeCoreInventory(), 0, offsetX, offsetY),
-                ThESlotSemantics.KNOWLEDGE_CORE);
     }
 
     @Override

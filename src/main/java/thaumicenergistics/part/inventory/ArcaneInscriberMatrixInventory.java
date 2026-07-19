@@ -30,7 +30,6 @@ public final class ArcaneInscriberMatrixInventory extends AppEngInternalInventor
 
     @Override
     public void readFromNBT(NBTTagCompound data, String name) {
-        this.clear();
         super.readFromNBT(data, name);
         for (int slot = 0; slot < INGREDIENT_SLOT_COUNT; slot++) {
             ItemStack stack = super.getStackInSlot(slot);

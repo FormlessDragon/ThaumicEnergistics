@@ -18,6 +18,7 @@ public final class InitUpgrades {
         Upgrades.add(ThEItems.UPGRADE_ARCANE.item(), ThEBlocks.ARCANE_ASSEMBLER.item(), 1);
 
         Upgrades.add(ThEItems.UPGRADE_ARCANE.item(), ThEParts.ARCANE_TERMINAL.item(), 1);
+        Upgrades.add(ThEItems.UPGRADE_ARCANE.item(), ThEItems.WIRELESS_ARCANE_TERMINAL.item(), 1);
 
         Upgrades.add(ThEItems.KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD.item(), ThEItems.BLANK_KNOWLEDGE_CORE.item(), ThEConfig.instance().expansionCardMaxInstalled());
         Upgrades.add(ThEItems.KNOWLEDGE_CORE_PATTERN_EXPANSION_CARD.item(), ThEItems.KNOWLEDGE_CORE.item(), ThEConfig.instance().expansionCardMaxInstalled());

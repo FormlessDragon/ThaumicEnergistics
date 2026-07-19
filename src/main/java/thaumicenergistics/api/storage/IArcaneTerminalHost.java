@@ -50,4 +50,5 @@ public interface IArcaneTerminalHost extends ITerminalHost {
      * Returns the side used when the container navigates back from an arcane sub-GUI.
      */
     EnumFacing getReturnSide();
+
 }

@@ -147,7 +147,7 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     }
 
     private ItemStack getKnowledgeCore() {
-        return this.inscriberContainer.getArcaneHost().getKnowledgeCoreInventory().getStackInSlot(0);
+        return this.inscriberContainer.getHost().getKnowledgeCoreInventory().getStackInSlot(0);
     }
 
     private boolean isKnowledgeCoreBlank(ItemStack knowledgeCore) {
