@@ -1,16 +1,13 @@
 package thaumicenergistics.container.part;
 
-import ae2.api.stacks.AEItemKey;
 import ae2.api.config.Actionable;
 import ae2.api.inventories.InternalInventory;
 import ae2.api.util.IConfigurableObject;
 import ae2.container.GuiIds;
 import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
-import ae2.core.network.serverbound.GuiActionPacket;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.NBTBase;
@@ -26,7 +23,6 @@ import thaumicenergistics.container.slot.SlotArcaneResult;
 import thaumicenergistics.container.slot.SlotKnowledgeCore;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.client.gui.ModGUIs;
-import thaumicenergistics.integration.jei.ArcaneInscriberGhostItemPayload;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.part.inventory.ArcaneInscriberMatrixInventory;
@@ -42,9 +38,6 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     private static final String ACTION_KNOWLEDGE_CORE_ADD = "knowledgeCoreAdd";
     private static final String ACTION_KNOWLEDGE_CORE_DEL = "knowledgeCoreDel";
     private static final String ACTION_KNOWLEDGE_CORE_VIEW = "knowledgeCoreView";
-    private static final String ACTION_GHOST_ITEM_MOVE = "moveGhostItem";
-    private static final int ACTION_GHOST_ITEM_MOVE_MAX_LENGTH = GuiActionPacket.MAX_JSON_PAYLOAD_LENGTH;
-
     @GuiSync(103)
     private boolean recipeIsArcane = false;
 
@@ -55,8 +48,6 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
         this.registerClientAction(ACTION_KNOWLEDGE_CORE_ADD, this::requestKnowledgeCoreAdd);
         this.registerClientAction(ACTION_KNOWLEDGE_CORE_DEL, this::requestKnowledgeCoreDel);
         this.registerClientAction(ACTION_KNOWLEDGE_CORE_VIEW, this::requestKnowledgeCoreView);
-        this.registerClientAction(ACTION_GHOST_ITEM_MOVE, ArcaneInscriberGhostItemPayload.class,
-            ACTION_GHOST_ITEM_MOVE_MAX_LENGTH, this::receiveGhostItemMove);
     }
 
     @Override
@@ -145,55 +136,6 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
         return !knowledgeCore.isEmpty()
                 && knowledgeCore.getItem() instanceof ItemKnowledgeCore
                 && !((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
-    }
-
-    public void requestMoveGhostItem(int slotNumber, ItemStack stack) {
-        ArcaneInscriberGhostItemPayload payload = ArcaneInscriberGhostItemPayload.fromStack(slotNumber, stack);
-        if (this.isClientSide()) {
-            this.sendClientAction(ACTION_GHOST_ITEM_MOVE, payload);
-            return;
-        }
-
-        this.receiveGhostItemMove(payload);
-    }
-
-    private void receiveGhostItemMove(ArcaneInscriberGhostItemPayload payload) {
-        if (payload == null) {
-            throw this.rejectGhostItemMove("payload is missing");
-        }
-
-        ItemStack stack;
-        try {
-            stack = payload.toValidatedStack();
-        } catch (IllegalArgumentException e) {
-            ThELog.warn("Rejecting invalid Arcane Inscriber ghost item payload: {}", e.getMessage());
-            throw e;
-        }
-
-        int slotNumber = payload.slotNumber;
-        if (slotNumber < 0 || slotNumber >= this.inventorySlots.size()) {
-            throw this.rejectGhostItemMove("slot " + slotNumber + " is outside container range 0.."
-                    + (this.inventorySlots.size() - 1));
-        }
-
-        Slot slot = this.getSlot(slotNumber);
-        if (!(slot instanceof SlotArcaneGhostMatrix ghostSlot)) {
-            throw this.rejectGhostItemMove("slot " + slotNumber + " is not an Arcane Inscriber ghost matrix slot");
-        }
-        if (ghostSlot.getSlotIndex() >= 9) {
-            throw this.rejectGhostItemMove("slot " + slotNumber + " is an arcane crystal ghost slot");
-        }
-
-        AEItemKey key = AEItemKey.of(stack);
-        if (key == null) {
-            throw this.rejectGhostItemMove("stack " + stack + " cannot be represented as an AE item key");
-        }
-        slot.putStack(key.wrapForDisplayOrFilter());
-    }
-
-    private IllegalArgumentException rejectGhostItemMove(String message) {
-        ThELog.warn("Rejecting Arcane Inscriber ghost item move: {}", message);
-        return new IllegalArgumentException("Invalid Arcane Inscriber ghost item move: " + message);
     }
 
     public void refreshIsArcane() {

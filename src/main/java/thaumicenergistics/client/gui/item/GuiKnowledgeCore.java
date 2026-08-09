@@ -5,6 +5,7 @@ import ae2.client.gui.AEBaseGui;
 import ae2.client.gui.Icon;
 import ae2.client.gui.style.GuiStyleManager;
 import ae2.client.gui.widgets.UpgradesPanel;
+import ae2.container.slot.AppEngSlot;
 import ae2.container.SlotSemantics;
 import ae2.api.upgrades.Upgrades;
 import ae2.core.localization.GuiText;
@@ -16,6 +17,7 @@ import net.minecraft.util.text.ITextComponent;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
 import thaumicenergistics.core.definitions.ThEItems;
+import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -26,6 +28,7 @@ import java.util.Objects;
  * @author Alex811
  */
 public class GuiKnowledgeCore extends AEBaseGui<ContainerKnowledgeCore> {
+
     private static final String STYLE_PATH = "/screens/thaumicenergistics_knowledge_core.json";
     private static final String ACTION_WIDGET_ID = "knowledgeCoreAction";
     private static final int PREVIOUS_PAGE_BUTTON_ID = 1;
@@ -68,22 +71,24 @@ public class GuiKnowledgeCore extends AEBaseGui<ContainerKnowledgeCore> {
 
     @Override
     protected void handleMouseClick(@Nullable Slot slot, int slotId, int mouseButton, ClickType type) {
-        if (slot == null || this.container.getSlotSemantic(slot) != ThESlotSemantics.KNOWLEDGE_CORE || slotId >= 9) {
+        if (!(slot instanceof AppEngSlot appEngSlot)
+            || this.container.getSlotSemantic(slot) != ThESlotSemantics.KNOWLEDGE_CORE) {
             super.handleMouseClick(slot, slotId, mouseButton, type);
             return;
         }
+        int slotOnPage = appEngSlot.getSlotIndex() % KnowledgeCoreUtil.BASE_RECIPE_SLOTS;
         // Send to server for processing
         switch (container.getGUIAction()) {
             case KNOWLEDGE_CORE_ADD:
-                if (slotId > -1) container.playWriteSound(mc.player);
-                container.requestAddRecipe(slotId);
+                container.playWriteSound(mc.player);
+                container.requestAddRecipe(slotOnPage);
                 break;
             case KNOWLEDGE_CORE_DEL:
-                if (slotId > -1) container.playWriteSound(mc.player);
-                container.requestDeleteRecipe(slotId);
+                container.playWriteSound(mc.player);
+                container.requestDeleteRecipe(slotOnPage);
                 break;
             case KNOWLEDGE_CORE_VIEW:
-                container.requestViewRecipe(slotId);
+                container.requestViewRecipe(slotOnPage);
                 break;
             case KNOWLEDGE_CORE_MANAGE:
                 break;

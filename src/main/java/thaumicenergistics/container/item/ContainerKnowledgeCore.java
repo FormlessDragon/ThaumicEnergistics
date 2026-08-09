@@ -2,12 +2,11 @@ package thaumicenergistics.container.item;
 
 import ae2.container.AEBaseContainer;
 import ae2.container.ISubGui;
-import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
 import ae2.api.inventories.InternalInventory;
 import ae2.api.upgrades.IUpgradeInventory;
-import ae2.container.slot.FakeSlot;
 import ae2.container.slot.AppEngSlot;
+import ae2.container.slot.FakeSlot;
 import ae2.core.gui.locator.GuiHostLocator;
 import ae2.core.gui.locator.ItemGuiHostLocator;
 import ae2.util.inv.AppEngInternalInventory;
@@ -31,6 +30,7 @@ import java.util.Objects;
  * @author Alex811
  */
 public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
+
     public static final String ACTION_ADD_RECIPE = "knowledgeCoreAdd";
     public static final String ACTION_DELETE_RECIPE = "knowledgeCoreDelete";
     public static final String ACTION_VIEW_RECIPE = "knowledgeCoreView";
@@ -146,21 +146,24 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
     }
 
     private void initInv() {
-        inventory = new AppEngInternalInventory(RECIPE_SLOTS_PER_PAGE);
-        for (int slot = 0; slot < RECIPE_SLOTS_PER_PAGE; slot++) {
+        int maxRecipeSlots = KnowledgeCoreUtil.BASE_RECIPE_SLOTS
+            + KnowledgeCoreUtil.getMaxExpansionCards() * KnowledgeCoreUtil.RECIPE_SLOTS_PER_EXPANSION_CARD;
+        inventory = new AppEngInternalInventory(maxRecipeSlots);
+        for (int slot = 0; slot < maxRecipeSlots; slot++) {
             inventory.setMaxStackSize(slot, 1);
         }
     }
 
     @SuppressWarnings("SameParameterValue")
     private void addSlots(int offsetX, int offsetY) {
-        for (int i = 0; i < RECIPE_SLOTS_PER_PAGE; i++) {
-            FakeSlot slotGhost = new RecipeDisplaySlot(inventory, i, offsetX + i * 18, offsetY);
+        for (int i = 0; i < inventory.size(); i++) {
+            int slotOnPage = i % RECIPE_SLOTS_PER_PAGE;
+            FakeSlot slotGhost = new RecipeDisplaySlot(inventory, i,
+                offsetX + slotOnPage * 18, offsetY);
             this.addSlot(slotGhost, ThESlotSemantics.KNOWLEDGE_CORE);
         }
-        for (int slot = 0; slot < this.upgradeInventory.size(); slot++) {
-            this.addSlot(new ExpansionCardSlot(this.upgradeInventory, slot, 0, 0), SlotSemantics.UPGRADE);
-        }
+        this.setupUpgrades(this.upgradeInventory);
+        this.updateRecipeSlotState();
         this.refreshRecipeSlots();
     }
 
@@ -240,8 +243,9 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
     public void detectAndSendChanges() {
         if (this.isServerSide()) {
             this.page = Math.min(this.page, this.getPageCount() - 1);
-            this.refreshRecipeSlots();
         }
+        this.updateRecipeSlotState();
+        this.refreshRecipeSlots();
         super.detectAndSendChanges();
     }
 
@@ -257,7 +261,7 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
     public ItemStack slotClick(int slotID, int dragType, ClickType clickType, EntityPlayer player) {
         if (slotID >= 0 && slotID < this.inventorySlots.size()) {
             Slot slot = this.getSlot(slotID);
-            if (slotID < RECIPE_SLOTS_PER_PAGE && this.getSlotSemantic(slot) == ThESlotSemantics.KNOWLEDGE_CORE) {
+            if (this.getSlotSemantic(slot) == ThESlotSemantics.KNOWLEDGE_CORE) {
                 return ItemStack.EMPTY;
             }
         }
@@ -287,12 +291,17 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
             return;
         }
         this.page = newPage;
+        this.updateRecipeSlotState();
         this.refreshRecipeSlots();
     }
 
     public int getPageCount() {
-        return Math.max(1, (KnowledgeCoreUtil.getRecipeSlotCount(this.knowledgeCoreStack)
+        return Math.max(1, (this.getActiveRecipeSlots()
             + RECIPE_SLOTS_PER_PAGE - 1) / RECIPE_SLOTS_PER_PAGE);
+    }
+
+    public int getActiveRecipeSlots() {
+        return Math.min(this.inventory.size(), KnowledgeCoreUtil.getRecipeSlotCount(this.knowledgeCoreStack));
     }
 
     public boolean hasPreviousPage() {
@@ -311,11 +320,10 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
     }
 
     private void refreshRecipeSlots() {
-        int firstSlot = this.page * RECIPE_SLOTS_PER_PAGE;
-        for (int i = 0; i < RECIPE_SLOTS_PER_PAGE; i++) {
-            int recipeSlot = firstSlot + i;
-            KnowledgeCoreUtil.Recipe recipe = recipeSlot < KnowledgeCoreUtil.getRecipeSlotCount(this.knowledgeCoreStack)
-                ? KnowledgeCoreUtil.getRecipe(this.knowledgeCoreStack, recipeSlot) : null;
+        int activeSlots = this.getActiveRecipeSlots();
+        for (int i = 0; i < this.inventory.size(); i++) {
+            KnowledgeCoreUtil.Recipe recipe = i < activeSlots
+                ? KnowledgeCoreUtil.getRecipe(this.knowledgeCoreStack, i) : null;
             this.inventory.setItemDirect(i, ItemStack.EMPTY);
             if (recipe != null) {
                 this.inventory.insertItem(i, recipe.result(), false);
@@ -323,30 +331,19 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
         }
     }
 
-    private boolean canRemoveExpansionCard() {
-        int installed = KnowledgeCoreUtil.getInstalledExpansionCards(this.knowledgeCoreStack);
-        if (installed <= 0) {
-            return false;
-        }
-        int firstDisabledSlot = KnowledgeCoreUtil.BASE_RECIPE_SLOTS
-            + (installed - 1) * KnowledgeCoreUtil.RECIPE_SLOTS_PER_EXPANSION_CARD;
-        for (int slot = firstDisabledSlot; slot < KnowledgeCoreUtil.getRecipeSlotCount(this.knowledgeCoreStack); slot++) {
-            if (KnowledgeCoreUtil.hasRecipe(this.knowledgeCoreStack, slot)) {
-                return false;
+    private void updateRecipeSlotState() {
+        int firstSlot = this.page * RECIPE_SLOTS_PER_PAGE;
+        int lastSlot = firstSlot + RECIPE_SLOTS_PER_PAGE;
+        int activeSlots = this.getActiveRecipeSlots();
+        for (Slot slot : this.inventorySlots) {
+            if (this.getSlotSemantic(slot) != ThESlotSemantics.KNOWLEDGE_CORE
+                || !(slot instanceof AppEngSlot appEngSlot)) {
+                continue;
             }
-        }
-        return true;
-    }
-
-    private final class ExpansionCardSlot extends AppEngSlot {
-
-        private ExpansionCardSlot(IUpgradeInventory inventory, int index, int x, int y) {
-            super(inventory, index, x, y);
-        }
-
-        @Override
-        public boolean canTakeStack(EntityPlayer playerIn) {
-            return ContainerKnowledgeCore.this.canRemoveExpansionCard();
+            int index = appEngSlot.getSlotIndex();
+            boolean enabled = index >= firstSlot && index < lastSlot && index < activeSlots;
+            appEngSlot.setSlotEnabled(enabled);
+            appEngSlot.setActive(enabled);
         }
     }
 
@@ -354,6 +351,11 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
 
         private RecipeDisplaySlot(InternalInventory inventory, int index, int x, int y) {
             super(inventory, index, x, y);
+        }
+
+        @Override
+        public boolean canSetFilterTo(ItemStack stack) {
+            return false;
         }
 
         @Override
@@ -392,4 +394,5 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
         }
         return this.parentHost;
     }
+
 }

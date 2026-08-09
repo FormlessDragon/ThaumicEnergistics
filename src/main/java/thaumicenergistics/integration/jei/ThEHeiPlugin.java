@@ -17,7 +17,6 @@ import net.minecraftforge.fml.common.Loader;
 import org.jetbrains.annotations.NotNull;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
-import thaumicenergistics.client.gui.part.GuiArcaneInscriber;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.core.ThELog;
@@ -51,8 +50,6 @@ public class ThEHeiPlugin implements IModPlugin {
         registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_basic").toString())), essentiaSmeltCategory.getUid());
         registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_thaumium").toString())), essentiaSmeltCategory.getUid());
         registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_void").toString())), essentiaSmeltCategory.getUid());
-
-        registry.addGhostIngredientHandler(GuiArcaneInscriber.class, new GhostInscriberHandler());
 
         if(Loader.isModLoaded("thaumicjei")) {
             IngredientConverters.register(new TCJeiConverter());

@@ -26,13 +26,13 @@ public class ThEConfig {
     public static Map<String, Integer> essentiaContainerCapacity = new HashMap<>();
 
     @Config.Name("Tick Rates")
-    public static TickRates tickRates = new TickRates();
+    public static final TickRates tickRates = new TickRates();
 
     @Config.Name("Client Config")
-    public static Client client = new Client();
+    public static final Client client = new Client();
 
     @Config.Name("Common Config")
-    public static Common common = new Common();
+    public static final Common common = new Common();
 
     private static ThEConfig INSTANCE;
 
@@ -81,6 +81,8 @@ public class ThEConfig {
     public static class Common {
 
         @Config.Name("KnowledgeCore expansion card max installed")
+        @Config.RequiresMcRestart
+        @Config.RequiresWorldRestart
         @Config.RangeInt(min = 0, max = 3)
         public int expansionCardMaxInstalled = 1;
 
@@ -123,7 +125,7 @@ public class ThEConfig {
     }
 
     public int expansionCardMaxInstalled() {
-        return common.expansionCardMaxInstalled;
+        return Math.clamp(common.expansionCardMaxInstalled, 0, 3);
     }
 
 }

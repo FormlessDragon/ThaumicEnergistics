@@ -3,7 +3,6 @@ package thaumicenergistics.util.knowledgeCoreUtil;
 import ae2.api.crafting.IPatternDetails;
 import ae2.api.inventories.InternalInventory;
 import ae2.api.upgrades.IUpgradeInventory;
-import ae2.core.AEConfig;
 import ae2.util.inv.AppEngInternalInventory;
 import ae2.api.stacks.AEItemKey;
 import ae2.api.stacks.AEKey;
@@ -12,10 +11,10 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
+import thaumicenergistics.core.ThEConfig;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.items.ItemKnowledgeCore;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,10 +29,11 @@ public abstract class KnowledgeCoreUtil {
 
     public static final int BASE_RECIPE_SLOTS = 9;
     public static final int RECIPE_SLOTS_PER_EXPANSION_CARD = 9;
+    public static final int MAX_INSTALLED_EXPANSION_CARDS = ThEConfig.instance().expansionCardMaxInstalled();
     private static final KnowledgeCoreRecipeCodec RECIPE_CODEC = new KnowledgeCoreRecipeCodecImpl();
 
     public static int getMaxExpansionCards() {
-        return Math.max(0, AEConfig.instance().getMolecularAssemblerPatternExpansionCardLimit());
+        return MAX_INSTALLED_EXPANSION_CARDS;
     }
 
     public static int getRecipeSlotCount(ItemStack knowledgeCoreStack) {
@@ -96,16 +96,6 @@ public abstract class KnowledgeCoreUtil {
             if (recipe != null) recipeMap.put(recipe.result, recipe.ingredients);
         }
         return recipeMap;
-    }
-
-    @Nullable
-    public static Recipe getRecipe(ItemStack knowledgeCoreStack, ItemStack result) {
-        for (int i = 0; i < getRecipeSlotCount(knowledgeCoreStack); i++) {
-            Recipe recipe = getRecipe(knowledgeCoreStack, i);
-            if (recipe != null && recipe.result().getItem().equals(result.getItem()))
-                return recipe;
-        }
-        return null;
     }
 
     /**
@@ -192,20 +182,6 @@ public abstract class KnowledgeCoreUtil {
     }
 
     /**
-     * Similar to {@link KnowledgeCoreUtil#getAEPattern(Recipe)},
-     * for when you don't have the actual recipe yet
-     * and you want to extract it from a Knowledge Core
-     *
-     * @param knowledgeCore Knowledge Core to extract from
-     * @param slot          The Knowledge Core slot to read from
-     * @return IPatternDetails instance to send to AE2.
-     */
-    public static IPatternDetails getAEPattern(ItemStack knowledgeCore, int slot) {
-        Recipe recipe = getRecipe(knowledgeCore, slot);
-        return getAEPattern(recipe);
-    }
-
-    /**
      * Method to extract an IPatternDetails instance from a Knowledge Core recipe, to use with AE2
      *
      * @param recipe Recipe to extract from
@@ -217,14 +193,6 @@ public abstract class KnowledgeCoreUtil {
             throw new IllegalArgumentException("Knowledge core recipe cannot be null");
         }
         return new KnowledgeCorePatternDetails(recipe);
-    }
-
-    public static Recipe getRecipe(ItemStack knowledgeCoreStack, IPatternDetails patternDetails) {
-        GenericStack output = patternDetails == null ? null : patternDetails.getPrimaryOutput();
-        if (output == null || !(output.what() instanceof AEItemKey)) {
-            return null;
-        }
-        return getRecipe(knowledgeCoreStack, ((AEItemKey) output.what()).toStack((int) Math.min(output.amount(), Integer.MAX_VALUE)));
     }
 
     public record Recipe(InternalInventory ingredients, ItemStack result, float visCost) {

@@ -35,10 +35,6 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
         this.widgets.add("knowledgeCoreView", this.coreViewButton);
     }
 
-    public void requestMoveGhostItem(int slotNumber, ItemStack stack) {
-        this.inscriberContainer.requestMoveGhostItem(slotNumber, stack);
-    }
-
     @Override
     public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
         super.drawFG(offsetX, offsetY, mouseX, mouseY);
