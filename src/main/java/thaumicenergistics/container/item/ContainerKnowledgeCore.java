@@ -10,6 +10,7 @@ import ae2.container.slot.FakeSlot;
 import ae2.core.gui.locator.GuiHostLocator;
 import ae2.core.gui.locator.ItemGuiHostLocator;
 import ae2.util.inv.AppEngInternalInventory;
+import it.unimi.dsi.fastutil.shorts.ShortSet;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Slot;
@@ -345,6 +346,12 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
             appEngSlot.setSlotEnabled(enabled);
             appEngSlot.setActive(enabled);
         }
+    }
+
+    @Override
+    public void onClientDataSync(ShortSet updatedFields) {
+        super.onClientDataSync(updatedFields);
+        this.updateRecipeSlotState();
     }
 
     private static final class RecipeDisplaySlot extends FakeSlot {
