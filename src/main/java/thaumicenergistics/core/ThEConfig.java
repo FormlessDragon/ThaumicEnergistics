@@ -4,8 +4,10 @@ import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import thaumicenergistics.thaumicenergistics.Tags;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * TODO: Allow config being changed from api
@@ -21,7 +23,7 @@ public class ThEConfig {
         Specifies how much a item that holds essentia can hold
         For filling with Essentia Terminal
         Best to set it to how much the item can actually store""")
-    public static Object2IntOpenHashMap<String> essentiaContainerCapacity = new Object2IntOpenHashMap<>();
+    public static Map<String, Integer> essentiaContainerCapacity = new HashMap<>();
 
     @Config.Name("Tick Rates")
     public static final TickRates tickRates = new TickRates();
@@ -106,8 +108,8 @@ public class ThEConfig {
         essentiaContainerCapacity.put("thaumcraft:jar_void", 250);
     }
 
-    public Object2IntOpenHashMap<String> essentiaContainerCapacity() {
-        return new Object2IntOpenHashMap<>(essentiaContainerCapacity);
+    public Map<String, Integer> essentiaContainerCapacity() {
+        return new HashMap<>(essentiaContainerCapacity);
     }
 
     public int tickTimeArcaneAssemblerMin() {
