@@ -4,7 +4,7 @@ import net.minecraft.item.ItemStack;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
 import thaumicenergistics.core.ThEConfig;
 
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 
 /**
  * @author BrockWS
@@ -15,10 +15,13 @@ public class ThEUtil {
         if (stack == null || !(stack.getItem() instanceof IEssentiaContainerItem) || stack.getItem().getRegistryName() == null)
             return 0;
 
-        Map<String, Integer> capacities = ThEConfig.instance().essentiaContainerCapacity();
         String registryName = stack.getItem().getRegistryName().toString();
-        Integer capacity = capacities.get(registryName + ":" + stack.getMetadata());
-        return capacity != null ? capacity : capacities.getOrDefault(registryName, 0);
+        String keyedName = registryName + ":" + stack.getMetadata();
+        Object2IntMap<String> capacities = ThEConfig.instance().essentiaContainerCapacity();
+        if (capacities.containsKey(keyedName)) {
+            return capacities.getInt(keyedName);
+        }
+        return capacities.getInt(registryName);
     }
 
     /**

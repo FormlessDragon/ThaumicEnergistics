@@ -11,7 +11,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 import thaumicenergistics.common.me.key.ArcaneVisKey;
-import thaumicenergistics.common.me.key.ArcaneVisKeys;
+import thaumicenergistics.common.me.key.ArcaneVisKeyType;
 
 /**
  * Renders the diagnostic Arcane Vis key as a blue Vis mote in AE2 pattern displays.
@@ -21,7 +21,7 @@ public final class ArcaneVisKeyRenderHandler implements AEKeyRenderHandler<Arcan
     private static final int SEGMENTS = 12;
 
     public static void register() {
-        AEKeyRendering.register(ArcaneVisKeys.INSTANCE, ArcaneVisKey.class, new ArcaneVisKeyRenderHandler());
+        AEKeyRendering.register(ArcaneVisKeyType.INSTANCE, ArcaneVisKey.class, new ArcaneVisKeyRenderHandler());
     }
 
     @Override

@@ -11,7 +11,7 @@ import org.lwjgl.opengl.GL11;
 import thaumcraft.codechicken.lib.math.MathHelper;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
 import thaumicenergistics.core.definitions.GuiText;
-import thaumicenergistics.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Tags;
 
 import java.awt.Color;
 
@@ -23,8 +23,8 @@ public class GuiArcaneAssembler extends GuiUpgradeable<ContainerArcaneAssembler>
     private static final String STYLE_PATH = "/screens/thaumicenergistics_arcane_assembler.json";
     private static final String[] aspects = {"aer", "terra", "ignis", "aqua", "ordo", "perditio"};
     private static final int[][] aspectGUILoc = {{69, 2}, {21, 82}, {21, 25}, {117, 25}, {117, 82}, {69, 106}};
-    private static final ResourceLocation BACKGROUND_ACTIVE = new ResourceLocation(Reference.MOD_ID, "textures/gui/arcane_assembler/active.png");
-    private static final ResourceLocation ASPECTS = new ResourceLocation(Reference.MOD_ID, "textures/gui/arcane_assembler/aspects.png");
+    private static final ResourceLocation BACKGROUND_ACTIVE = new ResourceLocation(Tags.MOD_ID, "textures/gui/arcane_assembler/active.png");
+    private static final ResourceLocation ASPECTS = new ResourceLocation(Tags.MOD_ID, "textures/gui/arcane_assembler/aspects.png");
     private float enAlpha;
 
     public GuiArcaneAssembler(ContainerArcaneAssembler container, InventoryPlayer playerInventory) {

@@ -4,9 +4,12 @@ import ae2.api.crafting.IPatternDetails;
 import ae2.api.stacks.AEItemKey;
 import ae2.api.stacks.KeyCounter;
 import ae2.crafting.CraftingPlan;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import thaumicenergistics.common.me.key.ArcaneVisKey;
-import thaumicenergistics.common.me.key.ArcaneVisKeys;
+import thaumicenergistics.common.me.key.ArcaneVisKeyType;
 import thaumicenergistics.core.ThELog;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
@@ -14,9 +17,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -24,7 +25,7 @@ import java.util.Objects;
  */
 public final class ArcaneVisAccountingImpl implements ArcaneVisAccounting {
 
-    public static final int UNITS_PER_VIS = ArcaneVisKeys.AMOUNT_PER_VIS;
+    public static final int UNITS_PER_VIS = ArcaneVisKeyType.AMOUNT_PER_VIS;
 
     private static final BigDecimal MAX_LONG = BigDecimal.valueOf(Long.MAX_VALUE);
 
@@ -43,15 +44,16 @@ public final class ArcaneVisAccountingImpl implements ArcaneVisAccounting {
         Objects.requireNonNull(plan, "plan");
         Objects.requireNonNull(snapshot, "snapshot");
 
-        KeyCounter usedItems = copyCounter(plan.usedItems());
-        KeyCounter emittedItems = copyCounter(plan.emittedItems());
-        KeyCounter missingItems = copyCounter(plan.missingItems());
+        KeyCounter usedItems = plan.usedItems();
+        KeyCounter emittedItems = plan.emittedItems();
+        KeyCounter missingItems = plan.missingItems();
         removeUnexpectedBaseVis(usedItems, "used");
         removeUnexpectedBaseVis(emittedItems, "emitted");
         removeUnexpectedBaseVis(missingItems, "missing");
 
-        Map<ArcaneVisChunk, Long> remainingBudgets = new HashMap<>(snapshot.availableUnits());
-        Map<ArcaneVisChunk, Integer> reachCounts = countProviderReach(snapshot.providers());
+        Object2LongMap<ArcaneVisChunk> remainingBudgets = new Object2LongOpenHashMap<>();
+        remainingBudgets.putAll(snapshot.availableUnits());
+        Object2IntOpenHashMap<ArcaneVisChunk> reachCounts = countProviderReach(snapshot.providers());
         List<VisDemand> demands = collectDemands(plan, snapshot.providers());
         long usedVis = 0;
         long missingVis = 0;
@@ -75,27 +77,27 @@ public final class ArcaneVisAccountingImpl implements ArcaneVisAccounting {
                 "total missing Vis");
         }
         if (usedVis > 0) {
-            usedItems.add(ArcaneVisKey.INSTANCE, usedVis);
+            addSaturated(usedItems, usedVis, "used Vis counter");
         }
         if (missingVis > 0) {
-            missingItems.add(ArcaneVisKey.INSTANCE, missingVis);
+            addSaturated(missingItems, missingVis, "missing Vis counter");
         }
-        return copyPlan(plan, usedItems, emittedItems, missingItems);
+        return plan;
     }
 
     @Override
     public CraftingPlan sanitize(CraftingPlan plan) {
         Objects.requireNonNull(plan, "plan");
-        KeyCounter usedItems = copyCounter(plan.usedItems());
-        KeyCounter emittedItems = copyCounter(plan.emittedItems());
-        KeyCounter missingItems = copyCounter(plan.missingItems());
+        KeyCounter usedItems = plan.usedItems();
+        KeyCounter emittedItems = plan.emittedItems();
+        KeyCounter missingItems = plan.missingItems();
         if (emittedItems.get(ArcaneVisKey.INSTANCE) != 0) {
             ThELog.error("Decorated crafting plan unexpectedly contains emitted Arcane Vis; removing it before CPU submission");
         }
         usedItems.remove(ArcaneVisKey.INSTANCE);
         emittedItems.remove(ArcaneVisKey.INSTANCE);
         missingItems.remove(ArcaneVisKey.INSTANCE);
-        return copyPlan(plan, usedItems, emittedItems, missingItems);
+        return plan;
     }
 
     private void removeUnexpectedBaseVis(KeyCounter counter, String counterName) {
@@ -159,8 +161,8 @@ public final class ArcaneVisAccountingImpl implements ArcaneVisAccounting {
 
     private long allocateCrafts(
         VisDemand demand,
-        Map<ArcaneVisChunk, Long> budgets,
-        Map<ArcaneVisChunk, Integer> reachCounts) {
+        Object2LongMap<ArcaneVisChunk> budgets,
+        Object2IntMap<ArcaneVisChunk> reachCounts) {
         long remainingCrafts = demand.craftCount();
         List<ArcaneVisProviderSnapshot> candidates = new ArrayList<>(demand.candidates());
         while (remainingCrafts > 0) {
@@ -189,8 +191,8 @@ public final class ArcaneVisAccountingImpl implements ArcaneVisAccounting {
     private int compareProviders(
         ArcaneVisProviderSnapshot left,
         ArcaneVisProviderSnapshot right,
-        Map<ArcaneVisChunk, Long> budgets,
-        Map<ArcaneVisChunk, Integer> reachCounts) {
+        Object2LongMap<ArcaneVisChunk> budgets,
+        Object2IntMap<ArcaneVisChunk> reachCounts) {
         long leftExclusive = providerBudget(left, budgets, true, reachCounts);
         long rightExclusive = providerBudget(right, budgets, true, reachCounts);
         int comparison = Long.compare(rightExclusive, leftExclusive);
@@ -204,13 +206,13 @@ public final class ArcaneVisAccountingImpl implements ArcaneVisAccounting {
 
     private long providerBudget(
         ArcaneVisProviderSnapshot provider,
-        Map<ArcaneVisChunk, Long> budgets,
+        Object2LongMap<ArcaneVisChunk> budgets,
         boolean exclusiveOnly,
-        Map<ArcaneVisChunk, Integer> reachCounts) {
+        Object2IntMap<ArcaneVisChunk> reachCounts) {
         long total = 0;
         for (ArcaneVisChunk chunk : provider.reachableChunks()) {
-            if (!exclusiveOnly || reachCounts.getOrDefault(chunk, 0) == 1) {
-                total = saturatedAdd(total, budgets.getOrDefault(chunk, 0L), "provider chunk budget");
+            if (!exclusiveOnly || reachCounts.getInt(chunk) == 1) {
+                total = saturatedAdd(total, budgets.getLong(chunk), "provider chunk budget");
             }
         }
         return total;
@@ -219,15 +221,17 @@ public final class ArcaneVisAccountingImpl implements ArcaneVisAccounting {
     private void drainProvider(
         ArcaneVisProviderSnapshot provider,
         long units,
-        Map<ArcaneVisChunk, Long> budgets,
-        Map<ArcaneVisChunk, Integer> reachCounts) {
+        Object2LongMap<ArcaneVisChunk> budgets,
+        Object2IntMap<ArcaneVisChunk> reachCounts) {
         List<ArcaneVisChunk> chunks = new ArrayList<>(provider.reachableChunks());
         chunks.sort(Comparator
-            .comparingInt((ArcaneVisChunk chunk) -> reachCounts.getOrDefault(chunk, 0))
-            .thenComparing(Comparator.naturalOrder()));
+            .comparingInt((ArcaneVisChunk chunk) -> reachCounts.getInt(chunk))
+            .thenComparing(Comparator.comparingInt(ArcaneVisChunk::dimension)
+                .thenComparingInt(ArcaneVisChunk::x)
+                .thenComparingInt(ArcaneVisChunk::z)));
         long remaining = units;
         for (ArcaneVisChunk chunk : chunks) {
-            long available = budgets.getOrDefault(chunk, 0L);
+            long available = budgets.getLong(chunk);
             long drained = Math.min(available, remaining);
             budgets.put(chunk, available - drained);
             remaining -= drained;
@@ -239,39 +243,20 @@ public final class ArcaneVisAccountingImpl implements ArcaneVisAccounting {
             provider.stableId(), remaining);
     }
 
-    private Map<ArcaneVisChunk, Integer> countProviderReach(List<ArcaneVisProviderSnapshot> providers) {
-        Map<ArcaneVisChunk, Integer> reachCounts = new HashMap<>();
+    private Object2IntOpenHashMap<ArcaneVisChunk> countProviderReach(List<ArcaneVisProviderSnapshot> providers) {
+        Object2IntOpenHashMap<ArcaneVisChunk> reachCounts = new Object2IntOpenHashMap<>();
+        reachCounts.defaultReturnValue(0);
         for (ArcaneVisProviderSnapshot provider : providers) {
             for (ArcaneVisChunk chunk : provider.reachableChunks()) {
-                reachCounts.merge(chunk, 1, Integer::sum);
+                reachCounts.addTo(chunk, 1);
             }
         }
         return reachCounts;
     }
 
-    private CraftingPlan copyPlan(
-        CraftingPlan plan,
-        KeyCounter usedItems,
-        KeyCounter emittedItems,
-        KeyCounter missingItems) {
-        return new CraftingPlan(
-            plan.finalOutput(),
-            plan.bytes(),
-            plan.simulation(),
-            plan.multiplePaths(),
-            usedItems,
-            emittedItems,
-            missingItems,
-            plan.intermediateFinalOutputAmount(),
-            plan.patternTimes(),
-            plan.tree(),
-            plan.temporaryProviders());
-    }
-
-    private KeyCounter copyCounter(KeyCounter original) {
-        KeyCounter copy = KeyCounter.saturating();
-        copy.addAll(Objects.requireNonNull(original, "plan counter"));
-        return copy;
+    private void addSaturated(KeyCounter counter, long amount, String context) {
+        long current = counter.get(ArcaneVisKey.INSTANCE);
+        counter.set(ArcaneVisKey.INSTANCE, saturatedAdd(current, amount, context));
     }
 
     private long saturatedAdd(long left, long right, String context) {

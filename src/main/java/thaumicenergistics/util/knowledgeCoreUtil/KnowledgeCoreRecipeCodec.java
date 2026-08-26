@@ -5,7 +5,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Defines the single NBT contract used to persist and project Knowledge Core recipes.
@@ -42,15 +41,15 @@ public interface KnowledgeCoreRecipeCodec {
     /**
      * Reads one recipe from a Knowledge Core root tag.
      *
-     * <p>Malformed external data is logged and returned as an empty result so a damaged core cannot break AE2's
+     * <p>Malformed external data is logged and reported as null so a damaged core cannot break AE2's
      * crafting-provider refresh.</p>
      *
      * @param knowledgeCoreTag root tag owned by a Knowledge Core stack
      * @param recipeSlot       non-negative recipe slot to inspect
-     * @return the decoded recipe, or an empty result when the slot is absent or damaged
+     * @return the decoded recipe, or null when the slot is absent or damaged
      * @throws IllegalArgumentException when {@code recipeSlot} is negative
      */
-    Optional<KnowledgeCoreUtil.Recipe> getRecipe(NBTTagCompound knowledgeCoreTag, int recipeSlot);
+    @Nullable KnowledgeCoreUtil.Recipe getRecipe(NBTTagCompound knowledgeCoreTag, int recipeSlot);
 
     /**
      * Reads every valid recipe in ascending Knowledge Core slot order.
@@ -92,9 +91,9 @@ public interface KnowledgeCoreRecipeCodec {
      *
      * @param recipeTag         encoded recipe compound
      * @param sourceDescription concise location included in corruption logs
-     * @return the decoded recipe, or an empty result after malformed data has been logged
+     * @return the decoded recipe, or null after malformed data has been logged
      */
-    Optional<KnowledgeCoreUtil.Recipe> decodeRecipe(NBTTagCompound recipeTag, String sourceDescription);
+    @Nullable KnowledgeCoreUtil.Recipe decodeRecipe(NBTTagCompound recipeTag, String sourceDescription);
 
     /**
      * Copies every root value except recipe data.

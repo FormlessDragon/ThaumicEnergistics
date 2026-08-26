@@ -17,6 +17,8 @@ import ae2.api.networking.ticking.TickRateModulation;
 import ae2.api.networking.ticking.TickingRequest;
 import ae2.api.stacks.AEItemKey;
 import ae2.api.stacks.KeyCounter;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import ae2.api.storage.MEStorage;
 import ae2.api.upgrades.IUpgradeInventory;
 import ae2.api.upgrades.IUpgradeableObject;
@@ -57,12 +59,12 @@ import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCorePatternProjection;
 import thaumicenergistics.util.TCUtil;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -573,7 +575,7 @@ public class TileArcaneAssembler extends AENetworkedTile
         boolean visAvailable = this.getWorld() != null && this.getWorldVis() >= requiredVis;
         MEStorage inventory = this.getNetworkStorage();
         Map<String, Boolean> availability = new HashMap<>();
-        Map<Aspect, Long> requirements = this.collectAspectRequirements(recipe, multiplier, availability);
+        Object2LongOpenHashMap<Aspect> requirements = this.collectAspectRequirements(recipe, multiplier, availability);
         boolean requirementsMissing = this.missingAspect;
 
         if (inventory == null) {
@@ -582,12 +584,12 @@ public class TileArcaneAssembler extends AENetworkedTile
             return false;
         }
 
-        for (Map.Entry<Aspect, Long> requirement : requirements.entrySet()) {
+        for (Object2LongMap.Entry<Aspect> requirement : requirements.object2LongEntrySet()) {
             AEEssentiaKey key = AEEssentiaKey.of(requirement.getKey());
             long extracted = key == null
                 ? 0
-                : inventory.extract(key, requirement.getValue(), Actionable.SIMULATE, this.src);
-            boolean available = extracted >= requirement.getValue();
+                : inventory.extract(key, requirement.getLongValue(), Actionable.SIMULATE, this.src);
+            boolean available = extracted >= requirement.getLongValue();
             availability.put(requirement.getKey().getTag(), available);
             requirementsMissing |= !available;
         }
@@ -596,13 +598,13 @@ public class TileArcaneAssembler extends AENetworkedTile
             return false;
         }
 
-        Map<Aspect, Long> extractedAspects = new LinkedHashMap<>();
-        for (Map.Entry<Aspect, Long> requirement : requirements.entrySet()) {
+        Object2LongOpenHashMap<Aspect> extractedAspects = new Object2LongOpenHashMap<>();
+        for (Object2LongMap.Entry<Aspect> requirement : requirements.object2LongEntrySet()) {
             AEEssentiaKey key = AEEssentiaKey.of(requirement.getKey());
             long extracted = key == null
                 ? 0
-                : inventory.extract(key, requirement.getValue(), Actionable.MODULATE, this.src);
-            if (extracted < requirement.getValue()) {
+                : inventory.extract(key, requirement.getLongValue(), Actionable.MODULATE, this.src);
+            if (extracted < requirement.getLongValue()) {
                 if (extracted > 0) {
                     extractedAspects.put(requirement.getKey(), extracted);
                 }
@@ -623,12 +625,12 @@ public class TileArcaneAssembler extends AENetworkedTile
         return true;
     }
 
-    private Map<Aspect, Long> collectAspectRequirements(
+    private Object2LongOpenHashMap<Aspect> collectAspectRequirements(
         CurrentRecipeSnapshot recipe,
         int multiplier,
         Map<String, Boolean> availability) {
         this.missingAspect = false;
-        Map<Aspect, Long> requirements = new LinkedHashMap<>();
+        Object2LongOpenHashMap<Aspect> requirements = new Object2LongOpenHashMap<>();
         for (ItemStack aspectStack : recipe.aspectIngredients()) {
             if (aspectStack.isEmpty()) {
                 continue;
@@ -640,22 +642,22 @@ public class TileArcaneAssembler extends AENetworkedTile
                 continue;
             }
             long amount = (long) aspectStack.getCount() * multiplier;
-            requirements.merge(aspect, amount, Long::sum);
+            requirements.addTo(aspect, amount);
             availability.put(aspect.getTag(), false);
         }
         return requirements;
     }
 
-    private void restoreExtractedAspects(MEStorage inventory, Map<Aspect, Long> extractedAspects) {
-        for (Map.Entry<Aspect, Long> extracted : extractedAspects.entrySet()) {
+    private void restoreExtractedAspects(MEStorage inventory, Object2LongMap<Aspect> extractedAspects) {
+        for (Object2LongMap.Entry<Aspect> extracted : extractedAspects.object2LongEntrySet()) {
             AEEssentiaKey key = AEEssentiaKey.of(extracted.getKey());
-            if (key == null || extracted.getValue() <= 0) {
+            if (key == null || extracted.getLongValue() <= 0) {
                 continue;
             }
-            long restored = inventory.insert(key, extracted.getValue(), Actionable.MODULATE, this.src);
-            if (restored != extracted.getValue()) {
+            long restored = inventory.insert(key, extracted.getLongValue(), Actionable.MODULATE, this.src);
+            if (restored != extracted.getLongValue()) {
                 ThELog.error("Arcane Assembler @ {} could not restore {} {} essentia after a failed craft acceptance",
-                    this.getPos(), extracted.getValue() - restored, extracted.getKey().getTag());
+                    this.getPos(), extracted.getLongValue() - restored, extracted.getKey().getTag());
             }
         }
     }
@@ -1112,12 +1114,13 @@ public class TileArcaneAssembler extends AENetworkedTile
      */
     private final class ArcaneAssemblerUpgradeInventory extends AppEngInternalInventory implements IUpgradeInventory {
 
-        private final Map<Item, Integer> installedUpgrades = new HashMap<>();
+        private final Object2IntOpenHashMap<Item> installedUpgrades = new Object2IntOpenHashMap<>();
         private boolean installedUpgradesValid;
 
-        private ArcaneAssemblerUpgradeInventory() {
-            super(TileArcaneAssembler.this, 5, 1);
-            this.setFilter(new UpgradeFilter());
+    private ArcaneAssemblerUpgradeInventory() {
+        super(TileArcaneAssembler.this, 5, 1);
+        this.installedUpgrades.defaultReturnValue(0);
+        this.setFilter(new UpgradeFilter());
         }
 
         @Override
@@ -1128,7 +1131,7 @@ public class TileArcaneAssembler extends AENetworkedTile
         @Override
         public int getInstalledUpgrades(Item upgrade) {
             this.ensureInstalledUpgrades();
-            return this.installedUpgrades.getOrDefault(upgrade, 0);
+            return this.installedUpgrades.getInt(upgrade);
         }
 
         @Override
@@ -1158,7 +1161,7 @@ public class TileArcaneAssembler extends AENetworkedTile
                 Item item = stack.getItem();
                 int maxInstalled = this.getMaxInstalled(item);
                 if (maxInstalled > 0) {
-                    int installed = this.installedUpgrades.getOrDefault(item, 0) + stack.getCount();
+                int installed = this.installedUpgrades.getInt(item) + stack.getCount();
                     this.installedUpgrades.put(item, Math.min(maxInstalled, installed));
                 }
             }

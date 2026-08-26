@@ -3,7 +3,7 @@ package thaumicenergistics.core;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
 import thaumicenergistics.core.definitions.ThEItems;
-import thaumicenergistics.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Tags;
 
 /**
  * Contains useful constant values
@@ -34,7 +34,7 @@ public class ModGlobals {
         }
     };
 
-    public static final String RESEARCH_CATEGORY = Reference.MOD_ID.toUpperCase();
+    public static final String RESEARCH_CATEGORY = Tags.MOD_ID.toUpperCase();
 
     public static final String MOD_ID_AE2 = "ae2";
 

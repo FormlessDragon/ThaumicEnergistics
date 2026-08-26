@@ -3,6 +3,7 @@ package thaumicenergistics.container.part;
 import ae2.api.config.Actionable;
 import ae2.api.inventories.InternalInventory;
 import ae2.api.stacks.AEItemKey;
+import ae2.api.stacks.AEKey2LongMap;
 import ae2.api.storage.MEStorage;
 import ae2.api.storage.StorageHelper;
 import ae2.api.upgrades.IUpgradeInventory;
@@ -53,9 +54,9 @@ import thaumicenergistics.core.ThELog;
 import ae2.util.inv.AppEngInternalInventory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
 public class ContainerArcaneTerm extends ContainerMEStorage implements ICraftingContainer {
 
@@ -874,7 +875,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     private static final class JEITransferAvailability {
-        private final Map<AEItemKey, Long> available = new HashMap<>();
+        private final AEKey2LongMap available = new AEKey2LongMap.OpenHashMap();
 
         private static JEITransferAvailability from(ContainerArcaneTerm container, List<JEITransferSlot> transferSlots) {
             JEITransferAvailability availability = new JEITransferAvailability();
@@ -888,22 +889,22 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
                 return;
             }
 
-            Map<AEItemKey, Long> requested = new HashMap<>();
+            Object2LongOpenHashMap<AEItemKey> requested = new Object2LongOpenHashMap<>();
             for (JEITransferSlot transferSlot : transferSlots) {
                 for (ItemStack stack : transferSlot.alternatives) {
                     AEItemKey key = AEItemKey.of(stack);
                     if (key != null) {
-                        requested.merge(key, (long) stack.getCount(), Long::sum);
+                        requested.addTo(key, stack.getCount());
                     }
                 }
             }
 
-            for (Map.Entry<AEItemKey, Long> entry : requested.entrySet()) {
-                int amount = (int) Math.min(entry.getValue(), Integer.MAX_VALUE);
+            for (Object2LongMap.Entry<AEItemKey> entry : requested.object2LongEntrySet()) {
+                int amount = (int) Math.min(entry.getLongValue(), Integer.MAX_VALUE);
                 ItemStack extracted = container.extractItem(container.storage, entry.getKey().toStack(1), amount,
                         Actionable.SIMULATE);
                 if (!extracted.isEmpty()) {
-                    this.available.merge(entry.getKey(), (long) extracted.getCount(), Long::sum);
+                    this.available.addTo(entry.getKey(), extracted.getCount());
                 }
             }
         }
@@ -920,7 +921,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         private void add(ItemStack stack) {
             AEItemKey key = stack == null ? null : AEItemKey.of(stack);
             if (key != null && stack.getCount() > 0) {
-                this.available.merge(key, (long) stack.getCount(), Long::sum);
+                this.available.addTo(key, stack.getCount());
             }
         }
 
@@ -964,7 +965,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         private void restore(ItemStack stack) {
             AEItemKey key = AEItemKey.of(stack);
             if (key != null) {
-                this.available.merge(key, (long) stack.getCount(), Long::sum);
+                this.available.addTo(key, stack.getCount());
             }
         }
     }

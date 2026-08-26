@@ -3,10 +3,10 @@ package thaumicenergistics.util;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 
-import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.List;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
+import javax.annotation.Nonnull;
 /**
  * @author BrockWS
  * @author Alex811
@@ -39,7 +39,7 @@ public class ItemHandlerUtil {
             return ItemStack.EMPTY;
 
         ItemStack copy = original.copy();
-        List<Integer> emptySlots = new ArrayList<>();
+        IntList emptySlots = new IntArrayList();
 
         for (int slot = minValidSlot; slot < maxValidSlot; slot++) {   // insert into matching stacks
             ItemStack existing = handler.getStackInSlot(slot);

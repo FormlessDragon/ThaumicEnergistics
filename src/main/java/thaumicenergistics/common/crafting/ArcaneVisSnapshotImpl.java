@@ -1,9 +1,12 @@
 package thaumicenergistics.common.crafting;
 
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMaps;
+
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,14 +17,14 @@ import java.util.Set;
  */
 public final class ArcaneVisSnapshotImpl implements ArcaneVisSnapshot {
 
-    private static final ArcaneVisSnapshot EMPTY = new ArcaneVisSnapshotImpl(List.of(), Map.of());
+    private static final ArcaneVisSnapshot EMPTY = new ArcaneVisSnapshotImpl(List.of(), Object2LongMaps.emptyMap());
 
     private final List<ArcaneVisProviderSnapshot> providers;
-    private final Map<ArcaneVisChunk, Long> availableUnits;
+    private final Object2LongMap<ArcaneVisChunk> availableUnits;
 
     public ArcaneVisSnapshotImpl(
         List<ArcaneVisProviderSnapshot> providers,
-        Map<ArcaneVisChunk, Long> availableUnits) {
+        Object2LongMap<ArcaneVisChunk> availableUnits) {
         Objects.requireNonNull(providers, "providers");
         Objects.requireNonNull(availableUnits, "availableUnits");
 
@@ -34,21 +37,21 @@ public final class ArcaneVisSnapshotImpl implements ArcaneVisSnapshot {
             }
             providerCopy.add(checked);
         }
-        providerCopy.sort(java.util.Comparator.comparing(ArcaneVisProviderSnapshot::stableId));
+        providerCopy.sort(Comparator.comparing(ArcaneVisProviderSnapshot::stableId));
         this.providers = List.copyOf(providerCopy);
 
-        List<Map.Entry<ArcaneVisChunk, Long>> budgets = new ArrayList<>(availableUnits.entrySet());
+        List<Object2LongMap.Entry<ArcaneVisChunk>> budgets = new ArrayList<>(availableUnits.object2LongEntrySet());
         budgets.sort(Map.Entry.comparingByKey());
-        Map<ArcaneVisChunk, Long> budgetCopy = new LinkedHashMap<>();
-        for (Map.Entry<ArcaneVisChunk, Long> budget : budgets) {
+        Object2LongMap<ArcaneVisChunk> budgetCopy = new Object2LongLinkedOpenHashMap<>();
+        for (var budget : budgets) {
             ArcaneVisChunk chunk = Objects.requireNonNull(budget.getKey(), "availableUnits key");
-            long amount = Objects.requireNonNull(budget.getValue(), "availableUnits value");
+            long amount = budget.getLongValue();
             if (amount < 0) {
                 throw new IllegalArgumentException("Arcane Vis chunk budget cannot be negative: " + chunk);
             }
             budgetCopy.put(chunk, amount);
         }
-        this.availableUnits = Collections.unmodifiableMap(budgetCopy);
+        this.availableUnits = Object2LongMaps.unmodifiable(budgetCopy);
     }
 
     public static ArcaneVisSnapshot empty() {
@@ -61,7 +64,7 @@ public final class ArcaneVisSnapshotImpl implements ArcaneVisSnapshot {
     }
 
     @Override
-    public Map<ArcaneVisChunk, Long> availableUnits() {
+    public Object2LongMap<ArcaneVisChunk> availableUnits() {
         return this.availableUnits;
     }
 }

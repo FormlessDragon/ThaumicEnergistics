@@ -86,7 +86,7 @@ public abstract class KnowledgeCoreUtil {
     public static Recipe getRecipe(ItemStack knowledgeCoreStack, int slot) {
         validateRecipeSlot(knowledgeCoreStack, slot);
         NBTTagCompound nbt = knowledgeCoreStack.getTagCompound();
-        return nbt == null ? null : RECIPE_CODEC.getRecipe(nbt, slot).orElse(null);
+        return nbt == null ? null : RECIPE_CODEC.getRecipe(nbt, slot);
     }
 
     public static HashMap<ItemStack, InternalInventory> getRecipeMap(ItemStack knowledgeCoreStack) {

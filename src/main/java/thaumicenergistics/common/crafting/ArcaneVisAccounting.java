@@ -24,19 +24,19 @@ public interface ArcaneVisAccounting {
     long availableUnits(float vis);
 
     /**
-     * Copies a concrete AE2 plan and adds atomically allocatable Vis to used and missing statistics.
+     * Adds atomically allocatable Vis to the mutable counters of a concrete AE2 plan.
      *
      * @param plan     the completed AE2 calculation result
      * @param snapshot the immutable provider/aura snapshot captured before worker execution
-     * @return a concrete copied plan containing Vis statistics
+     * @return the same plan, with Vis statistics added to its counters
      */
     CraftingPlan decorate(CraftingPlan plan, ArcaneVisSnapshot snapshot);
 
     /**
-     * Copies a decorated plan while removing only the synthetic Vis key before CPU submission.
+     * Removes only the synthetic Vis key from a decorated plan before CPU submission.
      *
      * @param plan plan previously shown to the submitting player
-     * @return a concrete CPU-safe copied plan
+     * @return the same plan, after its counters are made CPU-safe
      */
     CraftingPlan sanitize(CraftingPlan plan);
 }

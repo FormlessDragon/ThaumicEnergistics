@@ -4,10 +4,8 @@ import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import thaumicenergistics.thaumicenergistics.Reference;
-
-import java.util.HashMap;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import thaumicenergistics.thaumicenergistics.Tags;
 
 /**
  * TODO: Allow config being changed from api
@@ -15,7 +13,7 @@ import java.util.Map;
  * @author BrockWS
  * @author Alex811
  */
-@Config(modid = Reference.MOD_ID, name = Reference.MOD_NAME)
+@Config(modid = Tags.MOD_ID, name = Tags.MOD_NAME)
 public class ThEConfig {
 
     @Config.Name("Essentia Container Capacity")
@@ -23,7 +21,7 @@ public class ThEConfig {
         Specifies how much a item that holds essentia can hold
         For filling with Essentia Terminal
         Best to set it to how much the item can actually store""")
-    public static Map<String, Integer> essentiaContainerCapacity = new HashMap<>();
+    public static Object2IntOpenHashMap<String> essentiaContainerCapacity = new Object2IntOpenHashMap<>();
 
     @Config.Name("Tick Rates")
     public static final TickRates tickRates = new TickRates();
@@ -44,7 +42,7 @@ public class ThEConfig {
         if (INSTANCE != null) {
             throw new IllegalStateException("ThEConfig has already been initialized");
         }
-        ConfigManager.sync(Reference.MOD_ID, Config.Type.INSTANCE);
+        ConfigManager.sync(Tags.MOD_ID, Config.Type.INSTANCE);
         INSTANCE = new ThEConfig();
     }
 
@@ -56,16 +54,16 @@ public class ThEConfig {
     }
 
     public void save() {
-        ConfigManager.sync(Reference.MOD_ID, Config.Type.INSTANCE);
+        ConfigManager.sync(Tags.MOD_ID, Config.Type.INSTANCE);
     }
 
     @SubscribeEvent
     public void onConfigChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event) {
-        if(!Reference.MOD_ID.equals(event.getModID())) {
+        if(!Tags.MOD_ID.equals(event.getModID())) {
             return;
         }
 
-        ConfigManager.sync(Reference.MOD_ID, Config.Type.INSTANCE);
+        ConfigManager.sync(Tags.MOD_ID, Config.Type.INSTANCE);
     }
 
     public static class Client {
@@ -108,8 +106,8 @@ public class ThEConfig {
         essentiaContainerCapacity.put("thaumcraft:jar_void", 250);
     }
 
-    public Map<String, Integer> essentiaContainerCapacity() {
-        return new HashMap<>(essentiaContainerCapacity);
+    public Object2IntOpenHashMap<String> essentiaContainerCapacity() {
+        return new Object2IntOpenHashMap<>(essentiaContainerCapacity);
     }
 
     public int tickTimeArcaneAssemblerMin() {

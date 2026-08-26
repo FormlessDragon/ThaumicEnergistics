@@ -1,5 +1,8 @@
 package thaumicenergistics.integration.jei;
 
+import ae2.api.stacks.AEKey2LongMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import mcp.MethodsReturnNonnullByDefault;
 import ae2.api.inventories.InternalInventory;
 import ae2.api.stacks.AEItemKey;
@@ -20,7 +23,6 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -61,7 +63,7 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
     }
 
     protected IRecipeTransferError preflightTransfer(C container, ExtractedArcaneRecipe recipe) {
-        List<Integer> missingSlots = findMissingIngredientSlots(container, recipe);
+        IntList missingSlots = findMissingIngredientSlots(container, recipe);
         if (missingSlots.isEmpty()) {
             return null;
         }
@@ -71,8 +73,8 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
     private ExtractedArcaneRecipe extractRecipe(Map<Integer, ? extends IGuiIngredient<ItemStack>> ingredients) {
         List<List<ItemStack>> normal = emptySlots(ArcaneRecipeTransferPayload.NORMAL_SLOT_COUNT);
         List<List<ItemStack>> crystal = emptySlots(ArcaneRecipeTransferPayload.CRYSTAL_SLOT_COUNT);
-        List<Integer> normalJeiSlots = emptySlotIds(ArcaneRecipeTransferPayload.NORMAL_SLOT_COUNT);
-        List<Integer> crystalJeiSlots = emptySlotIds(ArcaneRecipeTransferPayload.CRYSTAL_SLOT_COUNT);
+        IntList normalJeiSlots = emptySlotIds(ArcaneRecipeTransferPayload.NORMAL_SLOT_COUNT);
+        IntList crystalJeiSlots = emptySlotIds(ArcaneRecipeTransferPayload.CRYSTAL_SLOT_COUNT);
         int nextNormalSlot = 0;
         int nextCrystalSlot = 0;
 
@@ -134,27 +136,27 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
         alternatives.add(stack.copy());
     }
 
-    private List<Integer> findMissingIngredientSlots(ContainerArcaneTerm container, ExtractedArcaneRecipe recipe) {
+    private IntList findMissingIngredientSlots(ContainerArcaneTerm container, ExtractedArcaneRecipe recipe) {
         AvailableIngredients available = AvailableIngredients.from(container);
         if (available.canSatisfy(recipe.normal(), recipe.crystal())) {
-            return List.of();
+            return new IntArrayList();
         }
 
-        List<Integer> missingSlots = new ArrayList<>();
+        IntList missingSlots = new IntArrayList();
         collectMissingSlots(available, missingSlots, recipe.normal(), recipe.normalJeiSlots());
         collectMissingSlots(available, missingSlots, recipe.crystal(), recipe.crystalJeiSlots());
         return missingSlots;
     }
 
-    private void collectMissingSlots(AvailableIngredients available, List<Integer> missingSlots,
-                                     List<List<ItemStack>> slots, List<Integer> jeiSlotIds) {
+    private void collectMissingSlots(AvailableIngredients available, IntList missingSlots,
+                                     List<List<ItemStack>> slots, IntList jeiSlotIds) {
         for (int i = 0; i < slots.size(); i++) {
             List<ItemStack> alternatives = slots.get(i);
             if (alternatives.isEmpty()) {
                 continue;
             }
             if (!available.consumeAny(alternatives)) {
-                int jeiSlot = jeiSlotIds.get(i);
+                int jeiSlot = jeiSlotIds.getInt(i);
                 missingSlots.add(jeiSlot >= 0 ? jeiSlot : i + 1);
             }
         }
@@ -168,8 +170,8 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
         return slots;
     }
 
-    private static List<Integer> emptySlotIds(int size) {
-        List<Integer> slotIds = new ArrayList<>(size);
+    private static IntList emptySlotIds(int size) {
+        IntList slotIds = new IntArrayList(size);
         for (int i = 0; i < size; i++) {
             slotIds.add(-1);
         }
@@ -177,12 +179,12 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
     }
 
     protected record ExtractedArcaneRecipe(List<List<ItemStack>> normal, List<List<ItemStack>> crystal,
-                                           List<Integer> normalJeiSlots, List<Integer> crystalJeiSlots) {
+                                           IntList normalJeiSlots, IntList crystalJeiSlots) {
     }
 
     private static final class AvailableIngredients {
 
-        private final Map<AEItemKey, Long> available = new HashMap<>();
+        private final AEKey2LongMap available = new AEKey2LongMap.OpenHashMap();
 
         private static AvailableIngredients from(ContainerArcaneTerm container) {
             AvailableIngredients ingredients = new AvailableIngredients();
@@ -218,7 +220,7 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
             }
             for (GridInventoryEntry entry : clientRepo.getAllEntries()) {
                 if (entry != null && entry.what() instanceof AEItemKey key && entry.storedAmount() > 0) {
-                    ingredients.available.merge(key, entry.storedAmount(), Long::sum);
+                    ingredients.available.addTo(key, entry.storedAmount());
                 }
             }
         }
@@ -226,7 +228,7 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
         private void add(ItemStack stack) {
             AEItemKey key = stack == null ? null : AEItemKey.of(stack);
             if (key != null && stack.getCount() > 0) {
-                this.available.merge(key, (long) stack.getCount(), Long::sum);
+                this.available.addTo(key, stack.getCount());
             }
         }
 
@@ -254,7 +256,7 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
                 if (key == null) {
                     continue;
                 }
-                long amount = this.available.getOrDefault(key, 0L);
+                long amount = this.available.getLong(key);
                 int required = alternative.getCount();
                 if (amount < required) {
                     continue;
@@ -276,7 +278,7 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
                 if (key == null) {
                     continue;
                 }
-                long amount = this.available.getOrDefault(key, 0L);
+                long amount = this.available.getLong(key);
                 if (amount >= stack.getCount()) {
                     this.available.put(key, amount - stack.getCount());
                     return true;

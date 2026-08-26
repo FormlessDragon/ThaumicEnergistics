@@ -5,7 +5,7 @@ import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
-import thaumicenergistics.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Tags;
 
 /**
  * @author Alex811
@@ -15,7 +15,7 @@ import thaumicenergistics.thaumicenergistics.Reference;
 public final class ThETextures {
 
     public static final ResourceLocation KNOWLEDGE_CORE_SLOT =
-            new ResourceLocation(Reference.MOD_ID, "gui/slot/knowledge_core");
+            new ResourceLocation(Tags.MOD_ID, "gui/slot/knowledge_core");
 
     private ThETextures() {
     }

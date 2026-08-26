@@ -2,7 +2,7 @@ package thaumicenergistics.core.registries;
 
 import ae2.api.stacks.AEKeyTypes;
 import thaumicenergistics.common.me.key.AEEssentiaKeys;
-import thaumicenergistics.common.me.key.ArcaneVisKeys;
+import thaumicenergistics.common.me.key.ArcaneVisKeyType;
 import thaumicenergistics.common.strategy.EssentiaContainerItemStrategy;
 import thaumicenergistics.common.strategy.EssentiaExternalStorageStrategy;
 import thaumicenergistics.common.strategy.EssentiaStackExportStrategy;
@@ -22,7 +22,7 @@ public class AERegistries {
         }
 
         AEKeyTypes.register(AEEssentiaKeys.INSTANCE);
-        AEKeyTypes.register(ArcaneVisKeys.INSTANCE);
+        AEKeyTypes.register(ArcaneVisKeyType.INSTANCE);
         EssentiaContainerItemStrategy.register();
         EssentiaStackImportStrategy.register();
         EssentiaStackExportStrategy.register();

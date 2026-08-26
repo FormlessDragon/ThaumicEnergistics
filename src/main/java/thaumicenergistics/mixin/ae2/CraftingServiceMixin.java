@@ -21,10 +21,7 @@ public abstract class CraftingServiceMixin {
     private static final ArcaneVisAccounting THEENG$VIS_ACCOUNTING = new ArcaneVisAccountingImpl();
 
     @ModifyArg(
-        method = "submitJob(Lae2/api/networking/crafting/ICraftingPlan;"
-            + "Lae2/api/networking/crafting/ICraftingRequester;Lae2/api/networking/crafting/ICraftingCPU;Z"
-            + "Lae2/api/networking/security/IActionSource;ZZ)"
-            + "Lae2/api/networking/crafting/ICraftingSubmitResult;",
+        method = "submitJob(Lae2/api/networking/crafting/ICraftingPlan;Lae2/api/networking/crafting/ICraftingRequester;Lae2/api/networking/crafting/ICraftingCPU;ZLae2/api/networking/security/IActionSource;ZZ)Lae2/api/networking/crafting/ICraftingSubmitResult;",
         at = @At(
             value = "INVOKE",
             target = "Lae2/me/cluster/implementations/CraftingCPUCluster;mergeJob("
@@ -38,10 +35,7 @@ public abstract class CraftingServiceMixin {
     }
 
     @ModifyArg(
-        method = "submitJob(Lae2/api/networking/crafting/ICraftingPlan;"
-            + "Lae2/api/networking/crafting/ICraftingRequester;Lae2/api/networking/crafting/ICraftingCPU;Z"
-            + "Lae2/api/networking/security/IActionSource;ZZ)"
-            + "Lae2/api/networking/crafting/ICraftingSubmitResult;",
+        method = "submitJob(Lae2/api/networking/crafting/ICraftingPlan;Lae2/api/networking/crafting/ICraftingRequester;Lae2/api/networking/crafting/ICraftingCPU;ZLae2/api/networking/security/IActionSource;ZZ)Lae2/api/networking/crafting/ICraftingSubmitResult;",
         at = @At(
             value = "INVOKE",
             target = "Lae2/me/cluster/implementations/CraftingCPUCluster;submitJob("
@@ -61,7 +55,7 @@ public abstract class CraftingServiceMixin {
             return THEENG$VIS_ACCOUNTING.sanitize(concretePlan);
         }
         ThELog.error("AE2 crafting submission received unsupported plan type {}; Arcane Vis cannot be removed",
-            plan == null ? "null" : (Object) plan.getClass().getName());
+            plan == null ? "null" : plan.getClass().getName());
         return plan;
     }
 

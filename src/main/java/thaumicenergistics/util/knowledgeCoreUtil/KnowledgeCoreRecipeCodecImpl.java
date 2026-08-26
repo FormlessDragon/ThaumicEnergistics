@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-
 /**
  * Strict sparse-NBT implementation used by the Knowledge Core codec assembly point in {@link KnowledgeCoreUtil}.
  */
@@ -40,6 +38,11 @@ final class KnowledgeCoreRecipeCodecImpl implements KnowledgeCoreRecipeCodec {
      * Recipe field holding the finite, non-negative Vis requirement.
      */
     private static final String VIS_COST_TAG = "visCost";
+
+    /**
+     * Sentinel returned by {@link #parseRecipeSlot(String)}; valid slots are always non-negative.
+     */
+    private static final int INVALID_RECIPE_SLOT = -1;
 
     @Override
     public void setRecipe(NBTTagCompound knowledgeCoreTag, int recipeSlot,
@@ -66,25 +69,25 @@ final class KnowledgeCoreRecipeCodecImpl implements KnowledgeCoreRecipeCodec {
     }
 
     @Override
-    public Optional<KnowledgeCoreUtil.Recipe> getRecipe(NBTTagCompound knowledgeCoreTag, int recipeSlot) {
+    public @Nullable KnowledgeCoreUtil.Recipe getRecipe(NBTTagCompound knowledgeCoreTag, int recipeSlot) {
         Objects.requireNonNull(knowledgeCoreTag, "knowledgeCoreTag");
         validateNonNegativeRecipeSlot(recipeSlot);
 
-        Optional<NBTTagCompound> recipes = this.getRecipesForRead(knowledgeCoreTag);
-        if (recipes.isEmpty()) {
-            return Optional.empty();
+        NBTTagCompound recipes = this.getRecipesForRead(knowledgeCoreTag);
+        if (recipes == null) {
+            return null;
         }
 
         String recipeKey = Integer.toString(recipeSlot);
-        if (!recipes.get().hasKey(recipeKey)) {
-            return Optional.empty();
+        if (!recipes.hasKey(recipeKey)) {
+            return null;
         }
-        if (!recipes.get().hasKey(recipeKey, Constants.NBT.TAG_COMPOUND)) {
+        if (!recipes.hasKey(recipeKey, Constants.NBT.TAG_COMPOUND)) {
             ThELog.error("Rejected malformed Knowledge Core recipe slot {}: entry is not a compound", recipeSlot);
-            return Optional.empty();
+            return null;
         }
 
-        return this.decodeRecipe(recipes.get().getCompoundTag(recipeKey),
+        return this.decodeRecipe(recipes.getCompoundTag(recipeKey),
             "Knowledge Core recipe slot " + recipeSlot);
     }
 
@@ -96,33 +99,34 @@ final class KnowledgeCoreRecipeCodecImpl implements KnowledgeCoreRecipeCodec {
                 + recipeSlotCount);
         }
 
-        Optional<NBTTagCompound> recipes = this.getRecipesForRead(knowledgeCoreTag);
-        if (recipes.isEmpty()) {
+        NBTTagCompound recipes = this.getRecipesForRead(knowledgeCoreTag);
+        if (recipes == null) {
             return List.of();
         }
 
         List<StoredRecipe> decodedRecipes = new ArrayList<>();
-        for (String recipeKey : recipes.get().getKeySet()) {
-            Optional<Integer> parsedSlot = this.parseRecipeSlot(recipeKey);
-            if (parsedSlot.isEmpty()) {
+        for (String recipeKey : recipes.getKeySet()) {
+            int recipeSlot = this.parseRecipeSlot(recipeKey);
+            if (recipeSlot == INVALID_RECIPE_SLOT) {
                 continue;
             }
 
-            int recipeSlot = parsedSlot.get();
             if (recipeSlot >= recipeSlotCount) {
                 ThELog.error("Rejected Knowledge Core recipe slot {} outside active capacity {}",
                     recipeSlot, recipeSlotCount);
                 continue;
             }
-            if (!recipes.get().hasKey(recipeKey, Constants.NBT.TAG_COMPOUND)) {
+            if (!recipes.hasKey(recipeKey, Constants.NBT.TAG_COMPOUND)) {
                 ThELog.error("Rejected malformed Knowledge Core recipe slot {}: entry is not a compound",
                     recipeSlot);
                 continue;
             }
 
-            this.decodeRecipe(recipes.get().getCompoundTag(recipeKey),
-                    "Knowledge Core recipe slot " + recipeSlot)
-                .ifPresent(recipe -> decodedRecipes.add(new StoredRecipe(recipeSlot, recipe)));
+            KnowledgeCoreUtil.Recipe decoded = this.decodeRecipe(recipes.getCompoundTag(recipeKey),
+                "Knowledge Core recipe slot " + recipeSlot);
+            if (decoded != null) {
+                decodedRecipes.add(new StoredRecipe(recipeSlot, decoded));
+            }
         }
 
         decodedRecipes.sort(Comparator.comparingInt(StoredRecipe::slot));
@@ -184,17 +188,17 @@ final class KnowledgeCoreRecipeCodecImpl implements KnowledgeCoreRecipeCodec {
     }
 
     @Override
-    public Optional<KnowledgeCoreUtil.Recipe> decodeRecipe(NBTTagCompound recipeTag, String sourceDescription) {
+    public @Nullable KnowledgeCoreUtil.Recipe decodeRecipe(NBTTagCompound recipeTag, String sourceDescription) {
         Objects.requireNonNull(recipeTag, "recipeTag");
         if (sourceDescription == null || sourceDescription.isBlank()) {
             throw new IllegalArgumentException("Knowledge Core recipe source description cannot be blank");
         }
 
         try {
-            return Optional.of(this.decodeRecipeStrict(recipeTag));
+            return this.decodeRecipeStrict(recipeTag);
         } catch (RuntimeException exception) {
             ThELog.error("Rejected malformed " + sourceDescription, exception);
-            return Optional.empty();
+            return null;
         }
     }
 
@@ -305,34 +309,36 @@ final class KnowledgeCoreRecipeCodecImpl implements KnowledgeCoreRecipeCodec {
     /**
      * Resolves the canonical recipes compound at the external-data boundary and excludes a malformed root.
      */
-    private Optional<NBTTagCompound> getRecipesForRead(NBTTagCompound knowledgeCoreTag) {
+    private @Nullable NBTTagCompound getRecipesForRead(NBTTagCompound knowledgeCoreTag) {
         if (!knowledgeCoreTag.hasKey(RECIPES_TAG)) {
-            return Optional.empty();
+            return null;
         }
         if (!knowledgeCoreTag.hasKey(RECIPES_TAG, Constants.NBT.TAG_COMPOUND)) {
             ThELog.error("Rejected malformed Knowledge Core recipes root: value is not a compound");
-            return Optional.empty();
+            return null;
         }
-        return Optional.of(knowledgeCoreTag.getCompoundTag(RECIPES_TAG));
+        return knowledgeCoreTag.getCompoundTag(RECIPES_TAG);
     }
 
     /**
-     * Parses only canonical non-negative decimal recipe keys; no legacy root-key interpretation is performed.
+     * Parses only canonical non-negative decimal recipe keys into a raw slot value, or returns
+     * {@link #INVALID_RECIPE_SLOT} after malformed keys have been logged. No legacy root-key interpretation is
+     * performed.
      */
-    private Optional<Integer> parseRecipeSlot(String recipeKey) {
+    private int parseRecipeSlot(String recipeKey) {
         final int recipeSlot;
         try {
             recipeSlot = Integer.parseInt(recipeKey);
         } catch (NumberFormatException exception) {
             ThELog.error("Rejected malformed Knowledge Core recipe key " + recipeKey, exception);
-            return Optional.empty();
+            return INVALID_RECIPE_SLOT;
         }
 
         if (recipeSlot < 0 || !Integer.toString(recipeSlot).equals(recipeKey)) {
             ThELog.error("Rejected non-canonical Knowledge Core recipe key {}", recipeKey);
-            return Optional.empty();
+            return INVALID_RECIPE_SLOT;
         }
-        return Optional.of(recipeSlot);
+        return recipeSlot;
     }
 
     /**

@@ -20,7 +20,7 @@ import thaumicenergistics.core.registries.AERegistries;
 import thaumicenergistics.init.internal.InitStorageCells;
 import thaumicenergistics.init.internal.InitUpgrades;
 import thaumicenergistics.integration.thaumcraft.ThEThaumcraft;
-import thaumicenergistics.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Tags;
 import thaumicenergistics.command.CommandAddVis;
 import thaumicenergistics.command.CommandDrainVis;
 import thaumicenergistics.core.ModGlobals;
@@ -35,7 +35,7 @@ import java.util.Objects;
  *
  * @author Nividica
  */
-@Mod(modid = Reference.MOD_ID, name = Reference.MOD_NAME, version = Reference.VERSION, dependencies = ModGlobals.MOD_DEPENDENCIES)
+@Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.VERSION, dependencies = ModGlobals.MOD_DEPENDENCIES)
 @Mod.EventBusSubscriber
 public class ThaumicEnergistics {
 
@@ -45,7 +45,7 @@ public class ThaumicEnergistics {
     /**
      * Singleton instance
      */
-    @Mod.Instance(value = Reference.MOD_ID)
+    @Mod.Instance(value = Tags.MOD_ID)
     public static ThaumicEnergistics INSTANCE;
 
     /**
@@ -57,7 +57,7 @@ public class ThaumicEnergistics {
     /**
      * Thaumic Energistics Logger
      */
-    public static Logger LOGGER = LogManager.getLogger(Reference.MOD_NAME);
+    public static Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
 
     private boolean commonBootstrapInitialized;
     private boolean commonSetupInitialized;
@@ -79,7 +79,7 @@ public class ThaumicEnergistics {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         ThEConfig.init();
-        ThELog.info("{} preInit", Reference.MOD_NAME);
+        ThELog.info("{} preInit", Tags.MOD_NAME);
         initializeCommonBootstrap();
         proxy().preInit(event);
     }
@@ -91,7 +91,7 @@ public class ThaumicEnergistics {
      */
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        ThELog.info("{} init", Reference.MOD_NAME);
+        ThELog.info("{} init", Tags.MOD_NAME);
         initializeCommonSetup();
         proxy().init(event);
     }
@@ -103,7 +103,7 @@ public class ThaumicEnergistics {
      */
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
-        ThELog.info("{} postInit", Reference.MOD_NAME);
+        ThELog.info("{} postInit", Tags.MOD_NAME);
         postRegistrationInitialization();
         proxy().postInit(event);
         ThEConfig.instance().save();
@@ -153,7 +153,7 @@ public class ThaumicEnergistics {
     }
 
     public static ResourceLocation id(String id) {
-        return new ResourceLocation(Reference.MOD_ID, id);
+        return new ResourceLocation(Tags.MOD_ID, id);
     }
 
 }

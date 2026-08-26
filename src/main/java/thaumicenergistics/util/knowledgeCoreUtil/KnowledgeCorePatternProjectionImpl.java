@@ -46,9 +46,8 @@ final class KnowledgeCorePatternProjectionImpl implements KnowledgeCorePatternPr
             return null;
         }
 
-        return KnowledgeCoreUtil.getRecipeCodec()
-            .decodeRecipe(tag.getCompoundTag(RECIPE_TAG), "Knowledge Core pattern projection")
-            .map(KnowledgeCoreUtil.KnowledgeCorePatternDetails::new)
-            .orElse(null);
+        KnowledgeCoreUtil.Recipe recipe = KnowledgeCoreUtil.getRecipeCodec()
+            .decodeRecipe(tag.getCompoundTag(RECIPE_TAG), "Knowledge Core pattern projection");
+        return recipe == null ? null : new KnowledgeCoreUtil.KnowledgeCorePatternDetails(recipe);
     }
 }

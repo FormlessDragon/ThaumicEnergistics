@@ -15,7 +15,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import thaumicenergistics.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Tags;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -68,7 +68,7 @@ public class ThEParticle extends Particle {
     }
 
     protected void init(String textureName) {
-        this.resourceLocation = new ResourceLocation(Reference.MOD_ID, "textures/particle/" + textureName + ".png");
+        this.resourceLocation = new ResourceLocation(Tags.MOD_ID, "textures/particle/" + textureName + ".png");
     }
 
     @Override

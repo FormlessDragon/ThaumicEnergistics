@@ -6,7 +6,7 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.registries.IForgeRegistry;
-import thaumicenergistics.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Tags;
 
 import java.util.HashSet;
 
@@ -45,7 +45,7 @@ public class ThESounds {
     }
 
     private static ResourceLocation addSound(String sound) {
-        ResourceLocation resourceLocation = new ResourceLocation(Reference.MOD_ID, sound);
+        ResourceLocation resourceLocation = new ResourceLocation(Tags.MOD_ID, sound);
         SoundEvent soundEvent = new SoundEvent(resourceLocation);
         soundEvent.setRegistryName(sound);
         SOUNDS.add(soundEvent);

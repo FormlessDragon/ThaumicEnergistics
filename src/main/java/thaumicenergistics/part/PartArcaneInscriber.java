@@ -15,7 +15,7 @@ import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.core.ModGlobals;
 import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.part.inventory.ArcaneInscriberMatrixInventory;
-import thaumicenergistics.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Tags;
 
 import javax.annotation.Nonnull;
 
@@ -30,13 +30,13 @@ public class PartArcaneInscriber extends AbstractArcaneTerminalPart implements I
 
     @PartModels
     public static final ResourceLocation MODEL_BASE =
-            new ResourceLocation(Reference.MOD_ID, "part/arcane_inscriber/base");
+            new ResourceLocation(Tags.MOD_ID, "part/arcane_inscriber/base");
     @PartModels
     public static final ResourceLocation MODEL_ON =
-            new ResourceLocation(Reference.MOD_ID, "part/arcane_inscriber/on");
+            new ResourceLocation(Tags.MOD_ID, "part/arcane_inscriber/on");
     @PartModels
     public static final ResourceLocation MODEL_OFF =
-            new ResourceLocation(Reference.MOD_ID, "part/arcane_inscriber/off");
+            new ResourceLocation(Tags.MOD_ID, "part/arcane_inscriber/off");
 
     private static final IPartModel MODELS_ON = new PartModel(MODEL_BASE, MODEL_ON,
             new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_on"));

@@ -12,9 +12,9 @@ import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.init.client.InitModelRegistration;
 import thaumicenergistics.init.internal.InitStorageCells;
-import thaumicenergistics.thaumicenergistics.Reference;
+import thaumicenergistics.thaumicenergistics.Tags;
 
-@Mod.EventBusSubscriber(modid = Reference.MOD_ID)
+@Mod.EventBusSubscriber(modid = Tags.MOD_ID)
 public final class RegistryHandler {
 
     private RegistryHandler() {}

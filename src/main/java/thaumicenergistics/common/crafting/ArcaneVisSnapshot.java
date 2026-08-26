@@ -1,7 +1,8 @@
 package thaumicenergistics.common.crafting;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+
 import java.util.List;
-import java.util.Map;
 
 /**
  * Immutable aura and provider view captured before AE2 moves a crafting calculation to its worker thread.
@@ -21,5 +22,5 @@ public interface ArcaneVisSnapshot {
      *
      * @return immutable, globally deduplicated chunk budgets
      */
-    Map<ArcaneVisChunk, Long> availableUnits();
+    Object2LongMap<ArcaneVisChunk> availableUnits();
 }

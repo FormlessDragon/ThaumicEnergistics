@@ -3,6 +3,8 @@ package thaumicenergistics.common.crafting;
 import ae2.api.networking.IGrid;
 import ae2.api.networking.crafting.ICraftingProvider;
 import ae2.api.stacks.AEItemKey;
+import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import thaumcraft.api.aura.AuraHelper;
@@ -11,10 +13,8 @@ import thaumicenergistics.core.ThELog;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -55,7 +55,7 @@ public final class ArcaneVisSnapshotFactoryImpl implements ArcaneVisSnapshotFact
         }
 
         List<ArcaneVisProviderSnapshot> providers = new ArrayList<>();
-        Map<ArcaneVisChunk, Long> budgets = new LinkedHashMap<>();
+        Object2LongMap<ArcaneVisChunk> budgets = new Object2LongLinkedOpenHashMap<>();
         for (ArcaneVisProvider source : sources) {
             captureProvider(source, providers, budgets);
         }
@@ -65,7 +65,7 @@ public final class ArcaneVisSnapshotFactoryImpl implements ArcaneVisSnapshotFact
     private void captureProvider(
         ArcaneVisProvider source,
         List<ArcaneVisProviderSnapshot> providers,
-        Map<ArcaneVisChunk, Long> budgets) {
+        Object2LongMap<ArcaneVisChunk> budgets) {
         World world = source.getArcaneVisWorld();
         BlockPos position = source.getArcaneVisPosition();
         if (world == null || position == null) {
