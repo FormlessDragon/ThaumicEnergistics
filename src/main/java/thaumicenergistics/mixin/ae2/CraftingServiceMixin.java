@@ -61,7 +61,7 @@ public abstract class CraftingServiceMixin {
             return THEENG$VIS_ACCOUNTING.sanitize(concretePlan);
         }
         ThELog.error("AE2 crafting submission received unsupported plan type {}; Arcane Vis cannot be removed",
-            plan == null ? "null" : plan.getClass().getName());
+            plan == null ? "null" : (Object) plan.getClass().getName());
         return plan;
     }
 

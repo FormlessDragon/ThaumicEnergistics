@@ -11,6 +11,7 @@ import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -39,18 +40,11 @@ public abstract class CraftingCalculationMixin {
     private ArcaneVisSnapshot theeng$visSnapshot = ArcaneVisSnapshotImpl.empty();
 
     @Inject(
-        method = "<init>(Lnet/minecraft/world/World;Lae2/api/networking/IGrid;"
-            + "Lae2/api/networking/crafting/ICraftingSimulationRequester;Lae2/api/stacks/GenericStack;"
-            + "Lae2/api/networking/crafting/CalculationStrategy;)V",
+        method = "<init>(Lnet/minecraft/world/World;Lae2/api/networking/IGrid;Lae2/api/networking/crafting/ICraftingSimulationRequester;Lae2/api/stacks/GenericStack;Lae2/api/networking/crafting/CalculationStrategy;Lae2/crafting/CraftingPerformanceListener;Ljava/lang/Object;)V",
         at = @At("TAIL"),
         require = 1)
     private void theeng$captureVisSnapshot(
-        World level,
-        IGrid grid,
-        ICraftingSimulationRequester simRequester,
-        GenericStack output,
-        CalculationStrategy strategy,
-        CallbackInfo callback) {
+        World level, IGrid grid, ICraftingSimulationRequester simRequester, GenericStack output, CalculationStrategy strategy, @Coerce Object performanceListener, Object sharedMemoCache, CallbackInfo ci) {
         this.theeng$visSnapshot = THEENG$VIS_SNAPSHOT_FACTORY.capture(
             grid, simRequester.getAdditionalProviders());
     }
