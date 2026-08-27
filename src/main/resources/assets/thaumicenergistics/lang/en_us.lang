@@ -20,10 +20,6 @@ item.thaumicenergistics.essentia_storage_cell_16k.name=16k ME Essentia Storage C
 item.thaumicenergistics.essentia_storage_cell_64k.name=64k ME Essentia Storage Cell
 item.thaumicenergistics.creative_essentia_cell.name=Creative ME Essentia Storage Cell
 
-item.thaumicenergistics.essentia_import.name=ME Essentia Import Bus
-item.thaumicenergistics.essentia_export.name=ME Essentia Export Bus
-item.thaumicenergistics.essentia_storage.name=ME Essentia Storage Bus
-item.thaumicenergistics.essentia_terminal.name=ME Essentia Terminal
 item.thaumicenergistics.arcane_terminal.name=Arcane Crafting Terminal
 item.thaumicenergistics.wireless_arcane_terminal.name=Wireless Arcane Crafting Terminal
 item.thaumicenergistics.arcane_inscriber.name=Arcane Inscriber
