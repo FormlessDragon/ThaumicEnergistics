@@ -2,6 +2,7 @@ package thaumicenergistics.util;
 
 import ae2.util.InteractionUtil;
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -28,10 +29,10 @@ public class AEUtil {
         return rl != null ? rl.getNamespace() : "MODIDNOTFOUND";
     }
 
-    public static boolean isWrench(ItemStack stack, EntityPlayer player, BlockPos pos) {
+    public static boolean isWrench(ItemStack stack, EntityPlayer player, BlockPos pos, IBlockState blockState) {
         if (stack.isEmpty())
             return false;
-        return InteractionUtil.canWrenchRotate(player, stack, pos);
+        return InteractionUtil.canWrenchRotate(player, stack, pos, blockState);
     }
 
 }
