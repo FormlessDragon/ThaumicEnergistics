@@ -15,7 +15,9 @@ import thaumicenergistics.core.ThEConfig;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.items.ItemKnowledgeCore;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -240,21 +242,73 @@ public abstract class KnowledgeCoreUtil {
     }
 
     public static class KnowledgeCorePatternDetails implements IPatternDetails {
+        /**
+         * Number of 3x3 crafting grid slots a Knowledge Core recipe exposes, empty slots included.
+         */
+        private static final int SPARSE_INPUT_SLOTS = 9;
+
         private final Recipe recipe;
         private final AEItemKey definition;
         private final IInput[] inputs;
         private final List<GenericStack> outputs;
+        private final int[] sparseToCompressed = new int[SPARSE_INPUT_SLOTS];
+        private final GenericStack[] sparseInputs = new GenericStack[SPARSE_INPUT_SLOTS];
 
         public KnowledgeCorePatternDetails(Recipe recipe) {
             this.recipe = Objects.requireNonNull(recipe, "recipe");
             this.definition = Objects.requireNonNull(
                 AEItemKey.of(KnowledgeCorePatternProjection.INSTANCE.encode(recipe)));
-            this.inputs = buildInputs(recipe);
             this.outputs = Collections.singletonList(new GenericStack(Objects.requireNonNull(AEItemKey.of(recipe.result())), recipe.result().getCount()));
+
+            List<IInput> compressedInputs = new ArrayList<>();
+            InternalInventory normalInputs = recipe.getIngredientPart(false);
+            Arrays.fill(this.sparseToCompressed, -1);
+            for (int slot = 0; slot < this.sparseInputs.length; slot++) {
+                ItemStack stack = normalInputs.getStackInSlot(slot);
+                if (stack.isEmpty()) {
+                    this.sparseToCompressed[slot] = -1;
+                    this.sparseInputs[slot] = null;
+                    continue;
+                }
+                this.sparseToCompressed[slot] = compressedInputs.size();
+                this.sparseInputs[slot] = new GenericStack(Objects.requireNonNull(AEItemKey.of(stack)), 1);
+                compressedInputs.add(new ItemPatternInput(stack));
+            }
+            this.inputs = compressedInputs.toArray(new IInput[0]);
         }
 
         public Recipe getRecipe() {
             return this.recipe;
+        }
+
+        /**
+         * @return the number of 3x3 crafting grid slots this pattern exposes, empty slots included
+         */
+        public int getSparseInputCount() {
+            return this.sparseInputs.length;
+        }
+
+        /**
+         * @param sparseIndex a 3x3 crafting grid slot
+         * @return the single expected stack of that slot, or null when the slot is empty or the index is out of range
+         */
+        public @Nullable GenericStack getSparseInput(int sparseIndex) {
+            if (sparseIndex < 0 || sparseIndex >= this.sparseInputs.length) {
+                return null;
+            }
+            return this.sparseInputs[sparseIndex];
+        }
+
+        /**
+         * @param sparseIndex a 3x3 crafting grid slot
+         * @return the index into {@link #getInputs()} that backs the slot, or -1 when the slot is empty or the index
+         * is out of range
+         */
+        public int getCompressedInputIndex(int sparseIndex) {
+            if (sparseIndex < 0 || sparseIndex >= this.sparseToCompressed.length) {
+                return -1;
+            }
+            return this.sparseToCompressed[sparseIndex];
         }
 
         @Override
@@ -282,18 +336,6 @@ public abstract class KnowledgeCoreUtil {
         @Override
         public int hashCode() {
             return this.definition.hashCode();
-        }
-
-        private static IInput[] buildInputs(Recipe recipe) {
-            List<IInput> inputs = new ArrayList<>();
-            InternalInventory normalInputs = recipe.getIngredientPart(false);
-            for (int slot = 0; slot < normalInputs.size(); slot++) {
-                ItemStack stack = normalInputs.getStackInSlot(slot);
-                if (!stack.isEmpty()) {
-                    inputs.add(new ItemPatternInput(stack));
-                }
-            }
-            return inputs.toArray(new IInput[0]);
         }
     }
 
