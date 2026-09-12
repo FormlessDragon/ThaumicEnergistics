@@ -124,9 +124,15 @@ public abstract class KnowledgeCoreUtil {
     }
 
     public static boolean hasRecipe(ItemStack knowledgeCoreStack, Item result) {
-        return getRecipeMap(knowledgeCoreStack).keySet().stream()
-            .map(ItemStack::getItem)
-            .anyMatch(item -> item.equals(result));
+        // Scans the same recipe slots getRecipeMap would have decoded, but without materialising a map
+        // (ItemStack keys hash by identity, so the map never deduplicated anything) and can stop at the first hit.
+        for (int i = 0; i < getRecipeSlotCount(knowledgeCoreStack); i++) {
+            Recipe recipe = getRecipe(knowledgeCoreStack, i);
+            if (recipe != null && recipe.result.getItem().equals(result)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean hasRecipe(ItemStack knowledgeCoreStack, int slot) {

@@ -3,14 +3,13 @@ package thaumicenergistics.common.crafting;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMaps;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Validated immutable {@link ArcaneVisSnapshot} implementation used by the crafting worker.
@@ -29,7 +28,7 @@ public final class ArcaneVisSnapshotImpl implements ArcaneVisSnapshot {
         Objects.requireNonNull(availableUnits, "availableUnits");
 
         List<ArcaneVisProviderSnapshot> providerCopy = new ArrayList<>(providers.size());
-        Set<String> providerIds = new HashSet<>();
+        ObjectOpenHashSet<String> providerIds = new ObjectOpenHashSet<>();
         for (ArcaneVisProviderSnapshot provider : providers) {
             ArcaneVisProviderSnapshot checked = Objects.requireNonNull(provider, "providers entry");
             if (!providerIds.add(checked.stableId())) {

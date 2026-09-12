@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import thaumicenergistics.api.storage.ReadOnlyPatternContainer;
-import thaumicenergistics.mixin.ae2.utils.Util;
+import thaumicenergistics.util.AEUtil;
 
 @Mixin(value = PatternAccessSession.class, remap = false)
 public class PatternAccessSessionMixin {
@@ -36,7 +36,7 @@ public class PatternAccessSessionMixin {
 
     @Inject(method = "doAction", at = @At("HEAD"), cancellable = true)
     private void theeng$rejectReadOnlyAction(EntityPlayerMP player, InventoryAction action, int slot, long id, CallbackInfoReturnable<Boolean> cir) {
-        if (Util.isReadOnlyTracker(this.byId.get(id))) {
+        if (AEUtil.isReadOnlyTracker(this.byId.get(id))) {
             // ContainerPEATerm delegates to its parent when this action is not handled. A read-only
             // provider must consume the request here so that the parent cannot mutate its slot.
             cir.setReturnValue(true);
@@ -47,7 +47,7 @@ public class PatternAccessSessionMixin {
     private void theeng$rejectReadOnlyQuickMove(EntityPlayerMP player, Slot sourceSlot, AEItemKey sourcePattern,
                                                 ReferenceSet<?> usedContainers, @Coerce Object container, int slot,
                                                 CallbackInfoReturnable<Boolean> callback) {
-        if (Util.isReadOnlyTracker(container)) {
+        if (AEUtil.isReadOnlyTracker(container)) {
             callback.setReturnValue(false);
         }
     }

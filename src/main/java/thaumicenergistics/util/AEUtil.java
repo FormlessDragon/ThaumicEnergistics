@@ -9,6 +9,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import thaumicenergistics.api.storage.ReadOnlyPatternContainer;
+import thaumicenergistics.mixin.ae2.accessor.PatternAccessSessionTrackerAccessor;
 
 /**
  * @author BrockWS
@@ -33,6 +35,11 @@ public class AEUtil {
         if (stack.isEmpty())
             return false;
         return InteractionUtil.canWrenchRotate(player, stack, pos, blockState);
+    }
+
+    public static boolean isReadOnlyTracker(Object tracker) {
+        return tracker instanceof PatternAccessSessionTrackerAccessor accessor
+            && accessor.theeng$getPatternContainer() instanceof ReadOnlyPatternContainer;
     }
 
 }
