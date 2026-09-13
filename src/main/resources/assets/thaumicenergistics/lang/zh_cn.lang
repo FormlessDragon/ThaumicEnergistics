@@ -64,11 +64,13 @@ gui.thaumicenergistics.no_recipe=无选中配方
 gui.thaumicenergistics.out_of_aspect=缺少源质！
 gui.thaumicenergistics.out_of_vis=缺少Vis！
 
+gui.thaumicenergistics.essentia_smelt=源质冶炼
+
 card.tinkerae.name=捣鼓ME网络
 card.tinkerae.text=尝试将源质转化为能量，就像你的ME网络一样。获得10到25点 能源学 进度。
 
-gui.thaumicenergistics.essentia_smelt=源质冶炼
-
+key.ae2.wireless_arcane_terminal=打开无线奥术合成终端
+key.ae2.wireless_arcane_inscriber=打开无线奥术记录仪
 # FROM THAUMCRAFT en_US.lang
 # BEST TO RECHECK THE LATEST LANG FILE FOR CHANGED FORMATTING
 #

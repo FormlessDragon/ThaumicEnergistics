@@ -69,6 +69,8 @@ gui.thaumicenergistics.essentia_smelt=Essentia smelt
 card.tinkerae.name=Tinker with Matter/Energy
 card.tinkerae.text=Experiment with converting Essentia into Energy similar to your current Matter/Energy network. Gain 10-25 Energistics.
 
+key.ae2.wireless_arcane_terminal=Open Wireless Arcane Terminal
+key.ae2.wireless_arcane_inscriber=Open Wireless Arcane Inscriber
 # FROM THAUMCRAFT en_US.lang
 # BEST TO RECHECK THE LATEST LANG FILE FOR CHANGED FORMATTING
 #
