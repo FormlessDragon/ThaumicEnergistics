@@ -12,6 +12,7 @@ import java.util.Objects;
  * @author Alex811
  */
 public class SlotArcaneGhostMatrix extends FakeSlot {
+
     private final ICraftingContainer container;
 
     public SlotArcaneGhostMatrix(ICraftingContainer container, int index, int xPosition, int yPosition) {
@@ -28,8 +29,21 @@ public class SlotArcaneGhostMatrix extends FakeSlot {
     }
 
     @Override
+    public void putStack(ItemStack stack) {
+        if (isRemote()) {
+            ItemStack synced = stack.isEmpty() ? ItemStack.EMPTY : stack.copy();
+            this.getInventory().setItemDirect(this.getSlotIndex(), synced);
+            this.onSlotChanged();
+            return;
+        }
+
+        super.putStack(stack);
+    }
+
+    @Override
     public void onSlotChanged() {
         this.container.onMatrixChanged();
         super.onSlotChanged();
     }
+
 }

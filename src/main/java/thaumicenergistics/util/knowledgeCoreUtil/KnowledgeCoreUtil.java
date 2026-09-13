@@ -246,6 +246,14 @@ public abstract class KnowledgeCoreUtil {
          * Number of 3x3 crafting grid slots a Knowledge Core recipe exposes, empty slots included.
          */
         private static final int SPARSE_INPUT_SLOTS = 9;
+        /**
+         * Number of arcane crystal requirements displayed alongside the normal 3x3 inputs.
+         *
+         * <p>Crystal requirements are intentionally kept out of {@link #getInputs()} because AE2's pattern
+         * matcher must continue to treat only the nine normal matrix positions as craftable inputs.</p>
+         */
+        private static final int CRYSTAL_INPUT_SLOTS = KnowledgeCoreRecipeCodec.INGREDIENT_SLOT_COUNT
+            - SPARSE_INPUT_SLOTS;
 
         private final Recipe recipe;
         private final AEItemKey definition;
@@ -253,6 +261,7 @@ public abstract class KnowledgeCoreUtil {
         private final List<GenericStack> outputs;
         private final int[] sparseToCompressed = new int[SPARSE_INPUT_SLOTS];
         private final GenericStack[] sparseInputs = new GenericStack[SPARSE_INPUT_SLOTS];
+        private final GenericStack[] crystalInputs = new GenericStack[CRYSTAL_INPUT_SLOTS];
 
         public KnowledgeCorePatternDetails(Recipe recipe) {
             this.recipe = Objects.requireNonNull(recipe, "recipe");
@@ -275,6 +284,14 @@ public abstract class KnowledgeCoreUtil {
                 compressedInputs.add(new ItemPatternInput(stack));
             }
             this.inputs = compressedInputs.toArray(new IInput[0]);
+
+            InternalInventory crystalInputs = recipe.getIngredientPart(true);
+            for (int slot = 0; slot < this.crystalInputs.length; slot++) {
+                ItemStack stack = crystalInputs.getStackInSlot(slot);
+                this.crystalInputs[slot] = stack.isEmpty()
+                    ? null
+                    : new GenericStack(Objects.requireNonNull(AEItemKey.of(stack)), stack.getCount());
+            }
         }
 
         public Recipe getRecipe() {
@@ -300,15 +317,21 @@ public abstract class KnowledgeCoreUtil {
         }
 
         /**
-         * @param sparseIndex a 3x3 crafting grid slot
-         * @return the index into {@link #getInputs()} that backs the slot, or -1 when the slot is empty or the index
-         * is out of range
+         * @return the fixed number of arcane crystal display positions, including empty positions
          */
-        public int getCompressedInputIndex(int sparseIndex) {
-            if (sparseIndex < 0 || sparseIndex >= this.sparseToCompressed.length) {
-                return -1;
+        public int getCrystalInputCount() {
+            return this.crystalInputs.length;
+        }
+
+        /**
+         * @param crystalIndex crystal display position
+         * @return the required crystal stack, or null when that position is empty or out of range
+         */
+        public @Nullable GenericStack getCrystalInput(int crystalIndex) {
+            if (crystalIndex < 0 || crystalIndex >= this.crystalInputs.length) {
+                return null;
             }
-            return this.sparseToCompressed[sparseIndex];
+            return this.crystalInputs[crystalIndex];
         }
 
         @Override

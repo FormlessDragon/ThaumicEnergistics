@@ -10,9 +10,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.items.IItemHandler;
 import thaumcraft.api.crafting.IArcaneRecipe;
 import thaumicenergistics.api.storage.IArcaneInscriberHost;
@@ -26,7 +23,6 @@ import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.integration.thaumcraft.TCCraftingManager;
 import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.part.inventory.ArcaneInscriberMatrixInventory;
-import thaumicenergistics.util.ItemHandlerUtil;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 import thaumicenergistics.core.ThELog;
 
@@ -157,11 +153,6 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     @Override
-    public void onMatrixChanged() {
-        super.onMatrixChanged();
-    }
-
-    @Override
     public void detectAndSendChanges() {
         if (this.isServerSide() && this.hasFullGuiSyncListener()) {
             this.refreshIsArcane();
@@ -174,6 +165,11 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
         IItemHandler crafting = this.getCraftingItemHandler();
         for (int slot = 0; slot < crafting.getSlots(); slot++)
             crafting.extractItem(slot, crafting.getStackInSlot(slot).getCount(), false);
+    }
+
+    @Override
+    public boolean canClearToPlayerInventory() {
+        return false;
     }
 
     @Override
@@ -196,79 +192,20 @@ public class ContainerArcaneInscriber extends ContainerArcaneTerm implements ICo
     }
 
     @Override
+    protected Actionable getJEIStorageExtractionAction() {
+        return Actionable.SIMULATE;
+    }
+
+    @Override
+    protected boolean shouldSimulateJEIPlayerExtraction() {
+        return true;
+    }
+
+    @Override
     protected float getRequiredVis(IRecipe recipe, EntityPlayer player) {
         if (!(recipe instanceof IArcaneRecipe))
             return -1;
         return ((IArcaneRecipe) recipe).getVis();
-    }
-
-    @Override
-    public void handleJEITransfer(EntityPlayer player, NBTTagCompound tag) {
-        NBTBase normal = tag.getTag("normal");
-        NBTBase crystals = tag.getTag("crystal");
-
-        clearCrafting();
-        this.onMatrixChanged();
-
-        handleJEITag(0, normal, true);
-        handleJEITag(9, crystals, false);
-
-        this.onMatrixChanged();
-    }
-
-    private void handleJEITag(int startAtSlot, NBTBase ingredientGroup, boolean mustBeSingle) {
-        IItemHandler crafting = this.getCraftingItemHandler();
-        IItemHandler playerInv = this.getPlayerItemHandler();
-
-        if (ingredientGroup == null || ingredientGroup.isEmpty()) {
-            return;
-        }
-
-        if (!(ingredientGroup instanceof NBTTagList subs)) {
-            ThELog.warn("Invalid JEI ingredient group: {}", ingredientGroup);
-            return;
-        }
-
-        for (int i = 0; i < subs.tagCount(); i++) {
-            int slot = startAtSlot + i;
-            NBTBase sub = subs.get(i);
-            if (!(sub instanceof NBTTagList alternatives)) {
-                ThELog.warn("Invalid JEI ingredient entry: {}", sub);
-                continue;
-            }
-
-            if (alternatives.tagCount() <= 0) {
-                continue;
-            }
-
-            NBTTagCompound ingredient = alternatives.getCompoundTagAt(0);
-            ItemStack stack = new ItemStack(ingredient);
-            if (stack.isEmpty()) continue;
-
-            ThELog.debug("Adding {} for {}", stack.getDisplayName(), slot);
-            ItemStack aeExtractStack = this.storage == null
-                    ? ItemStack.EMPTY
-                    : this.extractItem(this.storage, stack, stack.getCount(), Actionable.SIMULATE);
-            if (!aeExtractStack.isEmpty()) {
-                if (mustBeSingle) aeExtractStack.setCount(1);
-                crafting.insertItem(slot, aeExtractStack, false);
-            }
-
-            if (!crafting.getStackInSlot(slot).isEmpty()) // We managed to pull everything from the system
-                continue;
-
-            // Try pull from player
-            ThELog.debug("Failed to pull item from ae inv, trying player inventory");
-
-            ItemStack invExtract = ItemHandlerUtil.extract(playerInv, stack, true);
-            if (!invExtract.isEmpty()) {
-                if (mustBeSingle) invExtract.setCount(1);
-                crafting.insertItem(slot, invExtract, false);
-            }
-
-            // If we fail to find from ae2 or inv, just make the best guess from JEI
-            crafting.insertItem(slot, stack, false);
-        }
     }
 
     @Override

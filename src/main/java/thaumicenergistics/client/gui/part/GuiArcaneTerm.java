@@ -12,21 +12,32 @@ import thaumicenergistics.container.part.ArcaneTerminalVisState;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
 import thaumicenergistics.core.definitions.GuiText;
 
-public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
+public class GuiArcaneTerm<C extends ContainerArcaneTerm> extends GuiMEStorage<C> {
 
     public static final String STYLE_PATH = "/screens/terminals/thaumicenergistics_arcane_terminal.json";
 
-    public GuiArcaneTerm(ContainerArcaneTerm container, InventoryPlayer playerInventory) {
+    public GuiArcaneTerm(C container, InventoryPlayer playerInventory) {
         this(container, playerInventory, GuiText.arcane_terminal.text(), GuiStyleManager.loadStyleDoc(GuiArcaneTerm.STYLE_PATH));
     }
 
-    public GuiArcaneTerm(ContainerArcaneTerm container, InventoryPlayer playerInventory, ITextComponent title, GuiStyle style) {
+    public GuiArcaneTerm(C container, InventoryPlayer playerInventory, ITextComponent title, GuiStyle style) {
         super(container, playerInventory, title, style);
 
-        ActionButton clearBtn = new ActionButton(ActionItems.S_STASH, container::clearCraftingGrid);
+        ActionButton clearBtn = new ActionButton(this.getClearGridActionItem(), container::clearCraftingGrid);
         clearBtn.setHalfSize(true);
         clearBtn.setDisableBackground(true);
-        widgets.add("clearCraftingGrid", clearBtn);
+        this.widgets.add("clearCraftingGrid", clearBtn);
+
+        if (container.canClearToPlayerInventory()) {
+            ActionButton clearToPlayerInvBtn = new ActionButton(ActionItems.S_STASH_TO_PLAYER_INV, container::clearToPlayerInventory);
+            clearToPlayerInvBtn.setHalfSize(true);
+            clearToPlayerInvBtn.setDisableBackground(true);
+            this.widgets.add("clearToPlayerInv", clearToPlayerInvBtn);
+        }
+    }
+
+    protected ActionItems getClearGridActionItem() {
+        return ActionItems.S_STASH;
     }
 
     @Override
@@ -66,4 +77,5 @@ public class GuiArcaneTerm extends GuiMEStorage<ContainerArcaneTerm> {
     protected float getVisIfSet(float vis) {
         return vis > -1 ? vis : 0;
     }
+
 }

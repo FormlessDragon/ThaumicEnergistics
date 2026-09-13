@@ -15,7 +15,6 @@ import net.minecraftforge.registries.IForgeRegistryEntry;
 import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.core.definitions.ThEParts;
-import thaumicenergistics.thaumicenergistics.Tags;
 import thaumcraft.api.ThaumcraftApi;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
@@ -35,6 +34,8 @@ import thaumicenergistics.integration.thaumcraft.research.ScanMod;
 import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.TCUtil;
 import thaumicenergistics.core.ThELog;
+
+import static thaumicenergistics.ThaumicEnergistics.id;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,12 +64,12 @@ public final class ThEThaumcraft {
                         .add(Aspect.EXCHANGE, 20)
                         .add(Aspect.MAGIC, 15)
                         .add(Aspect.METAL, 5),
-                new ResourceLocation(Tags.MOD_ID, "textures/research/tab_icon.png"),
+                id("textures/research/tab_icon.png"),
                 ResearchCategories.getResearchCategory("BASICS").background,
                 ResearchCategories.getResearchCategory("BASICS").background2);
 
         ThELog.info("Registering Research");
-        ThaumcraftApi.registerResearchLocation(new ResourceLocation(Tags.MOD_ID, "research/" + ModGlobals.RESEARCH_CATEGORY));
+        ThaumcraftApi.registerResearchLocation(id("research/" + ModGlobals.RESEARCH_CATEGORY));
 
         ScanningManager.addScannableThing(new ScanMod("f_AECORE", ModGlobals.MOD_ID_AE2));
 
@@ -91,7 +92,7 @@ public final class ThEThaumcraft {
         List<ItemStack> netherQuartz = new ArrayList<>(Arrays.asList(CraftingHelper.getIngredient("gemQuartz").getMatchingStacks()));
         netherQuartz.add(asItemStack(AEItemIds.PURIFIED_NETHER_QUARTZ_CRYSTAL));
 
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "coalescence_core"), new ShapedArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("coalescence_core"), new ShapedArcaneRecipe(
                 recipeGroup,
                 "DIGISENTIA@2",
                 10,
@@ -109,7 +110,7 @@ public final class ThEThaumcraft {
                 'L',
                 AEItems.LOGIC_PROCESSOR.stack()
         ));
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "diffusion_core"), new ShapedArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("diffusion_core"), new ShapedArcaneRecipe(
                 recipeGroup,
                 "DIGISENTIA@2",
                 10,
@@ -128,7 +129,7 @@ public final class ThEThaumcraft {
                 AEItems.LOGIC_PROCESSOR.stack()
         ));
 
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "essentia_component_1k"), new ShapedArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("essentia_component_1k"), new ShapedArcaneRecipe(
                 recipeGroup,
                 "ESSENTIASTORAGE1k@2",
                 10,
@@ -144,9 +145,9 @@ public final class ThEThaumcraft {
                 'P',
                 AEItems.LOGIC_PROCESSOR.stack()
         ));
-        addFakeCrafting(new ResourceLocation(Tags.MOD_ID, "cells/essentia_cell_1k"));
+        addFakeCrafting(id("cells/essentia_cell_1k"));
 
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "essentia_component_4k"), new ShapedArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("essentia_component_4k"), new ShapedArcaneRecipe(
                 recipeGroup,
                 "ESSENTIASTORAGE4k@2",
                 10,
@@ -164,9 +165,9 @@ public final class ThEThaumcraft {
                 'G',
                 AEBlocks.QUARTZ_GLASS.block()
         ));
-        addFakeCrafting(new ResourceLocation(Tags.MOD_ID, "cells/essentia_cell_4k"));
+        addFakeCrafting(id("cells/essentia_cell_4k"));
 
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "essentia_component_16k"), new ShapedArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("essentia_component_16k"), new ShapedArcaneRecipe(
                 recipeGroup,
                 "ESSENTIASTORAGE16k@2",
                 10,
@@ -184,9 +185,9 @@ public final class ThEThaumcraft {
                 'G',
                 AEBlocks.QUARTZ_GLASS.block()
         ));
-        addFakeCrafting(new ResourceLocation(Tags.MOD_ID, "cells/essentia_cell_16k"));
+        addFakeCrafting(id("cells/essentia_cell_16k"));
 
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "essentia_component_64k"), new ShapedArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("essentia_component_64k"), new ShapedArcaneRecipe(
                 recipeGroup,
                 "ESSENTIASTORAGE64k@2",
                 10,
@@ -204,8 +205,8 @@ public final class ThEThaumcraft {
                 'G',
                 AEBlocks.QUARTZ_GLASS.block()
         ));
-        addFakeCrafting(new ResourceLocation(Tags.MOD_ID, "cells/essentia_cell_64k"));
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "arcane_terminal"), new ShapelessArcaneRecipe(
+        addFakeCrafting(id("cells/essentia_cell_64k"));
+        ThaumcraftApi.addArcaneCraftingRecipe(id("arcane_terminal"), new ShapelessArcaneRecipe(
                 recipeGroup,
                 "ARCANETERMINAL@2",
                 50,
@@ -215,7 +216,7 @@ public final class ThEThaumcraft {
                 BlocksTC.arcaneWorkbench,
                 AEItems.CALCULATION_PROCESSOR.stack()
         ));
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "wireless_arcane_terminal"), new ShapelessArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("wireless_arcane_terminal"), new ShapelessArcaneRecipe(
                 recipeGroup,
                 "ARCANETERMINAL@2&&WORKBENCHCHARGER",
                 75,
@@ -225,7 +226,7 @@ public final class ThEThaumcraft {
                 ThEParts.ARCANE_TERMINAL.stack(1),
                 BlocksTC.arcaneWorkbenchCharger
         ));
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "arcane_inscriber"), new ShapelessArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("arcane_inscriber"), new ShapelessArcaneRecipe(
                 recipeGroup,
                 "ARCANEINSCRIBER@2",
                 50,
@@ -235,7 +236,7 @@ public final class ThEThaumcraft {
                 BlocksTC.arcaneWorkbench,
                 AEItems.ENGINEERING_PROCESSOR.stack()
         ));
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "wireless_arcane_inscriber"), new ShapelessArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("wireless_arcane_inscriber"), new ShapelessArcaneRecipe(
                 recipeGroup,
                 "ARCANEINSCRIBER@2&&WORKBENCHCHARGER",
                 75,
@@ -245,7 +246,7 @@ public final class ThEThaumcraft {
                 ThEParts.ARCANE_INSCRIBER.stack(1),
                 BlocksTC.arcaneWorkbenchCharger
         ));
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "arcane_p2p_tunnel"), new ShapelessArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("arcane_p2p_tunnel"), new ShapelessArcaneRecipe(
                 recipeGroup,
                 "ESSENTIABUSES@2&&ARCANETERMINAL",
                 75,
@@ -256,7 +257,7 @@ public final class ThEThaumcraft {
                 ThEItems.COALESCENCE_CORE.stack(1),
                 ItemsTC.salisMundus
         ));
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "upgrade_arcane"), new ShapelessArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("upgrade_arcane"), new ShapelessArcaneRecipe(
                 recipeGroup,
                 "ARCANETERMINAL@2&&WORKBENCHCHARGER",
                 25,
@@ -265,7 +266,7 @@ public final class ThEThaumcraft {
                 AEItems.ADVANCED_CARD.stack(),
                 BlocksTC.arcaneWorkbenchCharger
         ));
-        ThaumcraftApi.addArcaneCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "knowledge_core"), new ShapedArcaneRecipe(
+        ThaumcraftApi.addArcaneCraftingRecipe(id("knowledge_core"), new ShapedArcaneRecipe(
                 recipeGroup,
                 "KNOWLEDGECORE@2",
                 100,
@@ -286,7 +287,7 @@ public final class ThEThaumcraft {
     }
 
     private static void registerInfusionRecipes() {
-        ThaumcraftApi.addInfusionCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "infusion_provider"), new InfusionRecipe(
+        ThaumcraftApi.addInfusionCraftingRecipe(id("infusion_provider"), new InfusionRecipe(
                 "INFUSIONPROVIDER@2",
                 ThEBlocks.INFUSION_PROVIDER.stack(1),
                 2,
@@ -297,7 +298,7 @@ public final class ThEThaumcraft {
                 ThEItems.COALESCENCE_CORE.stack(1),
                 ItemsTC.salisMundus
         ));
-        ThaumcraftApi.addInfusionCraftingRecipe(new ResourceLocation(Tags.MOD_ID, "arcane_assembler"), new InfusionRecipe(
+        ThaumcraftApi.addInfusionCraftingRecipe(id("arcane_assembler"), new InfusionRecipe(
                 "ARCANEASSEMBLER@2",
                 ThEBlocks.ARCANE_ASSEMBLER.stack(1),
                 6,

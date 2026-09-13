@@ -15,7 +15,13 @@ public class ContainerKnowledgeCorePattern extends ContainerPattern {
                 this.addDisplaySlot(this.inputs, row * 3 + column, 29 + column * 18, 35 + row * 18);
             }
         }
-        this.addDisplaySlot(this.outputs, 0, 121, 53);
+        for (int row = 0; row < 3; row++) {
+            for (int column = 0; column < 2; column++) {
+                int crystalIndex = row * 2 + column;
+                this.addDisplaySlot(this.inputs, 9 + crystalIndex, 139 + column * 18, 35 + row * 18);
+            }
+        }
+        this.addDisplaySlot(this.outputs, 0, 117, 53);
     }
 
     @Override
@@ -32,6 +38,13 @@ public class ContainerKnowledgeCorePattern extends ContainerPattern {
                 continue;
             }
             this.inputs.add(new GenericStack[]{new GenericStack(sparse.what(), sparse.amount())});
+        }
+
+        for (int slot = 0; slot < pattern.getCrystalInputCount(); slot++) {
+            GenericStack crystal = pattern.getCrystalInput(slot);
+            this.inputs.add(crystal == null
+                ? new GenericStack[0]
+                : new GenericStack[]{new GenericStack(crystal.what(), crystal.amount())});
         }
 
         GenericStack output = pattern.getPrimaryOutput();

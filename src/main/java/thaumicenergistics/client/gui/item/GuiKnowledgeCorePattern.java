@@ -5,15 +5,15 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.ResourceLocation;
 import thaumicenergistics.container.ContainerKnowledgeCorePattern;
 import thaumicenergistics.core.definitions.GuiText;
-import thaumicenergistics.thaumicenergistics.Tags;
+
+import static thaumicenergistics.ThaumicEnergistics.id;
 
 /**
  * Pattern view of a Knowledge Core recipe projection, opened with the AE2 "open pattern" key.
  */
 public class GuiKnowledgeCorePattern extends GuiPattern<ContainerKnowledgeCorePattern> {
 
-    private static final ResourceLocation BACKGROUND =
-        new ResourceLocation(Tags.MOD_ID, "textures/gui/knowledge_core_pattern.png");
+    private static final ResourceLocation BACKGROUND = id("textures/gui/knowledge_core_pattern.png");
 
     public GuiKnowledgeCorePattern(ContainerKnowledgeCorePattern container, InventoryPlayer playerInventory) {
         super(container, playerInventory);

@@ -13,7 +13,7 @@ import thaumicenergistics.thaumicenergistics.Tags;
 public class ModGlobals {
 
     public static final String MOD_DEPENDENCIES =
-            "required-after:ae2@[1.0.12,);" +
+            "required-after:ae2@[1.0.14,);" +
             "required-after:thaumcraft@[6.1.BETA26,);" +
             "after:thaumicjei;" +
             "after:inventorytweaks;" +
@@ -27,7 +27,7 @@ public class ModGlobals {
 
         @Override
         public ItemStack createIcon() {
-            ItemStack icon = ThEItems.ESSENTIA_CELL_1K.stack(1);
+            ItemStack icon = ThEItems.ESSENTIA_CELL_1K.stack();
             if (icon.isEmpty())
                 throw new NullPointerException("Unable to use essentiaCell1k for creative tab!");
             return icon;

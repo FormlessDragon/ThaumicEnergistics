@@ -38,8 +38,6 @@ public final class ArcaneVisSnapshotFactoryImpl implements ArcaneVisSnapshotFact
         Objects.requireNonNull(grid, "grid");
         Objects.requireNonNull(temporaryProviders, "temporaryProviders");
 
-        // ReferenceOpenHashSet hashes by identity, matching the previous IdentityHashMap-backed set without
-        // allocating a wrapper set, and providers are never null so its null-key support is not exercised.
         ReferenceOpenHashSet<ArcaneVisProvider> sources = new ReferenceOpenHashSet<>();
         for (Class<?> machineClass : grid.getMachineClasses()) {
             for (Object machine : grid.getActiveMachines(machineClass)) {
@@ -80,8 +78,7 @@ public final class ArcaneVisSnapshotFactoryImpl implements ArcaneVisSnapshotFact
             return;
         }
 
-        ObjectLinkedOpenHashSet<AEItemKey> definitions =
-            new ObjectLinkedOpenHashSet<>(source.getArcaneVisPatternDefinitions());
+        ObjectLinkedOpenHashSet<AEItemKey> definitions = new ObjectLinkedOpenHashSet<>(source.getArcaneVisPatternDefinitions());
         if (definitions.isEmpty()) {
             return;
         }

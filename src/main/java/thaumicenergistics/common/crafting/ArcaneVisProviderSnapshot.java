@@ -26,8 +26,6 @@ public record ArcaneVisProviderSnapshot(
         }
         Objects.requireNonNull(patternDefinitions, "patternDefinitions");
         Objects.requireNonNull(reachableChunks, "reachableChunks");
-        // An open-addressed set keeps definition lookups primitive-free and avoids the extra defensive copy
-        // Set.copyOf performed; the wrapper view is safe because this set never escapes the record.
         ObjectLinkedOpenHashSet<AEItemKey> definitions = new ObjectLinkedOpenHashSet<>(patternDefinitions);
         for (AEItemKey definition : definitions) {
             Objects.requireNonNull(definition, "patternDefinitions entry");

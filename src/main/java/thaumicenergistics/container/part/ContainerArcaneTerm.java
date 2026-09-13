@@ -12,6 +12,7 @@ import ae2.container.SlotSemantics;
 import ae2.container.guisync.GuiSync;
 import ae2.container.me.common.ContainerMEStorage;
 import ae2.core.network.serverbound.GuiActionPacket;
+import ae2.util.inv.PlayerInternalInventory;
 import com.google.common.collect.Lists;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -61,6 +62,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 public class ContainerArcaneTerm extends ContainerMEStorage implements ICraftingContainer {
 
     private static final String ACTION_CLEAR_GRID = "clearGrid";
+    private static final String ACTION_CLEAR_TO_PLAYER = "clearToPlayer";
     private static final String ACTION_SET_CLEAR_ON_CLOSE = "setClearOnClose";
     private static final String ACTION_JEI_RECIPE_TRANSFER = "jeiRecipeTransfer";
     private static final int ACTION_JEI_RECIPE_TRANSFER_MAX_LENGTH = GuiActionPacket.MAX_JSON_PAYLOAD_LENGTH;
@@ -94,6 +96,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         this.addMatrixSlots(32, 36);
         this.addArmorSlots(ip.player, new PlayerArmorInvWrapper(ip), 8, 19);
         this.registerClientAction(ACTION_CLEAR_GRID, this::clearCraftingGrid);
+        this.registerClientAction(ACTION_CLEAR_TO_PLAYER, this::clearToPlayerInventory);
         this.registerClientAction(ACTION_SET_CLEAR_ON_CLOSE, Boolean.class, this::setClearGridOnClose);
         this.registerClientAction(ACTION_JEI_RECIPE_TRANSFER, ArcaneRecipeTransferPayload.class,
                 ACTION_JEI_RECIPE_TRANSFER_MAX_LENGTH, this::receiveJEITransfer);
@@ -632,7 +635,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         ThELog.debug("Adding {} for {}", requested.getDisplayName(), slot);
         ItemStack aeExtract = this.storage == null
                 ? ItemStack.EMPTY
-                : this.extractItem(this.storage, requested, requestedCount, Actionable.MODULATE);
+                : this.extractItem(this.storage, requested, requestedCount, this.getJEIStorageExtractionAction());
         if (!aeExtract.isEmpty()) {
             crafting.insertItem(slot, aeExtract, false);
         }
@@ -646,7 +649,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         ItemStack playerRequest = requested.copy();
         playerRequest.shrink(insertedCount);
 
-        ItemStack invExtract = this.extractUnlockedPlayerItem(playerRequest, false);
+        ItemStack invExtract = this.extractUnlockedPlayerItem(playerRequest, this.shouldSimulateJEIPlayerExtraction());
         if (!invExtract.isEmpty()) {
             crafting.insertItem(slot, invExtract, false);
         }
@@ -680,6 +683,21 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
      */
     protected int getJEITransferSlotLimit(IItemHandler crafting, int slot) {
         return crafting.getSlotLimit(slot);
+    }
+
+    /**
+     * Controls whether JEI transfer extraction from ME storage is committed. Ghost matrices override this to
+     * preserve storage while still using the common transfer planning and slot filling logic.
+     */
+    protected Actionable getJEIStorageExtractionAction() {
+        return Actionable.MODULATE;
+    }
+
+    /**
+     * Controls whether JEI transfer extraction from unlocked player slots is committed.
+     */
+    protected boolean shouldSimulateJEIPlayerExtraction() {
+        return false;
     }
 
     private boolean canSatisfyJEIAlternative(ItemStack stack) {
@@ -740,6 +758,23 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
         this.clearCrafting();
         this.onMatrixChanged();
+    }
+
+    public boolean canClearToPlayerInventory() {
+        return true;
+    }
+
+    public void clearToPlayerInventory() {
+        if (!this.canClearToPlayerInventory()) {
+            return;
+        }
+
+        if (this.isClientSide()) {
+            this.sendClientAction(ACTION_CLEAR_TO_PLAYER);
+            return;
+        }
+
+        this.moveCraftingGridToPlayerInventory();
     }
 
     public void setClearGridOnClose(boolean clearGridOnClose) {
@@ -826,6 +861,41 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             crafting.extractItem(reservation.slot, reservation.stack.getCount(), false);
         }
         return true;
+    }
+
+    private void moveCraftingGridToPlayerInventory() {
+        InternalInventory crafting = this.getCraftingInventory();
+        if (crafting == null || crafting.isEmpty()) {
+            return;
+        }
+
+        PlayerInternalInventory playerInv = new PlayerInternalInventory(this.getPlayerInventory());
+
+        for (int slot = 0; slot < crafting.size(); slot++) {
+            ItemStack stack = crafting.getStackInSlot(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+
+            for (int emptyLoop = 0; emptyLoop < 2 && !stack.isEmpty(); emptyLoop++) {
+                boolean allowEmpty = emptyLoop == 1;
+
+                for (int playerSlot = 0; playerSlot < playerInv.size() && !stack.isEmpty(); playerSlot++) {
+                    if (this.isPlayerInventorySlotLocked(playerSlot)) {
+                        continue;
+                    }
+                    if (playerInv.getStackInSlot(playerSlot).isEmpty() != allowEmpty) {
+                        continue;
+                    }
+
+                    stack = playerInv.getSlotInv(playerSlot).addItems(stack);
+                }
+            }
+
+            crafting.setItemDirect(slot, stack);
+        }
+
+        this.onMatrixChanged();
     }
 
     private void rollbackNetworkReservations(List<NetworkReservation> reservations) {

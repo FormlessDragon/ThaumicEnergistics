@@ -12,7 +12,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.core.ModGlobals;
-import thaumicenergistics.thaumicenergistics.Tags;
+
+import static thaumicenergistics.ThaumicEnergistics.id;
 
 import javax.annotation.Nonnull;
 
@@ -27,14 +28,11 @@ public class PartArcaneTerminal extends AbstractArcaneTerminalPart {
     private static final String TAG_UPGRADES = "upgrades";
 
     @PartModels
-    public static final ResourceLocation MODEL_BASE =
-            new ResourceLocation(Tags.MOD_ID, "part/arcane_terminal/base");
+    public static final ResourceLocation MODEL_BASE = id("part/arcane_terminal/base");
     @PartModels
-    public static final ResourceLocation MODEL_ON =
-            new ResourceLocation(Tags.MOD_ID, "part/arcane_terminal/on");
+    public static final ResourceLocation MODEL_ON = id("part/arcane_terminal/on");
     @PartModels
-    public static final ResourceLocation MODEL_OFF =
-            new ResourceLocation(Tags.MOD_ID, "part/arcane_terminal/off");
+    public static final ResourceLocation MODEL_OFF = id("part/arcane_terminal/off");
 
     private static final IPartModel MODELS_ON = new PartModel(MODEL_BASE, MODEL_ON,
             new ResourceLocation(ModGlobals.MOD_ID_AE2, "part/display_status_on"));
