@@ -16,8 +16,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import thaumcraft.api.aura.AuraHelper;
 import ae2.api.stacks.AEKeyType;
-import thaumicenergistics.thaumicenergistics.Tags;
 import thaumicenergistics.util.ArcaneP2PTransfer;
+
+import static thaumicenergistics.ThaumicEnergistics.id;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 public class ArcaneP2PTunnelPart extends P2PTunnelPart<ArcaneP2PTunnelPart> implements IGridTickable {
 
     private static final float DEFAULT_VIS_PER_TICK = 1.0f;
-    public static final ResourceLocation MODEL = new ResourceLocation(Tags.MOD_ID, "part/p2p/p2p_tunnel_arcane");
+    public static final ResourceLocation MODEL = id("part/p2p/p2p_tunnel_arcane");
     private static final P2PModels MODELS = new P2PModels(MODEL);
 
     public ArcaneP2PTunnelPart(IPartItem<?> partItem) {

@@ -1,8 +1,9 @@
 package thaumicenergistics.common.crafting;
 
 import ae2.api.stacks.AEItemKey;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -25,7 +26,11 @@ public record ArcaneVisProviderSnapshot(
         }
         Objects.requireNonNull(patternDefinitions, "patternDefinitions");
         Objects.requireNonNull(reachableChunks, "reachableChunks");
-        patternDefinitions = Set.copyOf(new HashSet<>(patternDefinitions));
+        ObjectLinkedOpenHashSet<AEItemKey> definitions = new ObjectLinkedOpenHashSet<>(patternDefinitions);
+        for (AEItemKey definition : definitions) {
+            Objects.requireNonNull(definition, "patternDefinitions entry");
+        }
+        patternDefinitions = ObjectSets.unmodifiable(definitions);
         reachableChunks = reachableChunks.stream()
             .map(chunk -> Objects.requireNonNull(chunk, "reachableChunks entry"))
             .distinct()

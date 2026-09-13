@@ -17,6 +17,9 @@ import ae2.api.networking.ticking.TickRateModulation;
 import ae2.api.networking.ticking.TickingRequest;
 import ae2.api.stacks.AEItemKey;
 import ae2.api.stacks.KeyCounter;
+import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanMaps;
+import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import ae2.api.storage.MEStorage;
@@ -64,7 +67,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -95,7 +97,7 @@ public class TileArcaneAssembler extends AENetworkedTile
     private final ArcaneAssemblerUpgradeInventory upgradeInv;
     private final AppEngInternalInventory outputBuffer;
     private final List<ItemStack> cachedOutputs = new ArrayList<>();
-    private final Map<String, Boolean> aspectExists = new HashMap<>();
+    private final Object2BooleanMap<String> aspectExists = new Object2BooleanOpenHashMap<>();
     private TerminalPatternInventory terminalPatternInventory;
 
     private CurrentRecipeSnapshot currentRecipe;
@@ -497,7 +499,7 @@ public class TileArcaneAssembler extends AENetworkedTile
     }
 
     public Map<String, Boolean> getAspectExists() {
-        return new HashMap<>(this.aspectExists);
+        return new Object2BooleanOpenHashMap<>(this.aspectExists);
     }
 
     public boolean getHasEnoughVis() {
@@ -574,7 +576,7 @@ public class TileArcaneAssembler extends AENetworkedTile
         float requiredVis = recipe.visCost() * multiplier;
         boolean visAvailable = this.getWorld() != null && this.getWorldVis() >= requiredVis;
         MEStorage inventory = this.getNetworkStorage();
-        Map<String, Boolean> availability = new HashMap<>();
+        Object2BooleanMap<String> availability = new Object2BooleanOpenHashMap<>();
         Object2LongOpenHashMap<Aspect> requirements = this.collectAspectRequirements(recipe, multiplier, availability);
         boolean requirementsMissing = this.missingAspect;
 
@@ -621,14 +623,15 @@ public class TileArcaneAssembler extends AENetworkedTile
             TCUtil.drainVis(this.getWorld(), this.getPos(), requiredVis,
                 this.upgradeInv.getInstalledUpgrades(ThEItems.UPGRADE_ARCANE.item()));
         }
-        this.setResourceDiagnostics(true, false, Map.of());
+        this.setResourceDiagnostics(true, false, Object2BooleanMaps.emptyMap());
         return true;
     }
 
     private Object2LongOpenHashMap<Aspect> collectAspectRequirements(
         CurrentRecipeSnapshot recipe,
         int multiplier,
-        Map<String, Boolean> availability) {
+        Object2BooleanMap<String> availability
+    ) {
         this.missingAspect = false;
         Object2LongOpenHashMap<Aspect> requirements = new Object2LongOpenHashMap<>();
         for (ItemStack aspectStack : recipe.aspectIngredients()) {
@@ -663,7 +666,7 @@ public class TileArcaneAssembler extends AENetworkedTile
     }
 
     private void setResourceDiagnostics(boolean nextHasEnoughVis, boolean nextMissingAspect,
-                                        Map<String, Boolean> nextAspectExists) {
+                                        Object2BooleanMap<String> nextAspectExists) {
         boolean changed = this.hasEnoughVis != nextHasEnoughVis
             || this.missingAspect != nextMissingAspect
             || !this.aspectExists.equals(nextAspectExists);

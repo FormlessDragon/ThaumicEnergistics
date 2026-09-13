@@ -10,8 +10,8 @@ import org.spongepowered.asm.mixin.gen.Accessor;
  * <p>The server interaction mixin needs this association to enforce the read-only marker before AE2 copies or moves a
  * projected pattern.</p>
  */
-@Mixin(targets = "ae2.container.implementations.PatternAccessSupport$ContainerTracker", remap = false)
-public interface PatternAccessSupportTrackerAccessor {
+@Mixin(targets = "ae2.container.me.patternaccess.PatternAccessSession$ContainerTracker", remap = false)
+public interface PatternAccessSessionTrackerAccessor {
 
     /**
      * Returns the pattern container represented by this private AE2 tracker.

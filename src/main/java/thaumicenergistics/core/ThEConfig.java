@@ -6,6 +6,7 @@ import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import thaumicenergistics.thaumicenergistics.Tags;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -109,7 +110,8 @@ public class ThEConfig {
     }
 
     public Map<String, Integer> essentiaContainerCapacity() {
-        return new HashMap<>(essentiaContainerCapacity);
+        // A read-only view avoids copying the whole map on every essentia transfer; callers only ever look entries up.
+        return Collections.unmodifiableMap(essentiaContainerCapacity);
     }
 
     public int tickTimeArcaneAssemblerMin() {

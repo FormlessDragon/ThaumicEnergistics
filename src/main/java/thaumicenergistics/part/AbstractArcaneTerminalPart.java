@@ -175,7 +175,8 @@ public abstract class AbstractArcaneTerminalPart extends AbstractTerminalPart im
         if (super.onUseItemOn(itemStack, player, hand, pos)) {
             return true;
         }
-        if (player.isSneaking() && AEUtil.isWrench(player.getHeldItem(hand), player, this.getTile().getPos())) {
+        if (player.isSneaking() && AEUtil.isWrench(player.getHeldItem(hand), player, this.getTile().getPos(),
+            this.getLevel().getBlockState(this.getTile().getPos()))) {
             return false;
         }
         return this.openTerminalGui(player);

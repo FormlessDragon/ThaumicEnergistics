@@ -5,18 +5,16 @@ import ae2.api.networking.crafting.ICraftingProvider;
 import ae2.api.stacks.AEItemKey;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import thaumcraft.api.aura.AuraHelper;
 import thaumicenergistics.core.ThELog;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Server-thread {@link ArcaneVisSnapshotFactory} implementation for arcane assemblers.
@@ -40,7 +38,7 @@ public final class ArcaneVisSnapshotFactoryImpl implements ArcaneVisSnapshotFact
         Objects.requireNonNull(grid, "grid");
         Objects.requireNonNull(temporaryProviders, "temporaryProviders");
 
-        Set<ArcaneVisProvider> sources = Collections.newSetFromMap(new IdentityHashMap<>());
+        ReferenceOpenHashSet<ArcaneVisProvider> sources = new ReferenceOpenHashSet<>();
         for (Class<?> machineClass : grid.getMachineClasses()) {
             for (Object machine : grid.getActiveMachines(machineClass)) {
                 if (machine instanceof ArcaneVisProvider arcaneProvider) {
@@ -80,7 +78,7 @@ public final class ArcaneVisSnapshotFactoryImpl implements ArcaneVisSnapshotFact
             return;
         }
 
-        Set<AEItemKey> definitions = new LinkedHashSet<>(source.getArcaneVisPatternDefinitions());
+        ObjectLinkedOpenHashSet<AEItemKey> definitions = new ObjectLinkedOpenHashSet<>(source.getArcaneVisPatternDefinitions());
         if (definitions.isEmpty()) {
             return;
         }

@@ -1,34 +1,90 @@
 package thaumicenergistics.client.gui.part;
 
+import ae2.api.config.ActionItems;
 import ae2.client.gui.Icon;
 import ae2.client.gui.style.GuiStyleManager;
-import ae2.client.gui.widgets.IconButton;
+import ae2.client.gui.widgets.DynamicIconButton;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.ITextComponent;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.core.definitions.GuiText;
 import thaumicenergistics.items.ItemKnowledgeCore;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author Alex811
  */
-public class GuiArcaneInscriber extends GuiArcaneTerm {
+public class GuiArcaneInscriber extends GuiArcaneTerm<ContainerArcaneInscriber> {
+
     public static final String STYLE_PATH = "/screens/terminals/thaumicenergistics_arcane_inscriber.json";
 
-    private final KnowledgeCoreButton coreAddButton;
-    private final KnowledgeCoreButton coreDelButton;
-    private final KnowledgeCoreButton coreViewButton;
-    private final ContainerArcaneInscriber inscriberContainer;
+    private final DynamicIconButton coreAddButton;
+    private final DynamicIconButton coreDelButton;
+    private final DynamicIconButton coreViewButton;
 
     public GuiArcaneInscriber(ContainerArcaneInscriber container, InventoryPlayer playerInventory) {
         super(container, playerInventory, GuiText.arcane_inscriber.text(), GuiStyleManager.loadStyleDoc(GuiArcaneInscriber.STYLE_PATH));
-        this.inscriberContainer = container;
 
-        this.coreAddButton = new KnowledgeCoreButton(Icon.ARROW_DOWN, this::requestKnowledgeCoreAddIfAllowed);
-        this.coreDelButton = new KnowledgeCoreButton(Icon.CLEAR, this::requestKnowledgeCoreDeleteIfAllowed);
-        this.coreViewButton = new KnowledgeCoreButton(Icon.VIEW_MODE_STORED, this::requestKnowledgeCoreViewIfAllowed);
+        this.coreAddButton = new DynamicIconButton(() -> Icon.ARROW_DOWN, GuiText.add.text(), () -> {
+            ItemStack knowledgeCore = this.getKnowledgeCore();
+            if (knowledgeCore.isEmpty()) {
+                return List.of(GuiText.insert_knowledge_core.text());
+            }
+
+            ItemStack result = this.container.getCraftingResultInventory().getStackInSlot(0);
+            if (result.isEmpty()) {
+                return List.of(GuiText.no_recipe.text());
+            }
+
+            if (!this.container.isRecipeArcane()) {
+                return List.of(GuiText.recipe_not_arcane.text());
+            }
+
+            if (KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem())) {
+                return List.of(GuiText.recipe_already_stored.text());
+            }
+
+            return Collections.emptyList();
+        }, () -> {
+            if (this.canAddKnowledgeCoreRecipe()) {
+                this.container.requestKnowledgeCoreAdd();
+            }
+        });
+        this.coreDelButton = new DynamicIconButton(() -> Icon.CLEAR, GuiText.del.text(), () -> {
+            ItemStack knowledgeCore = this.getKnowledgeCore();
+            if (knowledgeCore.isEmpty()) {
+                return List.of(GuiText.insert_knowledge_core.text());
+            }
+
+            if (this.isKnowledgeCoreBlank(knowledgeCore)) {
+                return List.of(GuiText.knowledge_core_is_blank.text());
+            }
+
+            return Collections.emptyList();
+        }, () -> {
+            if (this.canOpenStoredKnowledgeCore()) {
+                this.container.requestKnowledgeCoreDel();
+            }
+        });
+        this.coreViewButton = new DynamicIconButton(() -> Icon.VIEW_MODE_STORED, GuiText.view.text(), () -> {
+            ItemStack knowledgeCore = this.getKnowledgeCore();
+            if (knowledgeCore.isEmpty()) {
+                return List.of(GuiText.insert_knowledge_core.text());
+            }
+
+            if (this.isKnowledgeCoreBlank(knowledgeCore)) {
+                return List.of(GuiText.knowledge_core_is_blank.text());
+            }
+
+            return Collections.emptyList();
+        }, () -> {
+            if (this.canOpenStoredKnowledgeCore()) {
+                this.container.requestKnowledgeCoreView();
+            }
+        });
 
         this.widgets.add("knowledgeCoreAdd", this.coreAddButton);
         this.widgets.add("knowledgeCoreDelete", this.coreDelButton);
@@ -36,19 +92,29 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     }
 
     @Override
-    public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
-        super.drawFG(offsetX, offsetY, mouseX, mouseY);
+    protected ActionItems getClearGridActionItem() {
+        return ActionItems.S_CLOSE;
     }
 
     @Override
     protected void updateBeforeRender() {
         super.updateBeforeRender();
-        this.updateKnowledgeCoreButtons();
+
+        if (this.getKnowledgeCore().isEmpty()) {
+            this.coreAddButton.enabled = false;
+            this.coreDelButton.enabled = false;
+            this.coreViewButton.enabled = false;
+            return;
+        }
+
+        this.coreAddButton.enabled = this.canAddKnowledgeCoreRecipe();
+        this.coreDelButton.enabled = this.canOpenStoredKnowledgeCore();
+        this.coreViewButton.enabled = this.canOpenStoredKnowledgeCore();
     }
 
     @Override
     protected void drawVisInfo() {
-        float visRequired = this.inscriberContainer.getVisState().getVisRequired();
+        float visRequired = this.container.getVisState().getVisRequired();
         this.fontRenderer.drawString(
                 GuiText.vis_required.getLocal(this.getVisIfSet(visRequired)),
                 80,
@@ -56,84 +122,12 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
                 4210752);
     }
 
-    private void updateKnowledgeCoreButtons() {
-        ItemStack knowledgeCore = this.getKnowledgeCore();
-        boolean hasArcaneRecipe = this.inscriberContainer.isRecipeArcane();
-        ItemStack result = this.inscriberContainer.getCraftingResultInventory().getStackInSlot(0);
-        boolean hasRecipe = !result.isEmpty();
-        boolean recipeExists = hasRecipe && KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem());
-        boolean currentIsBlank = this.isKnowledgeCoreBlank(knowledgeCore);
-
-        if (knowledgeCore.isEmpty()) {
-            ITextComponent insertKnowledgeCore = GuiText.insert_knowledge_core.text();
-            this.setKnowledgeCoreButtonState(this.coreAddButton, false, insertKnowledgeCore);
-            this.setKnowledgeCoreButtonState(this.coreDelButton, false, insertKnowledgeCore);
-            this.setKnowledgeCoreButtonState(this.coreViewButton, false, insertKnowledgeCore);
-            return;
-        }
-
-        this.setKnowledgeCoreButtonState(
-                this.coreAddButton,
-                hasRecipe && hasArcaneRecipe && !recipeExists,
-                this.getAddKnowledgeCoreTooltip(hasRecipe, hasArcaneRecipe, recipeExists));
-
-        if (currentIsBlank) {
-            ITextComponent blankKnowledgeCore = GuiText.knowledge_core_is_blank.text();
-            this.setKnowledgeCoreButtonState(this.coreDelButton, false, blankKnowledgeCore);
-            this.setKnowledgeCoreButtonState(this.coreViewButton, false, blankKnowledgeCore);
-            return;
-        }
-
-        this.setKnowledgeCoreButtonState(this.coreDelButton, true, null);
-        this.setKnowledgeCoreButtonState(this.coreViewButton, true, null);
-    }
-
-    private ITextComponent getAddKnowledgeCoreTooltip(boolean hasRecipe, boolean hasArcaneRecipe, boolean recipeExists) {
-        if (!hasRecipe) {
-            return GuiText.no_recipe.text();
-        }
-
-        if (!hasArcaneRecipe) {
-            return GuiText.recipe_not_arcane.text();
-        }
-
-        if (recipeExists) {
-            return GuiText.recipe_already_stored.text();
-        }
-
-        return null;
-    }
-
-    private void requestKnowledgeCoreAddIfAllowed() {
-        if (this.canAddKnowledgeCoreRecipe()) {
-            this.inscriberContainer.requestKnowledgeCoreAdd();
-        }
-    }
-
-    private void requestKnowledgeCoreDeleteIfAllowed() {
-        if (this.canOpenStoredKnowledgeCore()) {
-            this.inscriberContainer.requestKnowledgeCoreDel();
-        }
-    }
-
-    private void requestKnowledgeCoreViewIfAllowed() {
-        if (this.canOpenStoredKnowledgeCore()) {
-            this.inscriberContainer.requestKnowledgeCoreView();
-        }
-    }
-
-    private void setKnowledgeCoreButtonState(KnowledgeCoreButton button, boolean enabled, ITextComponent tooltip) {
-        button.visible = true;
-        button.enabled = enabled;
-        button.setTooltip(tooltip);
-    }
-
     private boolean canAddKnowledgeCoreRecipe() {
         ItemStack knowledgeCore = this.getKnowledgeCore();
-        ItemStack result = this.inscriberContainer.getCraftingResultInventory().getStackInSlot(0);
+        ItemStack result = this.container.getCraftingResultInventory().getStackInSlot(0);
         return !knowledgeCore.isEmpty()
                 && !result.isEmpty()
-                && this.inscriberContainer.isRecipeArcane()
+                && this.container.isRecipeArcane()
                 && !KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem());
     }
 
@@ -143,36 +137,11 @@ public class GuiArcaneInscriber extends GuiArcaneTerm {
     }
 
     private ItemStack getKnowledgeCore() {
-        return this.inscriberContainer.getHost().getKnowledgeCoreInventory().getStackInSlot(0);
+        return this.container.getHost().getKnowledgeCoreInventory().getStackInSlot(0);
     }
 
     private boolean isKnowledgeCoreBlank(ItemStack knowledgeCore) {
-        return !(knowledgeCore.getItem() instanceof ItemKnowledgeCore)
-                || ((ItemKnowledgeCore) knowledgeCore.getItem()).isBlank();
+        return !(knowledgeCore.getItem() instanceof ItemKnowledgeCore item) || item.isBlank();
     }
 
-    private static final class KnowledgeCoreButton extends IconButton {
-        private final Icon icon;
-        private boolean hasTooltip;
-
-        private KnowledgeCoreButton(Icon icon, Runnable onPress) {
-            super(onPress);
-            this.icon = icon;
-        }
-
-        @Override
-        protected Icon getIcon() {
-            return this.icon;
-        }
-
-        @Override
-        public boolean isTooltipAreaVisible() {
-            return this.hasTooltip && super.isTooltipAreaVisible();
-        }
-
-        private void setTooltip(ITextComponent tooltip) {
-            this.hasTooltip = tooltip != null;
-            this.setMessage(tooltip);
-        }
-    }
 }

@@ -15,7 +15,9 @@ import thaumicenergistics.core.ThEConfig;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.items.ItemKnowledgeCore;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -124,9 +126,15 @@ public abstract class KnowledgeCoreUtil {
     }
 
     public static boolean hasRecipe(ItemStack knowledgeCoreStack, Item result) {
-        return getRecipeMap(knowledgeCoreStack).keySet().stream()
-            .map(ItemStack::getItem)
-            .anyMatch(item -> item.equals(result));
+        // Scans the same recipe slots getRecipeMap would have decoded, but without materialising a map
+        // (ItemStack keys hash by identity, so the map never deduplicated anything) and can stop at the first hit.
+        for (int i = 0; i < getRecipeSlotCount(knowledgeCoreStack); i++) {
+            Recipe recipe = getRecipe(knowledgeCoreStack, i);
+            if (recipe != null && recipe.result.getItem().equals(result)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean hasRecipe(ItemStack knowledgeCoreStack, int slot) {
@@ -234,21 +242,96 @@ public abstract class KnowledgeCoreUtil {
     }
 
     public static class KnowledgeCorePatternDetails implements IPatternDetails {
+        /**
+         * Number of 3x3 crafting grid slots a Knowledge Core recipe exposes, empty slots included.
+         */
+        private static final int SPARSE_INPUT_SLOTS = 9;
+        /**
+         * Number of arcane crystal requirements displayed alongside the normal 3x3 inputs.
+         *
+         * <p>Crystal requirements are intentionally kept out of {@link #getInputs()} because AE2's pattern
+         * matcher must continue to treat only the nine normal matrix positions as craftable inputs.</p>
+         */
+        private static final int CRYSTAL_INPUT_SLOTS = KnowledgeCoreRecipeCodec.INGREDIENT_SLOT_COUNT
+            - SPARSE_INPUT_SLOTS;
+
         private final Recipe recipe;
         private final AEItemKey definition;
         private final IInput[] inputs;
         private final List<GenericStack> outputs;
+        private final int[] sparseToCompressed = new int[SPARSE_INPUT_SLOTS];
+        private final GenericStack[] sparseInputs = new GenericStack[SPARSE_INPUT_SLOTS];
+        private final GenericStack[] crystalInputs = new GenericStack[CRYSTAL_INPUT_SLOTS];
 
         public KnowledgeCorePatternDetails(Recipe recipe) {
             this.recipe = Objects.requireNonNull(recipe, "recipe");
             this.definition = Objects.requireNonNull(
                 AEItemKey.of(KnowledgeCorePatternProjection.INSTANCE.encode(recipe)));
-            this.inputs = buildInputs(recipe);
             this.outputs = Collections.singletonList(new GenericStack(Objects.requireNonNull(AEItemKey.of(recipe.result())), recipe.result().getCount()));
+
+            List<IInput> compressedInputs = new ArrayList<>();
+            InternalInventory normalInputs = recipe.getIngredientPart(false);
+            Arrays.fill(this.sparseToCompressed, -1);
+            for (int slot = 0; slot < this.sparseInputs.length; slot++) {
+                ItemStack stack = normalInputs.getStackInSlot(slot);
+                if (stack.isEmpty()) {
+                    this.sparseToCompressed[slot] = -1;
+                    this.sparseInputs[slot] = null;
+                    continue;
+                }
+                this.sparseToCompressed[slot] = compressedInputs.size();
+                this.sparseInputs[slot] = new GenericStack(Objects.requireNonNull(AEItemKey.of(stack)), 1);
+                compressedInputs.add(new ItemPatternInput(stack));
+            }
+            this.inputs = compressedInputs.toArray(new IInput[0]);
+
+            InternalInventory crystalInputs = recipe.getIngredientPart(true);
+            for (int slot = 0; slot < this.crystalInputs.length; slot++) {
+                ItemStack stack = crystalInputs.getStackInSlot(slot);
+                this.crystalInputs[slot] = stack.isEmpty()
+                    ? null
+                    : new GenericStack(Objects.requireNonNull(AEItemKey.of(stack)), stack.getCount());
+            }
         }
 
         public Recipe getRecipe() {
             return this.recipe;
+        }
+
+        /**
+         * @return the number of 3x3 crafting grid slots this pattern exposes, empty slots included
+         */
+        public int getSparseInputCount() {
+            return this.sparseInputs.length;
+        }
+
+        /**
+         * @param sparseIndex a 3x3 crafting grid slot
+         * @return the single expected stack of that slot, or null when the slot is empty or the index is out of range
+         */
+        public @Nullable GenericStack getSparseInput(int sparseIndex) {
+            if (sparseIndex < 0 || sparseIndex >= this.sparseInputs.length) {
+                return null;
+            }
+            return this.sparseInputs[sparseIndex];
+        }
+
+        /**
+         * @return the fixed number of arcane crystal display positions, including empty positions
+         */
+        public int getCrystalInputCount() {
+            return this.crystalInputs.length;
+        }
+
+        /**
+         * @param crystalIndex crystal display position
+         * @return the required crystal stack, or null when that position is empty or out of range
+         */
+        public @Nullable GenericStack getCrystalInput(int crystalIndex) {
+            if (crystalIndex < 0 || crystalIndex >= this.crystalInputs.length) {
+                return null;
+            }
+            return this.crystalInputs[crystalIndex];
         }
 
         @Override
@@ -276,18 +359,6 @@ public abstract class KnowledgeCoreUtil {
         @Override
         public int hashCode() {
             return this.definition.hashCode();
-        }
-
-        private static IInput[] buildInputs(Recipe recipe) {
-            List<IInput> inputs = new ArrayList<>();
-            InternalInventory normalInputs = recipe.getIngredientPart(false);
-            for (int slot = 0; slot < normalInputs.size(); slot++) {
-                ItemStack stack = normalInputs.getStackInSlot(slot);
-                if (!stack.isEmpty()) {
-                    inputs.add(new ItemPatternInput(stack));
-                }
-            }
-            return inputs.toArray(new IInput[0]);
         }
     }
 

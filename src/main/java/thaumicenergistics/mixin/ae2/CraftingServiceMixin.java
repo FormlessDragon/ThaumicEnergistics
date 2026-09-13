@@ -21,12 +21,12 @@ public abstract class CraftingServiceMixin {
     private static final ArcaneVisAccounting THEENG$VIS_ACCOUNTING = new ArcaneVisAccountingImpl();
 
     @ModifyArg(
-        method = "submitJob(Lae2/api/networking/crafting/ICraftingPlan;Lae2/api/networking/crafting/ICraftingRequester;Lae2/api/networking/crafting/ICraftingCPU;ZLae2/api/networking/security/IActionSource;ZZ)Lae2/api/networking/crafting/ICraftingSubmitResult;",
+        method = "submitJob(Lae2/api/networking/crafting/ICraftingPlan;Lae2/api/networking/crafting/ICraftingRequester;Lae2/api/networking/crafting/ICraftingCPU;ZLae2/api/networking/security/IActionSource;ZZLae2/api/networking/crafting/CraftingJobOptions;)Lae2/api/networking/crafting/ICraftingSubmitResult;",
         at = @At(
             value = "INVOKE",
             target = "Lae2/me/cluster/implementations/CraftingCPUCluster;mergeJob("
                 + "Lae2/api/networking/IGrid;Lae2/api/networking/crafting/ICraftingPlan;"
-                + "Lae2/api/networking/security/IActionSource;)"
+                + "Lae2/api/networking/security/IActionSource;I)"
                 + "Lae2/api/networking/crafting/ICraftingSubmitResult;"),
         index = 1,
         require = 2)
@@ -35,13 +35,14 @@ public abstract class CraftingServiceMixin {
     }
 
     @ModifyArg(
-        method = "submitJob(Lae2/api/networking/crafting/ICraftingPlan;Lae2/api/networking/crafting/ICraftingRequester;Lae2/api/networking/crafting/ICraftingCPU;ZLae2/api/networking/security/IActionSource;ZZ)Lae2/api/networking/crafting/ICraftingSubmitResult;",
+        method = "submitJob(Lae2/api/networking/crafting/ICraftingPlan;Lae2/api/networking/crafting/ICraftingRequester;Lae2/api/networking/crafting/ICraftingCPU;ZLae2/api/networking/security/IActionSource;ZZLae2/api/networking/crafting/CraftingJobOptions;)Lae2/api/networking/crafting/ICraftingSubmitResult;",
         at = @At(
             value = "INVOKE",
             target = "Lae2/me/cluster/implementations/CraftingCPUCluster;submitJob("
                 + "Lae2/api/networking/IGrid;Lae2/api/networking/crafting/ICraftingPlan;"
                 + "Lae2/api/networking/security/IActionSource;"
-                + "Lae2/api/networking/crafting/ICraftingRequester;)"
+                + "Lae2/api/networking/crafting/ICraftingRequester;"
+                + "Lae2/api/networking/crafting/CraftingJobOptions;)"
                 + "Lae2/api/networking/crafting/ICraftingSubmitResult;"),
         index = 1,
         require = 1)
