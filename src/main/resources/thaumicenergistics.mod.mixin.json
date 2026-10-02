@@ -8,7 +8,6 @@
 	"mixins": [
 		"ae2.CraftingCalculationMixin",
 		"ae2.CraftingServiceMixin",
-		"ae2.PatternAccessSessionMixin",
 		"ae2.accessor.PatternAccessSessionTrackerAccessor"
 	],
 	"client": [

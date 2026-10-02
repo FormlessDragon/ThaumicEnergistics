@@ -17,6 +17,7 @@ import ae2.api.networking.ticking.TickRateModulation;
 import ae2.api.networking.ticking.TickingRequest;
 import ae2.api.stacks.AEItemKey;
 import ae2.api.stacks.KeyCounter;
+import ae2.helpers.patternprovider.PatternContainer;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMaps;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
@@ -51,7 +52,6 @@ import thaumicenergistics.common.crafting.ArcaneVisAccountingImpl;
 import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.common.crafting.ArcaneVisProvider;
 import thaumicenergistics.common.me.key.AEEssentiaKey;
-import thaumicenergistics.api.storage.ReadOnlyPatternContainer;
 import thaumicenergistics.core.ThEConfig;
 import thaumicenergistics.core.ThELog;
 import thaumicenergistics.core.definitions.ThEBlocks;
@@ -78,7 +78,7 @@ import java.util.Objects;
  * resulting stacks remain in a persistent output buffer until the grid accepts them.</p>
  */
 public class TileArcaneAssembler extends AENetworkedTile
-    implements ArcaneVisProvider, IGridTickable, IUpgradeableObject, InternalInventoryHost, ReadOnlyPatternContainer {
+    implements ArcaneVisProvider, IGridTickable, IUpgradeableObject, InternalInventoryHost, PatternContainer {
 
     private static final String NBT_CORE = "core";
     private static final String NBT_UPGRADES = "upgrades";
@@ -243,10 +243,6 @@ public class TileArcaneAssembler extends AENetworkedTile
 
     public ItemStack getCurrentOutput() {
         return this.currentOutput;
-    }
-
-    public int getPendingCrafts() {
-        return this.pendingCrafts;
     }
 
     @Override
@@ -504,10 +500,6 @@ public class TileArcaneAssembler extends AENetworkedTile
 
     public boolean getHasEnoughVis() {
         return this.hasEnoughVis;
-    }
-
-    public boolean isMissingAspect() {
-        return this.missingAspect;
     }
 
     public int getProgress() {
@@ -946,6 +938,11 @@ public class TileArcaneAssembler extends AENetworkedTile
     private void saveVisualChange() {
         this.saveChanges();
         this.markForUpdate();
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return true;
     }
 
     /**

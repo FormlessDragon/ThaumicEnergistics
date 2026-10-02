@@ -8,6 +8,11 @@ plugins {
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.4.1'
     id 'xyz.wagyourtail.unimined' version '1.4.37-kappa'
     id 'com.diffplug.spotless' version '8.4.0'
+    id 'scala'
+}
+
+scala {
+    scalaVersion = "2.11.1"
 }
 
 apply from: 'gradle/scripts/helpers.gradle'

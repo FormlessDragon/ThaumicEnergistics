@@ -197,7 +197,7 @@ public final class GuiHandler implements IGuiHandler {
                     partLocator(x, y, z), ID,
                     PartArcaneTerminal.class, host -> new ContainerArcaneTerm(player.inventory, host));
                 if(arcaneTermContainer != null) {
-                    return new GuiArcaneTerm(arcaneTermContainer, player.inventory);
+                    return new GuiArcaneTerm<>(arcaneTermContainer, player.inventory);
                 }
                 return null;
             }
