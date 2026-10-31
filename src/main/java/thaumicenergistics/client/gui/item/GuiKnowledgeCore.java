@@ -14,6 +14,7 @@ import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Slot;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.util.text.ITextComponent;
+import thaumicenergistics.client.gui.ThESlotHints;
 import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.item.ContainerKnowledgeCore;
 import thaumicenergistics.core.definitions.ThEItems;
@@ -112,6 +113,9 @@ public class GuiKnowledgeCore extends AEBaseGui<ContainerKnowledgeCore> {
             case KNOWLEDGE_CORE_MANAGE:
                 break;
         }
+
+        ThESlotHints.highlightDestinations(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
+                slot -> this.container.getSlotSemantic(slot) == SlotSemantics.UPGRADE);
     }
 
     private void blitActionIcon(Icon icon) {

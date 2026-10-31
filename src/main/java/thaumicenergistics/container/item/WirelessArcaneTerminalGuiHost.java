@@ -25,8 +25,10 @@ import java.util.function.BiConsumer;
 public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<WirelessTerminalItem> implements IArcaneTerminalHost {
 
     private static final String TAG_ARCANE_MATRIX = "arcaneMatrix";
+    private static final String TAG_ARMOR = "terminalArmor";
 
     private final SupplierInternalInventory<InternalInventory> craftingInventory;
+    private final SupplierInternalInventory<InternalInventory> armorInventory;
 
     public WirelessArcaneTerminalGuiHost(WirelessTerminalItem stackItem,
                                          WirelessTerminalItem terminalItem,
@@ -37,6 +39,9 @@ public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<Wirel
         this.craftingInventory = new SupplierInternalInventory<>(
             new StackDependentSupplier<>(this::getItemStack,
                 stack -> createCraftingInventory(player, stack, terminalItem)));
+        this.armorInventory = new SupplierInternalInventory<>(
+            new StackDependentSupplier<>(this::getItemStack,
+                stack -> createArmorInventory(player, stack, terminalItem)));
     }
 
     private static InternalInventory createCraftingInventory(EntityPlayer player, ItemStack stack,
@@ -59,6 +64,25 @@ public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<Wirel
         return craftingInventory;
     }
 
+    private static InternalInventory createArmorInventory(EntityPlayer player, ItemStack stack, WirelessTerminalItem terminal) {
+        var armorInventory = new AppEngInternalInventory(new InternalInventoryHost() {
+            @Override
+            public void saveChangedInventory(AppEngInternalInventory inv) {
+                inv.writeToNBT(WirelessTerminals.getTerminalData(stack, terminal), TAG_ARMOR);
+            }
+
+            @Override
+            public boolean isClientSide() {
+                return player.world.isRemote;
+            }
+        }, 4, 1);
+        NBTTagCompound data = WirelessTerminals.getExistingTerminalData(stack, terminal);
+        if (data != null) {
+            armorInventory.readFromNBT(data, TAG_ARMOR);
+        }
+        return armorInventory;
+    }
+
     private DimensionalBlockPos getLinkedPosition() {
         WirelessTerminalItem terminal = getTerminalItem();
         return terminal.getLinkedPosition(getItemStack(), terminal);
@@ -72,6 +96,11 @@ public class WirelessArcaneTerminalGuiHost extends WirelessTerminalGuiHost<Wirel
     @Override
     public InternalInventory getArcaneCraftingInventory() {
         return this.craftingInventory;
+    }
+
+    @Override
+    public InternalInventory getArmorInventory() {
+        return this.armorInventory;
     }
 
     @Override

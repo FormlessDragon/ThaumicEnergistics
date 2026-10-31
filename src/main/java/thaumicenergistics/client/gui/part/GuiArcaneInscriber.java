@@ -6,6 +6,8 @@ import ae2.client.gui.style.GuiStyleManager;
 import ae2.client.gui.widgets.DynamicIconButton;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
+import thaumicenergistics.client.gui.ThESlotHints;
+import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.core.definitions.GuiText;
 import thaumicenergistics.items.ItemKnowledgeCore;
@@ -110,6 +112,13 @@ public class GuiArcaneInscriber extends GuiArcaneTerm<ContainerArcaneInscriber> 
         this.coreAddButton.enabled = this.canAddKnowledgeCoreRecipe();
         this.coreDelButton.enabled = this.canOpenStoredKnowledgeCore();
         this.coreViewButton.enabled = this.canOpenStoredKnowledgeCore();
+    }
+
+    @Override
+    public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
+        super.drawFG(offsetX, offsetY, mouseX, mouseY);
+        ThESlotHints.highlightOnlyFromPlayerInv(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
+            slot -> this.container.getSlotSemantic(slot) == ThESlotSemantics.KNOWLEDGE_CORE, stack -> stack.getItem() instanceof ItemKnowledgeCore);
     }
 
     @Override

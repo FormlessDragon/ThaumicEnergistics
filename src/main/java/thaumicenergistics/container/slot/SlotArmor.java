@@ -1,13 +1,12 @@
 package thaumicenergistics.container.slot;
 
-import ae2.api.inventories.PlatformInventoryWrapper;
+import ae2.api.inventories.InternalInventory;
 import ae2.container.slot.AppEngSlot;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.items.IItemHandler;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -19,8 +18,8 @@ public class SlotArmor extends AppEngSlot {
 
     private final EntityPlayer player;
 
-    public SlotArmor(EntityPlayer player, IItemHandler handler, int index, int xPosition, int yPosition) {
-        super(new PlatformInventoryWrapper(Objects.requireNonNull(handler, "handler")), index, xPosition, yPosition);
+    public SlotArmor(EntityPlayer player, InternalInventory inv, int index, int xPosition, int yPosition) {
+        super(inv, index, xPosition, yPosition);
         this.player = Objects.requireNonNull(player, "player");
     }
 

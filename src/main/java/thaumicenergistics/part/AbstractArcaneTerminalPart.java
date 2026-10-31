@@ -34,9 +34,11 @@ import java.util.function.Function;
 public abstract class AbstractArcaneTerminalPart extends AbstractTerminalPart implements IArcaneTerminalHost {
 
     private static final String TAG_CRAFTING = "crafting";
+    private static final String TAG_ARMOR = "terminalArmor";
 
     private final ModGUIs gui;
     private final AppEngInternalInventory craftingInventory;
+    private final AppEngInternalInventory armorInventory;
 
     protected AbstractArcaneTerminalPart(IPartItem<?> item,
                                          ModGUIs gui,
@@ -50,6 +52,7 @@ public abstract class AbstractArcaneTerminalPart extends AbstractTerminalPart im
                     this.getClass().getName(), actualSize);
             throw new IllegalStateException("Arcane crafting matrix must contain exactly 15 slots");
         }
+        this.armorInventory = new AppEngInternalInventory(this, 4, 1);
     }
 
     @Override
@@ -60,6 +63,11 @@ public abstract class AbstractArcaneTerminalPart extends AbstractTerminalPart im
     @Override
     public final InternalInventory getArcaneCraftingInventory() {
         return this.craftingInventory;
+    }
+
+    @Override
+    public InternalInventory getArmorInventory() {
+        return this.armorInventory;
     }
 
     /**
@@ -88,8 +96,10 @@ public abstract class AbstractArcaneTerminalPart extends AbstractTerminalPart im
     public final void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
         this.craftingInventory.clear();
+        this.armorInventory.clear();
         this.getArcaneAuxiliaryInventory().clear();
         this.craftingInventory.readFromNBT(tag, TAG_CRAFTING);
+        this.armorInventory.readFromNBT(tag, TAG_ARMOR);
         this.readArcaneAuxiliaryInventory(tag);
     }
 
@@ -97,6 +107,7 @@ public abstract class AbstractArcaneTerminalPart extends AbstractTerminalPart im
     public final void writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
         this.craftingInventory.writeToNBT(tag, TAG_CRAFTING);
+        this.armorInventory.writeToNBT(tag, TAG_ARMOR);
         this.writeArcaneAuxiliaryInventory(tag);
     }
 
@@ -106,6 +117,7 @@ public abstract class AbstractArcaneTerminalPart extends AbstractTerminalPart im
         if (this.shouldDropCraftingInventory()) {
             this.addInventoryDrops(drops, this.craftingInventory);
         }
+        this.addInventoryDrops(drops, this.armorInventory);
         this.addInventoryDrops(drops, this.getArcaneAuxiliaryInventory());
     }
 
@@ -113,6 +125,7 @@ public abstract class AbstractArcaneTerminalPart extends AbstractTerminalPart im
     public final void clearContent() {
         super.clearContent();
         this.craftingInventory.clear();
+        this.armorInventory.clear();
         this.getArcaneAuxiliaryInventory().clear();
     }
 

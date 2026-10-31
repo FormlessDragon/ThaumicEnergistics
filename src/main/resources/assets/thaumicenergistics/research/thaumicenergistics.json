@@ -4,7 +4,7 @@
       "key": "BASEENERGISTICS",
       "name": "research.base_energistics.title",
       "icons": [
-        "thaumicenergistics:essentia_import"
+        "thaumicenergistics:diffusion_core"
       ],
       "category": "THAUMICENERGISTICS",
       "location": [
@@ -243,9 +243,9 @@
       "key": "ESSENTIABUSES",
       "name": "research.essentiabuses.title",
       "icons": [
-        "thaumicenergistics:essentia_import",
-        "thaumicenergistics:essentia_export",
-        "thaumicenergistics:essentia_storage"
+        "ae2:import_bus",
+        "ae2:export_bus",
+        "ae2:storage_bus"
       ],
       "category": "THAUMICENERGISTICS",
       "location": [
@@ -267,10 +267,8 @@
         },
         {
           "text": "research.essentiabuses.stage.2",
-          "recipes": [
-            "thaumicenergistics:essentia_import_bus",
-            "thaumicenergistics:essentia_export_bus",
-            "thaumicenergistics:essentia_storage_bus"
+          "required_knowledge": [
+            "OBSERVATION;THAUMICENERGISTICS;2"
           ]
         }
       ],
@@ -282,39 +280,6 @@
           ],
           "required_research": [
             "ARCANETERMINAL"
-          ]
-        }
-      ]
-    },
-    {
-      "key": "ESSENTIATERMINAL",
-      "name": "research.essentiaterminal.title",
-      "icons": [
-        "thaumicenergistics:essentia_terminal"
-      ],
-      "category": "THAUMICENERGISTICS",
-      "location": [
-        -2,
-        -2
-      ],
-      "meta": [
-        "ROUND"
-      ],
-      "parents": [
-        "DIGISENTIA",
-        "ESSENTIASTORAGE1k"
-      ],
-      "stages": [
-        {
-          "text": "research.essentiaterminal.stage.1",
-          "required_knowledge": [
-            "OBSERVATION;THAUMICENERGISTICS;2"
-          ]
-        },
-        {
-          "text": "research.essentiaterminal.stage.2",
-          "recipes": [
-            "thaumicenergistics:essentia_terminal"
           ]
         }
       ]

@@ -33,7 +33,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.wrapper.PlayerArmorInvWrapper;
 import net.minecraftforge.items.wrapper.PlayerInvWrapper;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
@@ -94,7 +93,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         this.craftingResult = new AppEngInternalInventory(1);
 
         this.addMatrixSlots(32, 36);
-        this.addArmorSlots(ip.player, new PlayerArmorInvWrapper(ip), 8, 19);
+        this.addArmorSlots(ip.player, this.host.getArmorInventory(), 8, 19);
         this.registerClientAction(ACTION_CLEAR_GRID, this::clearCraftingGrid);
         this.registerClientAction(ACTION_CLEAR_TO_PLAYER, this::clearToPlayerInventory);
         this.registerClientAction(ACTION_SET_CLEAR_ON_CLOSE, Boolean.class, this::setClearGridOnClose);
@@ -168,10 +167,6 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
     protected IItemHandler getCraftingItemHandler() {
         return this.getCraftingInventory().toItemHandler();
-    }
-
-    protected IItemHandler getPlayerItemHandler() {
-        return new PlayerInvWrapper(this.getPlayerInventory());
     }
 
     @Override
@@ -454,7 +449,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     protected float getDiscount(EntityPlayer player) {
-        return TCCraftingManager.getDiscount(player);
+        return TCCraftingManager.getDiscount(player, this.host.getArmorInventory());
     }
 
     protected ItemStack extractItem(MEStorage storage, ItemStack stack, int amount, Actionable mode) {
@@ -928,11 +923,11 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     @SuppressWarnings("SameParameterValue")
-    protected void addArmorSlots(EntityPlayer player, IItemHandler inventory, int offsetX, int offsetY) {
-        this.addSlot(new SlotArmor(player, inventory, 3, offsetX, offsetY), ThESlotSemantics.PLAYER_ARMOR);
-        this.addSlot(new SlotArmor(player, inventory, 2, offsetX, offsetY + 18), ThESlotSemantics.PLAYER_ARMOR);
-        this.addSlot(new SlotArmor(player, inventory, 1, offsetX, offsetY + 18 * 2), ThESlotSemantics.PLAYER_ARMOR);
-        this.addSlot(new SlotArmor(player, inventory, 0, offsetX, offsetY + 18 * 3), ThESlotSemantics.PLAYER_ARMOR);
+    protected void addArmorSlots(EntityPlayer player, InternalInventory inventory, int offsetX, int offsetY) {
+        this.addSlot(new SlotArmor(player, inventory, 3, offsetX, offsetY), ThESlotSemantics.TERMINAL_ARMOR);
+        this.addSlot(new SlotArmor(player, inventory, 2, offsetX, offsetY + 18), ThESlotSemantics.TERMINAL_ARMOR);
+        this.addSlot(new SlotArmor(player, inventory, 1, offsetX, offsetY + 18 * 2), ThESlotSemantics.TERMINAL_ARMOR);
+        this.addSlot(new SlotArmor(player, inventory, 0, offsetX, offsetY + 18 * 3), ThESlotSemantics.TERMINAL_ARMOR);
     }
 
     private record NetworkReservation(int slot, ItemStack stack) {

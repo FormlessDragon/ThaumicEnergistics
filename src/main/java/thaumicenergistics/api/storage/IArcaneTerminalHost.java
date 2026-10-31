@@ -26,6 +26,8 @@ public interface IArcaneTerminalHost extends ITerminalHost {
      */
     InternalInventory getArcaneCraftingInventory();
 
+    InternalInventory getArmorInventory();
+
     /**
      * Reports whether the host currently has a valid world location from which Vis can be queried.
      */

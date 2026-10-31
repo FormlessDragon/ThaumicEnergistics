@@ -9,7 +9,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import thaumicenergistics.common.me.key.ArcaneVisKey;
-import thaumicenergistics.common.me.key.ArcaneVisKeyType;
+import thaumicenergistics.common.me.key.ArcaneVisKeys;
 import thaumicenergistics.core.ThELog;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
@@ -25,7 +25,7 @@ import java.util.Objects;
  */
 public final class ArcaneVisAccountingImpl implements ArcaneVisAccounting {
 
-    public static final int UNITS_PER_VIS = ArcaneVisKeyType.AMOUNT_PER_VIS;
+    public static final int UNITS_PER_VIS = ArcaneVisKeys.AMOUNT_PER_VIS;
 
     private static final BigDecimal MAX_LONG = BigDecimal.valueOf(Long.MAX_VALUE);
 

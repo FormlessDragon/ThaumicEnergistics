@@ -1,4 +1,4 @@
-﻿# Creative Tab
+# Creative Tab
 itemGroup.ThaumicEnergistics=Thaumic Energistics
 
 # Blocks
@@ -43,6 +43,8 @@ tooltip.thaumicenergistics.arcane_assembler.busy=Status: busy
 tooltip.thaumicenergistics.arcane_assembler.progress=Progress:
 tooltip.thaumicenergistics.arcane_assembler.no_aspect=Error: out of aspect
 tooltip.thaumicenergistics.arcane_assembler.no_vis=Error: out of Vis
+tooltip.thaumicenergistics.knowledge_core.recipes=Stored recipes: %s
+tooltip.thaumicenergistics.knowledge_core.hold_shift=Hold Shift to list them
 
 # GUI
 gui.thaumicenergistics.Essentias=Essentias
@@ -123,19 +125,14 @@ research.essentiastorage64k.stage.2=I can now store massive amounts of essentia 
 
 # Research Essentia Buses
 research.essentiabuses.title=Digisentia Transportation
-research.essentiabuses.stage.1=Now that I have the components to safely transport essentia with my ME system, I can now work on creating buses for essentia.
-research.essentiabuses.stage.2=I can now make Import, Export, and Storage Buses. They all function exactly like their item counterparts.
+research.essentiabuses.stage.1=Now that I can store essentia safely inside my ME network, moving it around should not need a new kind of bus - the buses I already have should handle it just like they handle items and fluids.
+research.essentiabuses.stage.2=Indeed they can: an ME Import Bus pulls essentia out of the essentia container it faces, and an ME Storage Bus exposes such a container's essentia to my network. Essentia is just another resource my ME system can move now.
 research.essentiabuses.addenda.1=With a little more tuning, P2P tunnels can move Vis between distant aura points through the ME network.
-
-# Research Essentia Terminal
-research.essentiaterminal.title=Essentia Monitoring
-research.essentiaterminal.stage.1=While I can now digitize essentia, I have realized this means I can no longer observe the quantities of essentia I have digitalized - an urgent problem.
-research.essentiaterminal.stage.2=The ME Essentia Terminal allows me to see all essentia my ME network can access. Additionally, I can insert and extract essentia with phials through it.
 
 # Research Infusion Provider
 research.infusionprovider.title=Infusion Provider
-research.infusionprovider.stage.1=While being able to manipulate essentia with my ME system has proven invaluable, I am frustrated with the process required for Infusion - I have to extract all my essentia into jars on-site. Perhaps if I could expose my essentia to the Runic Matrix similar to the Essentia Terminal...
-research.infusionprovider.stage.2=Success! The Essentia Infusion Provider will expose the entire ME network's essentia to the Infusion process! As a bonus, it also works with my ME Essentia Storage Buses, allowing me to create essentia subnetworks, should I ever need those.
+research.infusionprovider.stage.1=While being able to manipulate essentia with my ME system has proven invaluable, I am frustrated with the process required for Infusion - I have to extract all my essentia into jars on-site. Perhaps if I could expose my essentia to the Runic Matrix the way my ME network exposes it to me...
+research.infusionprovider.stage.2=Success! The Essentia Infusion Provider will expose the entire ME network's essentia to the Infusion process! As a bonus, it also works with my ME Storage Buses, allowing me to create essentia subnetworks, should I ever need those.
 
 # Research Arcane Crafting Terminal
 research.arcaneterminal.title=Arcane Crafting Terminal

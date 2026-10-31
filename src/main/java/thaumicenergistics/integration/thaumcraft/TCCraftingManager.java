@@ -43,16 +43,15 @@ public class TCCraftingManager {
         return inventory;
     }
 
-    public static float getDiscount(EntityPlayer player) {
+    public static float getDiscount(EntityPlayer player, Iterable<ItemStack> armors) {
         if (player == null)
             return 0f;
         int discount = 0;
 
-        for (int i = 0; i < 4; i++) {
-            ItemStack stack = player.inventory.getStackInSlot(36 + i);
-            if (stack.isEmpty() || !(stack.getItem() instanceof IVisDiscountGear gear))
+        for (ItemStack armor : armors) {
+            if (armor.isEmpty() || !(armor.getItem() instanceof IVisDiscountGear gear))
                 continue;
-            discount += gear.getVisDiscount(stack, player);
+            discount += gear.getVisDiscount(armor, player);
         }
 
         IBaublesItemHandler baublesHandler = BaublesApi.getBaublesHandler(player);

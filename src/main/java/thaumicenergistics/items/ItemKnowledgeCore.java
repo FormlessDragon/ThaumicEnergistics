@@ -3,6 +3,9 @@ package thaumicenergistics.items;
 import ae2.api.upgrades.IUpgradeInventory;
 import ae2.api.upgrades.IUpgradeableItem;
 import ae2.api.upgrades.UpgradeInventories;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -10,12 +13,19 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import ae2.core.gui.locator.GuiHostLocators;
 import thaumicenergistics.common.gui.ThEGuiOpener;
 import thaumicenergistics.client.gui.ModGUIs;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
+
+import java.util.List;
+
+import javax.annotation.Nullable;
 
 /**
  * If you're looking for methods to operate on a
@@ -33,6 +43,35 @@ public class ItemKnowledgeCore extends Item implements IUpgradeableItem {
 
     public boolean isBlank() {
         return this.isBlank;
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void addInformation(ItemStack stack, @Nullable World world, List<String> tooltip, ITooltipFlag flag) {
+        super.addInformation(stack, world, tooltip, flag);
+        if (this.isBlank) {
+            return;
+        }
+
+        List<KnowledgeCoreUtil.Recipe> recipes = KnowledgeCoreUtil.recipeStreamOf(stack).toList();
+        if (recipes.isEmpty()) {
+            return;
+        }
+
+        tooltip.add(TextFormatting.GRAY
+            + I18n.format("tooltip.thaumicenergistics.knowledge_core.recipes", recipes.size()));
+        if (!GuiScreen.isShiftKeyDown()) {
+            tooltip.add(TextFormatting.DARK_GRAY
+                + I18n.format("tooltip.thaumicenergistics.knowledge_core.hold_shift"));
+            return;
+        }
+        for (KnowledgeCoreUtil.Recipe recipe : recipes) {
+            ItemStack result = recipe.result();
+            if (result.isEmpty()) {
+                continue;
+            }
+            tooltip.add(TextFormatting.DARK_GRAY + " - " + result.getDisplayName());
+        }
     }
 
     @Override

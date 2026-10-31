@@ -3,14 +3,18 @@ package thaumicenergistics.client.gui.block;
 import ae2.client.gui.AEBaseGui;
 import ae2.client.gui.implementations.GuiUpgradeable;
 import ae2.client.gui.style.GuiStyleManager;
+import ae2.container.SlotSemantics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
 import org.lwjgl.opengl.GL11;
 import thaumcraft.codechicken.lib.math.MathHelper;
+import thaumicenergistics.client.gui.ThESlotHints;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
+import thaumicenergistics.container.slot.SlotKnowledgeCore;
 import thaumicenergistics.core.definitions.GuiText;
+import thaumicenergistics.items.ItemKnowledgeCore;
 
 import static thaumicenergistics.ThaumicEnergistics.id;
 
@@ -44,6 +48,11 @@ public class GuiArcaneAssembler extends GuiUpgradeable<ContainerArcaneAssembler>
             if (!this.container.getGuiState().hasEnoughVis())
                 this.fontRenderer.drawString(GuiText.out_of_vis.getLocal(), 115, 3, Color.RED.getRGB());
         }
+
+        ThESlotHints.highlightDestinations(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
+                slot -> slot instanceof SlotKnowledgeCore, stack -> stack.getItem() instanceof ItemKnowledgeCore);
+        ThESlotHints.highlightDestinations(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
+                slot -> this.container.getSlotSemantic(slot) == SlotSemantics.UPGRADE);
     }
 
     @Override
