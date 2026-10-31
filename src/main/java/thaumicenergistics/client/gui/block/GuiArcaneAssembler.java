@@ -5,10 +5,10 @@ import ae2.client.gui.implementations.GuiUpgradeable;
 import ae2.client.gui.style.GuiStyleManager;
 import ae2.container.SlotSemantics;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
-import org.lwjgl.opengl.GL11;
 import thaumcraft.codechicken.lib.math.MathHelper;
 import thaumicenergistics.client.gui.ThESlotHints;
 import thaumicenergistics.container.block.ContainerArcaneAssembler;
@@ -49,9 +49,9 @@ public class GuiArcaneAssembler extends GuiUpgradeable<ContainerArcaneAssembler>
                 this.fontRenderer.drawString(GuiText.out_of_vis.getLocal(), 115, 3, Color.RED.getRGB());
         }
 
-        ThESlotHints.highlightDestinations(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
+        ThESlotHints.highlightOnlyFromPlayerInv(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
                 slot -> slot instanceof SlotKnowledgeCore, stack -> stack.getItem() instanceof ItemKnowledgeCore);
-        ThESlotHints.highlightDestinations(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
+        ThESlotHints.highlightOnlyFromPlayerInv(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
                 slot -> this.container.getSlotSemantic(slot) == SlotSemantics.UPGRADE);
     }
 
@@ -66,10 +66,10 @@ public class GuiArcaneAssembler extends GuiUpgradeable<ContainerArcaneAssembler>
         }
 
         if (this.enAlpha > 0.0F) {
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, this.enAlpha);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, this.enAlpha);
             this.mc.getTextureManager().bindTexture(BACKGROUND_ACTIVE);
             drawModalRectWithCustomSizedTexture(offsetX, offsetY, 0, 0, this.xSize, this.ySize, this.xSize, this.ySize);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         }
 
         this.mc.getTextureManager().bindTexture(ASPECTS);
@@ -80,15 +80,15 @@ public class GuiArcaneAssembler extends GuiUpgradeable<ContainerArcaneAssembler>
             if (haveAspect != null && this.hasKnowledgeCore()) {   // recipe needs this aspect & we have a KCore
                 if (!haveAspect) {       // we don't have enough of this aspect
                     float alpha = (float) ((MathHelper.sin((Minecraft.getSystemTime() / 200.0) % (2 * MathHelper.pi)) + 1.0) / 2.0);
-                    GL11.glColor4f(1.0F, 1.0F, 1.0F, alpha * this.enAlpha);
+                    GlStateManager.color(1.0F, 1.0F, 1.0F, alpha * this.enAlpha);
                 } else {
-                    GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.2F + this.enAlpha * 0.8F);
+                    GlStateManager.color(1.0F, 1.0F, 1.0F, 0.2F + this.enAlpha * 0.8F);
                 }
             } else {
-                GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.2F + this.enAlpha * 0.5F);
+                GlStateManager.color(1.0F, 1.0F, 1.0F, 0.2F + this.enAlpha * 0.5F);
             }
             drawModalRectWithCustomSizedTexture(offsetX + x, offsetY + y, x, y, 40, 40, this.xSize, this.ySize);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
 

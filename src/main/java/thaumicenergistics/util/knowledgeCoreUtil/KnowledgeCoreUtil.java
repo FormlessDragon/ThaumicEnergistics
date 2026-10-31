@@ -17,9 +17,7 @@ import thaumicenergistics.items.ItemKnowledgeCore;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -91,15 +89,6 @@ public abstract class KnowledgeCoreUtil {
         return nbt == null ? null : RECIPE_CODEC.getRecipe(nbt, slot);
     }
 
-    public static HashMap<ItemStack, InternalInventory> getRecipeMap(ItemStack knowledgeCoreStack) {
-        HashMap<ItemStack, InternalInventory> recipeMap = new HashMap<>();
-        for (int i = 0; i < getRecipeSlotCount(knowledgeCoreStack); i++) {
-            Recipe recipe = getRecipe(knowledgeCoreStack, i);
-            if (recipe != null) recipeMap.put(recipe.result, recipe.ingredients);
-        }
-        return recipeMap;
-    }
-
     /**
      * @param knowledgeCore the Knowledge Core ItemStack
      * @return A clean stream of all the available recipes in the Knowledge Core, no nulls
@@ -126,8 +115,6 @@ public abstract class KnowledgeCoreUtil {
     }
 
     public static boolean hasRecipe(ItemStack knowledgeCoreStack, Item result) {
-        // Scans the same recipe slots getRecipeMap would have decoded, but without materialising a map
-        // (ItemStack keys hash by identity, so the map never deduplicated anything) and can stop at the first hit.
         for (int i = 0; i < getRecipeSlotCount(knowledgeCoreStack); i++) {
             Recipe recipe = getRecipe(knowledgeCoreStack, i);
             if (recipe != null && recipe.result.getItem().equals(result)) {
@@ -150,6 +137,12 @@ public abstract class KnowledgeCoreUtil {
         int recipeSlotCount = getRecipeSlotCount(knowledgeCoreStack);
         NBTTagCompound nbt = knowledgeCoreStack.getTagCompound();
         return nbt == null || RECIPE_CODEC.hasNoRecipes(nbt, recipeSlotCount);
+    }
+
+    public static int getStoredRecipeCount(ItemStack knowledgeCoreStack) {
+        int recipeSlotCount = getRecipeSlotCount(knowledgeCoreStack);
+        NBTTagCompound nbt = knowledgeCoreStack.getTagCompound();
+        return nbt == null ? 0 : RECIPE_CODEC.getRecipeCount(nbt, recipeSlotCount);
     }
 
     /**
@@ -259,7 +252,6 @@ public abstract class KnowledgeCoreUtil {
         private final AEItemKey definition;
         private final IInput[] inputs;
         private final List<GenericStack> outputs;
-        private final int[] sparseToCompressed = new int[SPARSE_INPUT_SLOTS];
         private final GenericStack[] sparseInputs = new GenericStack[SPARSE_INPUT_SLOTS];
         private final GenericStack[] crystalInputs = new GenericStack[CRYSTAL_INPUT_SLOTS];
 
@@ -271,15 +263,12 @@ public abstract class KnowledgeCoreUtil {
 
             List<IInput> compressedInputs = new ArrayList<>();
             InternalInventory normalInputs = recipe.getIngredientPart(false);
-            Arrays.fill(this.sparseToCompressed, -1);
             for (int slot = 0; slot < this.sparseInputs.length; slot++) {
                 ItemStack stack = normalInputs.getStackInSlot(slot);
                 if (stack.isEmpty()) {
-                    this.sparseToCompressed[slot] = -1;
                     this.sparseInputs[slot] = null;
                     continue;
                 }
-                this.sparseToCompressed[slot] = compressedInputs.size();
                 this.sparseInputs[slot] = new GenericStack(Objects.requireNonNull(AEItemKey.of(stack)), 1);
                 compressedInputs.add(new ItemPatternInput(stack));
             }

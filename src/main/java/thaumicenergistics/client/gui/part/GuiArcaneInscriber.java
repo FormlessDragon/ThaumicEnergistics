@@ -15,6 +15,7 @@ import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Alex811
@@ -131,13 +132,28 @@ public class GuiArcaneInscriber extends GuiArcaneTerm<ContainerArcaneInscriber> 
                 4210752);
     }
 
+    private int cachedCoreHash = Integer.MIN_VALUE;
+    private ItemStack cachedResult = ItemStack.EMPTY;
+    private boolean cachedArcane;
+    private boolean cachedCanAddRecipe;
+
     private boolean canAddKnowledgeCoreRecipe() {
         ItemStack knowledgeCore = this.getKnowledgeCore();
         ItemStack result = this.container.getCraftingResultInventory().getStackInSlot(0);
-        return !knowledgeCore.isEmpty()
+        int hash = knowledgeCore.hasTagCompound() ? Objects.requireNonNull(knowledgeCore.getTagCompound()).hashCode() : 0;
+        boolean arcane = this.container.isRecipeArcane();
+        if (hash == this.cachedCoreHash && arcane == this.cachedArcane
+                && ItemStack.areItemStacksEqual(result, this.cachedResult)) {
+            return this.cachedCanAddRecipe;
+        }
+        this.cachedCoreHash = hash;
+        this.cachedArcane = arcane;
+        this.cachedResult = result.copy();
+        this.cachedCanAddRecipe = !knowledgeCore.isEmpty()
                 && !result.isEmpty()
-                && this.container.isRecipeArcane()
+                && arcane
                 && !KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem());
+        return this.cachedCanAddRecipe;
     }
 
     private boolean canOpenStoredKnowledgeCore() {

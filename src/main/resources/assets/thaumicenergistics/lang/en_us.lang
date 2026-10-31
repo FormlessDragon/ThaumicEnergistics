@@ -62,6 +62,13 @@ gui.thaumicenergistics.knowledge_core_is_blank=The Knowledge Core is blank
 gui.thaumicenergistics.recipe_already_stored=The recipe is already stored
 gui.thaumicenergistics.recipe_not_arcane=The recipe is not arcane
 gui.thaumicenergistics.no_recipe=No recipe selected
+gui.thaumicenergistics.add=Store recipe
+gui.thaumicenergistics.del=Delete recipe
+gui.thaumicenergistics.view=View stored recipe
+
+gui.thaumicenergistics.knowledge_core=Knowledge Core
+gui.thaumicenergistics.missing_ingredients=Missing ingredients
+gui.thaumicenergistics.transfer_rejected=This recipe cannot be transferred to the terminal
 
 gui.thaumicenergistics.out_of_aspect=Out of aspect!
 gui.thaumicenergistics.out_of_vis=Out of vis!

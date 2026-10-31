@@ -53,19 +53,19 @@ public class ItemKnowledgeCore extends Item implements IUpgradeableItem {
             return;
         }
 
-        List<KnowledgeCoreUtil.Recipe> recipes = KnowledgeCoreUtil.recipeStreamOf(stack).toList();
-        if (recipes.isEmpty()) {
+        int recipeCount = KnowledgeCoreUtil.getStoredRecipeCount(stack);
+        if (recipeCount <= 0) {
             return;
         }
 
         tooltip.add(TextFormatting.GRAY
-            + I18n.format("tooltip.thaumicenergistics.knowledge_core.recipes", recipes.size()));
+            + I18n.format("tooltip.thaumicenergistics.knowledge_core.recipes", recipeCount));
         if (!GuiScreen.isShiftKeyDown()) {
             tooltip.add(TextFormatting.DARK_GRAY
                 + I18n.format("tooltip.thaumicenergistics.knowledge_core.hold_shift"));
             return;
         }
-        for (KnowledgeCoreUtil.Recipe recipe : recipes) {
+        for (KnowledgeCoreUtil.Recipe recipe : KnowledgeCoreUtil.recipeStreamOf(stack).toList()) {
             ItemStack result = recipe.result();
             if (result.isEmpty()) {
                 continue;

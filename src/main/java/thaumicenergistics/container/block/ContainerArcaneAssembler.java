@@ -45,11 +45,6 @@ public class ContainerArcaneAssembler extends UpgradeableContainer<TileArcaneAss
     }
 
     @Override
-    public boolean canInteractWith(EntityPlayer player) {
-        return true;
-    }
-
-    @Override
     public void detectAndSendChanges() {
         if (this.isServerSide()) {
             this.refreshGuiState();

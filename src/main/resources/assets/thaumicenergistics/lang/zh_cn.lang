@@ -62,6 +62,13 @@ gui.thaumicenergistics.knowledge_core_is_blank=知识核心空白
 gui.thaumicenergistics.recipe_already_stored=配方已存储
 gui.thaumicenergistics.recipe_not_arcane=非奥术配方
 gui.thaumicenergistics.no_recipe=无选中配方
+gui.thaumicenergistics.add=存储配方
+gui.thaumicenergistics.del=删除配方
+gui.thaumicenergistics.view=查看已存配方
+
+gui.thaumicenergistics.knowledge_core=知识核心
+gui.thaumicenergistics.missing_ingredients=缺少原料
+gui.thaumicenergistics.transfer_rejected=该配方无法转移到终端
 
 gui.thaumicenergistics.out_of_aspect=缺少源质！
 gui.thaumicenergistics.out_of_vis=缺少Vis！

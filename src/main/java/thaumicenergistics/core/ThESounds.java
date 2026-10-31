@@ -9,7 +9,8 @@ import net.minecraftforge.registries.IForgeRegistry;
 
 import static thaumicenergistics.ThaumicEnergistics.id;
 
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Alex811
@@ -17,24 +18,29 @@ import java.util.HashSet;
 @Mod.EventBusSubscriber
 public class ThESounds {
 
-    private static final HashSet<SoundEvent> SOUNDS = new HashSet<>();
+    private static final String KNOWLEDGE_CORE_WRITE = "knowledge_core_write";
+    private static final String KNOWLEDGE_CORE_POWER_UP = "knowledge_core_power_up";
+    private static final String KNOWLEDGE_CORE_POWER_DOWN = "knowledge_core_power_down";
+
+    private static final Map<ResourceLocation, SoundEvent> SOUNDS = new LinkedHashMap<>();
+
+    private static ThESounds INSTANCE;
 
     private final ResourceLocation soundKnowledgeCoreWrite;
     private final ResourceLocation soundKnowledgeCorePowerUp;
     private final ResourceLocation soundKnowledgeCorePowerDown;
 
-    private static ThESounds INSTANCE;
-
     private ThESounds() {
-        this.soundKnowledgeCoreWrite = ThESounds.addSound("knowledge_core_write");
-        this.soundKnowledgeCorePowerUp = ThESounds.addSound("knowledge_core_power_up");
-        this.soundKnowledgeCorePowerDown = ThESounds.addSound("knowledge_core_power_down");
+        this.soundKnowledgeCoreWrite = id(KNOWLEDGE_CORE_WRITE);
+        this.soundKnowledgeCorePowerUp = id(KNOWLEDGE_CORE_POWER_UP);
+        this.soundKnowledgeCorePowerDown = id(KNOWLEDGE_CORE_POWER_DOWN);
     }
 
     public static synchronized void init() {
         if (INSTANCE != null) {
             throw new IllegalStateException("ThESounds has already been initialized");
         }
+        ThESounds.ensureSoundsCreated();
         INSTANCE = new ThESounds();
     }
 
@@ -45,12 +51,20 @@ public class ThESounds {
         return INSTANCE;
     }
 
-    private static ResourceLocation addSound(String sound) {
+    public static synchronized void ensureSoundsCreated() {
+        if (!SOUNDS.isEmpty()) {
+            return;
+        }
+        ThESounds.addSound(KNOWLEDGE_CORE_WRITE);
+        ThESounds.addSound(KNOWLEDGE_CORE_POWER_UP);
+        ThESounds.addSound(KNOWLEDGE_CORE_POWER_DOWN);
+    }
+
+    private static void addSound(String sound) {
         ResourceLocation resourceLocation = id(sound);
         SoundEvent soundEvent = new SoundEvent(resourceLocation);
-        soundEvent.setRegistryName(sound);
-        SOUNDS.add(soundEvent);
-        return resourceLocation;
+        soundEvent.setRegistryName(resourceLocation);
+        SOUNDS.put(resourceLocation, soundEvent);
     }
 
     public ResourceLocation knowledgeCoreWrite() {
@@ -67,8 +81,9 @@ public class ThESounds {
 
     @SubscribeEvent
     public static void registerSoundEvents(RegistryEvent.Register<SoundEvent> event) {
+        ThESounds.ensureSoundsCreated();
         IForgeRegistry<SoundEvent> registry = event.getRegistry();
-        SOUNDS.forEach(registry::register);
+        SOUNDS.values().forEach(registry::register);
     }
 
 }

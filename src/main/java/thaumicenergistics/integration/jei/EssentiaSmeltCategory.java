@@ -12,6 +12,7 @@ import mezz.jei.api.recipe.IRecipeCategory;
 import mezz.jei.api.recipe.IRecipeWrapper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,8 @@ import java.util.List;
 public class EssentiaSmeltCategory implements IRecipeCategory<EssentiaSmeltCategory.EssentiaSmeltWrapper> {
 
     public static final String UUID = "EssentiaSmelt";
+    private static final IDrawable BACKGROUND = new AlphaDrawable(
+        new ResourceLocation("thaumcraft", "textures/gui/gui_researchbook_overlay.png"), 40, 6, 32, 32, 0, 18 * 4 + 5, 72, 72);
 
     @Override
     @NotNull
@@ -46,15 +49,18 @@ public class EssentiaSmeltCategory implements IRecipeCategory<EssentiaSmeltCateg
     @Override
     @NotNull
     public IDrawable getBackground() {
-        return new AlphaDrawable(new ResourceLocation("thaumcraft", "textures/gui/gui_researchbook_overlay.png"), 40, 6, 32, 32, 0, 18 * 4 + 5, 72, 72);
+        return BACKGROUND;
     }
 
     @Override
     public void drawExtras(Minecraft minecraft) {
         minecraft.renderEngine.bindTexture(new ResourceLocation(ThaumicJEI.MOD_ID, "textures/gui/gui.png"));
-        GL11.glEnable(3042);
+        boolean blendEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
+        GlStateManager.enableBlend();
         Gui.drawModalRectWithCustomSizedTexture(-66 + 81 - 9, 31, 0, 0, 163, 74, 256, 256);
-        GL11.glDisable(3042);
+        if (!blendEnabled) {
+            GlStateManager.disableBlend();
+        }
     }
 
     @Override

@@ -151,12 +151,21 @@ public class TileInfusionProvider extends AENetworkedPoweredTile
 
     @Override
     public void onStackChange(AEKey what, long amount) {
-        if (!(what instanceof AEEssentiaKey)) {
+        if (!(what instanceof AEEssentiaKey key) || this.isClientTile()) {
             return;
         }
-        if (this.updateSyncedAspectSnapshot()) {
-            this.sendVisualStateUpdate();
+
+        Aspect aspect = key.getAspect();
+        int clamped = amount >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) amount;
+        if (this.lastSyncedAspects.getAmount(aspect) == clamped) {
+            return;
         }
+
+        this.lastSyncedAspects.remove(aspect);
+        if (clamped > 0) {
+            this.lastSyncedAspects.add(aspect, clamped);
+        }
+        this.sendVisualStateUpdate();
     }
 
     private void sendVisualStateUpdate() {

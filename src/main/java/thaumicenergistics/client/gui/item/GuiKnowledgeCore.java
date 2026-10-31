@@ -114,7 +114,7 @@ public class GuiKnowledgeCore extends AEBaseGui<ContainerKnowledgeCore> {
                 break;
         }
 
-        ThESlotHints.highlightDestinations(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
+        ThESlotHints.highlightOnlyFromPlayerInv(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
                 slot -> this.container.getSlotSemantic(slot) == SlotSemantics.UPGRADE);
     }
 

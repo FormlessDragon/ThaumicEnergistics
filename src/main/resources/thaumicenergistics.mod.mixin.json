@@ -8,8 +8,7 @@
 	"mixins": [
 		"ae2.CraftingCalculationMixin",
 		"ae2.CraftingServiceMixin",
-		"ae2.KeyTypeSelectionMixin",
-		"ae2.accessor.PatternAccessSessionTrackerAccessor"
+		"ae2.KeyTypeSelectionMixin"
 	],
 	"client": [
 		"hei.MixinBookmarkItem"

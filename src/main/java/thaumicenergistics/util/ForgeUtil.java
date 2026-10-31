@@ -11,6 +11,8 @@ import net.minecraftforge.items.wrapper.PlayerMainInvWrapper;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
+import java.util.Objects;
+
 /**
  * Contains both Minecraft and Forge utility functions
  *
@@ -49,7 +51,7 @@ public class ForgeUtil {
     }
 
     public static boolean areNBTTagsEqual(NBTBase a, NBTBase b) {
-        return a == b || (a.isEmpty() && b.isEmpty()) || (a.isEmpty() != b.isEmpty()) || a.equals(b);
+        return Objects.equals(a, b);
     }
 
 }

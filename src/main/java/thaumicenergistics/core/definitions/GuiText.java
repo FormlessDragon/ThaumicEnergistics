@@ -22,6 +22,10 @@ public enum GuiText implements LocalizationEnum {
     del,
     view,
 
+    knowledge_core,
+    missing_ingredients,
+    transfer_rejected,
+
     arcane_terminal,
     arcane_inscriber;
 
