@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
+import thaumcraft.api.aspects.Aspect;
 import thaumicenergistics.common.me.key.AEEssentiaKey;
 import thaumicenergistics.common.me.key.AEEssentiaKeys;
 
@@ -35,7 +36,7 @@ public class CreativeEssentiaCellInventory extends CreativeCellInventory {
         if (what == null || amount <= 0) {
             return 0;
         }
-        return this.configured.contains(what) ? amount : 0;
+        return this.accepts(what) ? amount : 0;
     }
 
     @Override
@@ -43,11 +44,21 @@ public class CreativeEssentiaCellInventory extends CreativeCellInventory {
         if (what == null || amount <= 0) {
             return 0;
         }
-        return this.configured.contains(what) ? amount : 0;
+        return this.accepts(what) ? amount : 0;
     }
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
+        if (this.providesAllEssentia()) {
+            for (Aspect aspect : Aspect.aspects.values()) {
+                AEEssentiaKey key = AEEssentiaKey.of(aspect);
+                if (key != null) {
+                    out.add(key, Long.MAX_VALUE);
+                }
+            }
+            return;
+        }
+
         for (AEKey key : this.configured) {
             if (key instanceof AEEssentiaKey) {
                 out.add(key, Long.MAX_VALUE);
@@ -57,16 +68,24 @@ public class CreativeEssentiaCellInventory extends CreativeCellInventory {
 
     @Override
     public boolean isPreferredStorageFor(AEKey what, IActionSource source) {
-        return this.configured.contains(what);
+        return this.accepts(what);
     }
 
     @Override
     public boolean canFitInsideCell() {
-        return this.configured.isEmpty();
+        return this.providesAllEssentia();
     }
 
     @Override
     public ITextComponent getDescription() {
         return TextComponentItemStack.of(this.stack);
+    }
+
+    private boolean providesAllEssentia() {
+        return this.configured.isEmpty();
+    }
+
+    private boolean accepts(AEKey what) {
+        return what instanceof AEEssentiaKey && (this.providesAllEssentia() || this.configured.contains(what));
     }
 }

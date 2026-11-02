@@ -13,6 +13,7 @@ item.thaumicenergistics.essentia_component_1k.name=1k-ME源质存储组件
 item.thaumicenergistics.essentia_component_4k.name=4k-ME源质存储组件
 item.thaumicenergistics.essentia_component_16k.name=16k-ME源质存储组件
 item.thaumicenergistics.essentia_component_64k.name=64k-ME源质存储组件
+item.thaumicenergistics.essentia_cell_housing.name=ME源质元件外壳
 
 item.thaumicenergistics.essentia_storage_cell_1k.name=1k-ME源质存储元件
 item.thaumicenergistics.essentia_storage_cell_4k.name=4k-ME源质存储元件
@@ -48,6 +49,7 @@ tooltip.thaumicenergistics.knowledge_core.hold_shift=按住 Shift 查看列表
 
 # GUI
 gui.thaumicenergistics.Essentias=源质
+gui.thaumicenergistics.all_essentia=提供所有源质（未标记）
 gui.thaumicenergistics.arcane_vis=灵气
 gui.thaumicenergistics.arcane_terminal=奥术合成终端
 gui.thaumicenergistics.arcane_inscriber=奥术记录仪

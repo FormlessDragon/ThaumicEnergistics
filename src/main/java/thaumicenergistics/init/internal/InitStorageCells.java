@@ -2,7 +2,6 @@ package thaumicenergistics.init.internal;
 
 import ae2.api.client.StorageCellModels;
 import ae2.api.storage.StorageCells;
-import ae2.core.definitions.AEItems;
 import ae2.recipes.game.StorageCellDisassemblyRecipe;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -59,7 +58,7 @@ public final class InitStorageCells {
     }
 
     private static void registerStorageCellDisassembly(Item cell, Item component) {
-        Item housing = Objects.requireNonNull(AEItems.ITEM_CELL_HOUSING.item(), "item cell housing");
+        Item housing = Objects.requireNonNull(ThEItems.ESSENTIA_CELL_HOUSING.item(), "essentia cell housing");
         StorageCellDisassemblyRecipe.register(new StorageCellDisassemblyRecipe(
                 cell,
                 List.of(new ItemStack(housing), new ItemStack(component))));

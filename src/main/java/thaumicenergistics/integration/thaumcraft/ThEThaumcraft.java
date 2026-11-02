@@ -1,17 +1,13 @@
 package thaumicenergistics.integration.thaumcraft;
 
-import ae2.api.ids.AEItemIds;
 import ae2.core.definitions.AEBlocks;
 import ae2.core.definitions.AEItems;
+import ae2.core.definitions.ItemDefinition;
 import ae2.core.definitions.AEParts;
-import com.google.common.base.Preconditions;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.crafting.CraftingHelper;
-import net.minecraftforge.registries.IForgeRegistryEntry;
 import thaumicenergistics.core.definitions.ThEBlocks;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.core.definitions.ThEParts;
@@ -31,7 +27,6 @@ import thaumicenergistics.integration.thaumcraft.research.AidMEController;
 import thaumicenergistics.integration.thaumcraft.research.AidMEDrive;
 import thaumicenergistics.integration.thaumcraft.research.CardTinkerAE;
 import thaumicenergistics.integration.thaumcraft.research.ScanMod;
-import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.util.TCUtil;
 import thaumicenergistics.core.ThELog;
 
@@ -47,6 +42,8 @@ import java.util.Objects;
  * @author Alex811
  */
 public final class ThEThaumcraft {
+
+    private final static ResourceLocation recipeGroup = new ResourceLocation("");
 
     private ThEThaumcraft() {
 
@@ -83,14 +80,10 @@ public final class ThEThaumcraft {
     }
 
     private static void registerArcaneRecipes() {
-        ResourceLocation recipeGroup = new ResourceLocation("");
-
         List<ItemStack> certusQuartz = new ArrayList<>(Arrays.asList(CraftingHelper.getIngredient("crystalCertusQuartz").getMatchingStacks()));
         certusQuartz.add(AEItems.CERTUS_QUARTZ_CRYSTAL_CHARGED.stack());
-        certusQuartz.add(asItemStack(AEItemIds.PURIFIED_CERTUS_QUARTZ_CRYSTAL));
 
         List<ItemStack> netherQuartz = new ArrayList<>(Arrays.asList(CraftingHelper.getIngredient("gemQuartz").getMatchingStacks()));
-        netherQuartz.add(asItemStack(AEItemIds.PURIFIED_NETHER_QUARTZ_CRYSTAL));
 
         ThaumcraftApi.addArcaneCraftingRecipe(id("coalescence_core"), new ShapedArcaneRecipe(
                 recipeGroup,
@@ -129,6 +122,22 @@ public final class ThEThaumcraft {
                 AEItems.LOGIC_PROCESSOR.stack()
         ));
 
+        ThaumcraftApi.addArcaneCraftingRecipe(id("essentia_cell_housing"), new ShapedArcaneRecipe(
+            recipeGroup,
+            "ESSENTIASTORAGE1k@2",
+            10,
+            new AspectList(),
+            ThEItems.ESSENTIA_CELL_HOUSING.stack(),
+            "QSQ",
+            "S S",
+            "VVV",
+            'Q',
+            AEBlocks.QUARTZ_GLASS.block(),
+            'S',
+            ItemsTC.salisMundus,
+            'V',
+            ItemsTC.ingots
+        ));
         ThaumcraftApi.addArcaneCraftingRecipe(id("essentia_component_1k"), new ShapedArcaneRecipe(
                 recipeGroup,
                 "ESSENTIASTORAGE1k@2",
@@ -145,7 +154,7 @@ public final class ThEThaumcraft {
                 'P',
                 AEItems.LOGIC_PROCESSOR.stack()
         ));
-        addFakeCrafting(id("cells/essentia_cell_1k"));
+        addCellArcaneRecipe("1k", ThEItems.ESSENTIA_CELL_1K, ThEItems.ESSENTIA_COMPONENT_1K);
 
         ThaumcraftApi.addArcaneCraftingRecipe(id("essentia_component_4k"), new ShapedArcaneRecipe(
                 recipeGroup,
@@ -165,7 +174,7 @@ public final class ThEThaumcraft {
                 'G',
                 AEBlocks.QUARTZ_GLASS.block()
         ));
-        addFakeCrafting(id("cells/essentia_cell_4k"));
+        addCellArcaneRecipe("4k", ThEItems.ESSENTIA_CELL_4K, ThEItems.ESSENTIA_COMPONENT_4K);
 
         ThaumcraftApi.addArcaneCraftingRecipe(id("essentia_component_16k"), new ShapedArcaneRecipe(
                 recipeGroup,
@@ -185,7 +194,7 @@ public final class ThEThaumcraft {
                 'G',
                 AEBlocks.QUARTZ_GLASS.block()
         ));
-        addFakeCrafting(id("cells/essentia_cell_16k"));
+        addCellArcaneRecipe("16k", ThEItems.ESSENTIA_CELL_16K, ThEItems.ESSENTIA_COMPONENT_16K);
 
         ThaumcraftApi.addArcaneCraftingRecipe(id("essentia_component_64k"), new ShapedArcaneRecipe(
                 recipeGroup,
@@ -205,7 +214,8 @@ public final class ThEThaumcraft {
                 'G',
                 AEBlocks.QUARTZ_GLASS.block()
         ));
-        addFakeCrafting(id("cells/essentia_cell_64k"));
+        addCellArcaneRecipe("64k", ThEItems.ESSENTIA_CELL_64K, ThEItems.ESSENTIA_COMPONENT_64K);
+
         ThaumcraftApi.addArcaneCraftingRecipe(id("arcane_terminal"), new ShapelessArcaneRecipe(
                 recipeGroup,
                 "ARCANETERMINAL@2",
@@ -317,14 +327,35 @@ public final class ThEThaumcraft {
         ));
     }
 
-    private static void addFakeCrafting(ResourceLocation resourceLocation) {
-        IForgeRegistryEntry<?> entry = ForgeUtil.getRegistryEntry(IRecipe.class, resourceLocation);
-        Preconditions.checkNotNull(entry);
-        ThaumcraftApi.addFakeCraftingRecipe(entry.getRegistryName(), entry);
-    }
+    private static void addCellArcaneRecipe(String tier, ItemDefinition<?> cell, ItemDefinition<?> component) {
+        String research = "ESSENTIASTORAGE" + tier + "@2";
+        ThaumcraftApi.addArcaneCraftingRecipe(id("essentia_cell_" + tier), new ShapedArcaneRecipe(
+            recipeGroup,
+            research,
+            20,
+            new AspectList(),
+            cell.stack(),
+            "QSQ",
+            "SCS",
+            "VVV",
+            'Q',
+            AEBlocks.QUARTZ_GLASS.block(),
+            'S',
+            ItemsTC.salisMundus,
+            'C',
+            component.stack(),
+            'V',
+            ItemsTC.ingots
+        ));
 
-    private static ItemStack asItemStack(ResourceLocation id) {
-        Item item = Item.REGISTRY.getObject(id);
-        return item == null ? ItemStack.EMPTY : new ItemStack(item);
+        ThaumcraftApi.addArcaneCraftingRecipe(id("assembly_" + tier), new ShapelessArcaneRecipe(
+            recipeGroup,
+            research,
+            10,
+            new AspectList(),
+            Objects.requireNonNull(cell.item()),
+            ThEItems.ESSENTIA_CELL_HOUSING.stack(),
+            component.stack()
+        ));
     }
 }

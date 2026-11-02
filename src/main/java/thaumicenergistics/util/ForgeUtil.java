@@ -3,13 +3,9 @@ package thaumicenergistics.util;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.items.wrapper.PlayerMainInvWrapper;
-import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.IForgeRegistryEntry;
 
 import java.util.Objects;
 
@@ -30,14 +26,6 @@ public class ForgeUtil {
 
     public static Side getSide() {
         return FMLCommonHandler.instance().getEffectiveSide();
-    }
-
-    public static <K extends IForgeRegistryEntry<K>> IForgeRegistry<K> getRegistry(Class<K> reg) {
-        return GameRegistry.findRegistry(reg);
-    }
-
-    public static <K extends IForgeRegistryEntry<K>> IForgeRegistryEntry<K> getRegistryEntry(Class<K> reg, ResourceLocation resourceLocation) {
-        return ForgeUtil.getRegistry(reg).getValue(resourceLocation);
     }
 
     public static ItemStack addStackToPlayerInventory(EntityPlayer player, ItemStack stack, boolean simulate) {

@@ -66,6 +66,7 @@ public class CreativeEssentiaCell extends AEBaseItem implements ICellWorkbenchIt
 
         var cc = getConfigInventory(stack);
         if (cc.isEmpty()) {
+            lines.add(Tooltips.of(thaumicenergistics.core.definitions.GuiText.all_essentia).getFormattedText());
             return;
         }
 

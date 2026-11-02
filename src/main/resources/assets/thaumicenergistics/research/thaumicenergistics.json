@@ -101,8 +101,10 @@
         {
           "text": "research.essentiastorage1k.stage.2",
           "recipes": [
+            "thaumicenergistics:essentia_cell_housing",
             "thaumicenergistics:essentia_component_1k",
-            "thaumicenergistics:cells/essentia_cell_1k"
+            "thaumicenergistics:essentia_cell_1k",
+            "thaumicenergistics:assembly_1k"
           ]
         }
       ],
@@ -145,7 +147,8 @@
           "text": "research.essentiastorage4k.stage.2",
           "recipes": [
             "thaumicenergistics:essentia_component_4k",
-            "thaumicenergistics:cells/essentia_cell_4k"
+            "thaumicenergistics:essentia_cell_4k",
+            "thaumicenergistics:assembly_4k"
           ]
         }
       ],
@@ -188,7 +191,8 @@
           "text": "research.essentiastorage16k.stage.2",
           "recipes": [
             "thaumicenergistics:essentia_component_16k",
-            "thaumicenergistics:cells/essentia_cell_16k"
+            "thaumicenergistics:essentia_cell_16k",
+            "thaumicenergistics:assembly_16k"
           ]
         }
       ],
@@ -231,7 +235,8 @@
           "text": "research.essentiastorage64k.stage.2",
           "recipes": [
             "thaumicenergistics:essentia_component_64k",
-            "thaumicenergistics:cells/essentia_cell_64k"
+            "thaumicenergistics:essentia_cell_64k",
+            "thaumicenergistics:assembly_64k"
           ]
         }
       ],

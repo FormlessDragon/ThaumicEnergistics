@@ -13,6 +13,7 @@ item.thaumicenergistics.essentia_component_1k.name=1k ME Essentia Storage Compon
 item.thaumicenergistics.essentia_component_4k.name=4k ME Essentia Storage Component
 item.thaumicenergistics.essentia_component_16k.name=16k ME Essentia Storage Component
 item.thaumicenergistics.essentia_component_64k.name=64k ME Essentia Storage Component
+item.thaumicenergistics.essentia_cell_housing.name=ME Essentia Cell Housing
 
 item.thaumicenergistics.essentia_storage_cell_1k.name=1k ME Essentia Storage Cell
 item.thaumicenergistics.essentia_storage_cell_4k.name=4k ME Essentia Storage Cell
@@ -48,6 +49,7 @@ tooltip.thaumicenergistics.knowledge_core.hold_shift=Hold Shift to list them
 
 # GUI
 gui.thaumicenergistics.Essentias=Essentias
+gui.thaumicenergistics.all_essentia=Provides all essentia (unmarked)
 gui.thaumicenergistics.arcane_vis=Vis
 gui.thaumicenergistics.arcane_terminal=Arcane Terminal
 gui.thaumicenergistics.arcane_inscriber=Arcane Inscriber

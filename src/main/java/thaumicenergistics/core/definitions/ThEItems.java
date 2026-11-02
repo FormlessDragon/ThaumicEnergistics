@@ -43,6 +43,8 @@ public final class ThEItems {
     public static final ItemDefinition<StorageComponentItem> ESSENTIA_COMPONENT_64K = new ItemDefinition<>(ThEItemIds.ESSENTIA_COMPONENT_64K,
             new StorageComponentItem(64), ModGlobals.CREATIVE_TAB);
 
+    public static final ItemDefinition<Item> ESSENTIA_CELL_HOUSING = new ItemDefinition<>(ThEItemIds.ESSENTIA_CELL_HOUSING,
+        new Item(), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<WirelessArcaneTermItem> WIRELESS_ARCANE_TERMINAL = new ItemDefinition<>(ThEItemIds.WIRELESS_ARCANE_TERMINAL,
             new WirelessArcaneTermItem(getWirelessTerminalBattery()), ModGlobals.CREATIVE_TAB);
     public static final ItemDefinition<WirelessArcaneInscriberItem> WIRELESS_ARCANE_INSCRIBER = new ItemDefinition<>(ThEItemIds.WIRELESS_ARCANE_INSCRIBER,
@@ -66,6 +68,7 @@ public final class ThEItems {
 
     private static final ItemDefinition<?>[] ITEMS = {
             CREATIVE_ESSENTIA_CELL,
+            ESSENTIA_CELL_HOUSING,
             ESSENTIA_CELL_1K,
             ESSENTIA_CELL_4K,
             ESSENTIA_CELL_16K,
