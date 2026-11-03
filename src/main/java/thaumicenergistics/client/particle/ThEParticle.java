@@ -4,10 +4,6 @@ import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
@@ -15,7 +11,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.opengl.GL11;
 
 import static thaumicenergistics.ThaumicEnergistics.id;
 
@@ -36,7 +31,6 @@ import java.awt.Color;
 @SideOnly(Side.CLIENT)
 public class ThEParticle extends Particle {
 
-    private static final VertexFormat VERTEX_FORMAT = (new VertexFormat()).addElement(DefaultVertexFormats.POSITION_3F).addElement(DefaultVertexFormats.TEX_2F).addElement(DefaultVertexFormats.COLOR_4UB).addElement(DefaultVertexFormats.TEX_2S).addElement(DefaultVertexFormats.NORMAL_3B).addElement(DefaultVertexFormats.PADDING_1B);
     private double[][] texMap = {{1.0F, 1.0F}, {1.0F, 0.0F}, {0.0F, 0.0F}, {0.0F, 1.0F}};
     private float frameHeight;
     private int frameCurr;
@@ -75,6 +69,14 @@ public class ThEParticle extends Particle {
     @Override
     public int getFXLayer() {
         return 3;
+    }
+
+    public ResourceLocation getParticleTexture() {
+        return this.resourceLocation;
+    }
+
+    public boolean isParticleExpired() {
+        return this.isExpired;
     }
 
     @Override
@@ -156,14 +158,6 @@ public class ThEParticle extends Particle {
                 new Vec3d(rotationX - rotationXY, -rotationZ, rotationYZ - rotationXZ)
         };
 
-        GlStateManager.pushMatrix();
-        GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-        GlStateManager.alphaFunc(516, 0.003921569F);
-        GlStateManager.color(1.0F, 1.0F, 1.0F, this.particleAlpha);
-
-        Minecraft.getMinecraft().getTextureManager().bindTexture(this.resourceLocation);
-
         if (this.particleAngle != 0.0F) {
             float angleInterp = this.particleAngle + (this.particleAngle - this.prevParticleAngle) * partialTicks;
             float vecMod = MathHelper.cos(angleInterp * 0.5F);
@@ -181,18 +175,12 @@ public class ThEParticle extends Particle {
                         .add(vec3d.crossProduct(avec3d[i]).scale(vecMod2));
         }
 
-        bufferIn.begin(GL11.GL_QUADS, VERTEX_FORMAT);
-        GL11.glColor3f(1, 0, 0);
         for (int i = 0; i < 4; i++)
             bufferIn.pos(xInterp + avec3d[i].x, yInterp + avec3d[i].y, zInterp + avec3d[i].z)
                     .tex(texMap[i][0], texMap[i][1])
                     .color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
                     .lightmap(skyL, blockL)
-                    .normal(0.0F, 0.0F, 0.0F)
                     .endVertex();
-
-        Tessellator.getInstance().draw();
-        GlStateManager.popMatrix();
     }
 
     /**

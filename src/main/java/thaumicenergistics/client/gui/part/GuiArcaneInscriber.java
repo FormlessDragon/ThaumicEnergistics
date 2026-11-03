@@ -6,6 +6,8 @@ import ae2.client.gui.style.GuiStyleManager;
 import ae2.client.gui.widgets.DynamicIconButton;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
+import thaumicenergistics.client.gui.ThESlotHints;
+import thaumicenergistics.container.ThESlotSemantics;
 import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.core.definitions.GuiText;
 import thaumicenergistics.items.ItemKnowledgeCore;
@@ -13,6 +15,7 @@ import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Alex811
@@ -113,6 +116,13 @@ public class GuiArcaneInscriber extends GuiArcaneTerm<ContainerArcaneInscriber> 
     }
 
     @Override
+    public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
+        super.drawFG(offsetX, offsetY, mouseX, mouseY);
+        ThESlotHints.highlightOnlyFromPlayerInv(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
+            slot -> this.container.getSlotSemantic(slot) == ThESlotSemantics.KNOWLEDGE_CORE, stack -> stack.getItem() instanceof ItemKnowledgeCore);
+    }
+
+    @Override
     protected void drawVisInfo() {
         float visRequired = this.container.getVisState().getVisRequired();
         this.fontRenderer.drawString(
@@ -122,13 +132,28 @@ public class GuiArcaneInscriber extends GuiArcaneTerm<ContainerArcaneInscriber> 
                 4210752);
     }
 
+    private int cachedCoreHash = Integer.MIN_VALUE;
+    private ItemStack cachedResult = ItemStack.EMPTY;
+    private boolean cachedArcane;
+    private boolean cachedCanAddRecipe;
+
     private boolean canAddKnowledgeCoreRecipe() {
         ItemStack knowledgeCore = this.getKnowledgeCore();
         ItemStack result = this.container.getCraftingResultInventory().getStackInSlot(0);
-        return !knowledgeCore.isEmpty()
+        int hash = knowledgeCore.hasTagCompound() ? Objects.requireNonNull(knowledgeCore.getTagCompound()).hashCode() : 0;
+        boolean arcane = this.container.isRecipeArcane();
+        if (hash == this.cachedCoreHash && arcane == this.cachedArcane
+                && ItemStack.areItemStacksEqual(result, this.cachedResult)) {
+            return this.cachedCanAddRecipe;
+        }
+        this.cachedCoreHash = hash;
+        this.cachedArcane = arcane;
+        this.cachedResult = result.copy();
+        this.cachedCanAddRecipe = !knowledgeCore.isEmpty()
                 && !result.isEmpty()
-                && this.container.isRecipeArcane()
+                && arcane
                 && !KnowledgeCoreUtil.hasRecipe(knowledgeCore, result.getItem());
+        return this.cachedCanAddRecipe;
     }
 
     private boolean canOpenStoredKnowledgeCore() {

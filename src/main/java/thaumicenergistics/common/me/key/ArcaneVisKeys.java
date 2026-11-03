@@ -5,18 +5,19 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
 import thaumicenergistics.ThaumicEnergistics;
+import thaumicenergistics.api.IAEKeyViewable;
 import thaumicenergistics.core.definitions.GuiText;
 
 /**
  * Registers the single synthetic key used to display Vis in an AE2 crafting plan.
  */
-public final class ArcaneVisKeyType extends AEKeyType {
+public final class ArcaneVisKeys extends AEKeyType implements IAEKeyViewable {
 
     public static final int AMOUNT_PER_VIS = 1_000;
     public static final ResourceLocation ID = ThaumicEnergistics.id("arcane_vis");
-    public static final ArcaneVisKeyType INSTANCE = new ArcaneVisKeyType();
+    public static final ArcaneVisKeys INSTANCE = new ArcaneVisKeys();
 
-    private ArcaneVisKeyType() {
+    private ArcaneVisKeys() {
         super(ID, ArcaneVisKey.class, GuiText.arcane_vis.text());
     }
 
@@ -49,4 +50,10 @@ public final class ArcaneVisKeyType extends AEKeyType {
     public ArcaneVisKey loadKeyFromTag(NBTTagCompound tag) {
         return ArcaneVisKey.INSTANCE;
     }
+
+    @Override
+    public boolean showInKeyTypeSelection() {
+        return false;
+    }
+
 }

@@ -12,7 +12,6 @@ import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
 import net.minecraft.block.Block;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
 import org.jetbrains.annotations.NotNull;
 import thaumcraft.api.aspects.Aspect;
@@ -34,9 +33,13 @@ import java.util.List;
 public class ThEHeiPlugin implements IModPlugin {
 
     public static EssentiaSmeltCategory essentiaSmeltCategory;
+    private static final String[] SMELTER_BLOCKS = {"smelter_basic", "smelter_thaumium", "smelter_void"};
 
     @Override
     public void registerCategories(@NotNull IRecipeCategoryRegistration registry) {
+        if (!Loader.isModLoaded("thaumicjei")) {
+            return;
+        }
         essentiaSmeltCategory = new EssentiaSmeltCategory();
         registry.addRecipeCategories(essentiaSmeltCategory);
     }
@@ -47,31 +50,43 @@ public class ThEHeiPlugin implements IModPlugin {
 
         registerWorkbenchCatalyst(registry, new ACTRecipeTransferHandler<>(ContainerArcaneTerm.class, rthh), ThEParts.ARCANE_TERMINAL.stack());
         registerWorkbenchCatalyst(registry, new ACIRecipeTransferHandler<>(ContainerArcaneInscriber.class, rthh), ThEParts.ARCANE_INSCRIBER.stack());
-        registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_basic").toString())), essentiaSmeltCategory.getUid());
-        registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_thaumium").toString())), essentiaSmeltCategory.getUid());
-        registry.addRecipeCatalyst(new ItemStack(Block.getBlockFromName(new ResourceLocation("thaumcraft", "smelter_void").toString())), essentiaSmeltCategory.getUid());
 
-        if(Loader.isModLoaded("thaumicjei")) {
-            IngredientConverters.register(new TCJeiConverter());
-
-            long time = System.currentTimeMillis();
-            List<EssentiaSmeltCategory.EssentiaSmeltWrapper> wrappers = new ArrayList<>();
-            for(ItemStack item : new ArrayList<>(registry.getIngredientRegistry().getAllIngredients(VanillaTypes.ITEM))) {
-                AspectList list = new AspectList(item);
-                if(list.size() == 0) {
-                    continue;
-                }
-                List<AspectList> aspects = new ArrayList<>();
-                for(Aspect aspect : list.getAspects()) {
-                    AspectList singleAspect = new AspectList();
-                    singleAspect.add(aspect, list.getAmount(aspect));
-                    aspects.add(singleAspect);
-                }
-                wrappers.add(new EssentiaSmeltCategory.EssentiaSmeltWrapper(item, aspects));
-            }
-            registry.addRecipes(wrappers, essentiaSmeltCategory.getUid());
-            ThELog.info("Registered essentiaSmelt recipes in {} ms", System.currentTimeMillis() - time);
+        if (!Loader.isModLoaded("thaumicjei")) {
+            return;
         }
+
+        String categoryUid = EssentiaSmeltCategory.UUID;
+        for (String smelter : SMELTER_BLOCKS) {
+            ItemStack catalyst = smelterStack(smelter);
+            if (!catalyst.isEmpty()) {
+                registry.addRecipeCatalyst(catalyst, categoryUid);
+            }
+        }
+
+        IngredientConverters.register(new TCJeiConverter());
+
+        long time = System.currentTimeMillis();
+        List<EssentiaSmeltCategory.EssentiaSmeltWrapper> wrappers = new ArrayList<>();
+        for (ItemStack item : new ArrayList<>(registry.getIngredientRegistry().getAllIngredients(VanillaTypes.ITEM))) {
+            AspectList list = new AspectList(item);
+            if (list.size() == 0) {
+                continue;
+            }
+            List<AspectList> aspects = new ArrayList<>();
+            for (Aspect aspect : list.getAspects()) {
+                AspectList singleAspect = new AspectList();
+                singleAspect.add(aspect, list.getAmount(aspect));
+                aspects.add(singleAspect);
+            }
+            wrappers.add(new EssentiaSmeltCategory.EssentiaSmeltWrapper(item, aspects));
+        }
+        registry.addRecipes(wrappers, categoryUid);
+        ThELog.info("Registered essentiaSmelt recipes in {} ms", System.currentTimeMillis() - time);
+    }
+
+    private static ItemStack smelterStack(String name) {
+        Block block = Block.getBlockFromName("thaumcraft:" + name);
+        return block == null ? ItemStack.EMPTY : new ItemStack(block);
     }
 
     public void registerWorkbenchCatalyst(IModRegistry registry, IRecipeTransferHandler<? extends Container> handler, ItemStack stack) {

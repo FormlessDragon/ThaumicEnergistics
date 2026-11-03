@@ -46,9 +46,15 @@ public class TCUtil {
     }
 
     public static Aspect getCrystalAspect(ItemStack stack) {
-        if (!(stack.getItem() instanceof IEssentiaContainerItem) || stack.getItem() != ItemsTC.crystalEssence)
+        if (stack == null || !(stack.getItem() instanceof IEssentiaContainerItem container)
+                || stack.getItem() != ItemsTC.crystalEssence)
             return null;
-        return ((IEssentiaContainerItem) stack.getItem()).getAspects(stack).getAspects()[0];
+        AspectList aspects = container.getAspects(stack);
+        if (aspects == null || aspects.size() == 0) {
+            return null;
+        }
+        Aspect[] aspectArray = aspects.getAspects();
+        return aspectArray.length == 0 ? null : aspectArray[0];
     }
 
     public static ItemStack getCrystalWithAspect(Aspect aspect) {

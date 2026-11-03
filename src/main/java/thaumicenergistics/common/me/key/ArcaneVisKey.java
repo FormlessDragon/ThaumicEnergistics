@@ -27,7 +27,7 @@ public final class ArcaneVisKey extends AEKey {
 
     @Override
     public AEKeyType getType() {
-        return ArcaneVisKeyType.INSTANCE;
+        return ArcaneVisKeys.INSTANCE;
     }
 
     @Override
@@ -47,7 +47,7 @@ public final class ArcaneVisKey extends AEKey {
 
     @Override
     public ResourceLocation getId() {
-        return ArcaneVisKeyType.ID;
+        return ArcaneVisKeys.ID;
     }
 
     @Override

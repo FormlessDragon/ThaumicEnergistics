@@ -28,9 +28,11 @@ import java.util.function.BiConsumer;
 public class WirelessArcaneInscriberGuiHost extends WirelessTerminalGuiHost<WirelessTerminalItem> implements IArcaneInscriberHost {
 
     private static final String TAG_ARCANE_MATRIX = "arcaneMatrix";
+    private static final String TAG_ARMOR = "terminalArmor";
     private static final String TAG_KNOWLEDGE_CORE = "knowledgeCore";
 
     private final SupplierInternalInventory<InternalInventory> craftingInventory;
+    private final SupplierInternalInventory<InternalInventory> armorInventory;
     private final SupplierInternalInventory<InternalInventory> knowledgeCoreInventory;
 
     public WirelessArcaneInscriberGuiHost(WirelessTerminalItem stackItem,
@@ -42,6 +44,9 @@ public class WirelessArcaneInscriberGuiHost extends WirelessTerminalGuiHost<Wire
         this.craftingInventory = new SupplierInternalInventory<>(
             new StackDependentSupplier<>(this::getItemStack,
                 stack -> createCraftingInventory(player, stack, terminalItem)));
+        this.armorInventory = new SupplierInternalInventory<>(
+            new StackDependentSupplier<>(this::getItemStack,
+                stack -> createArmorInventory(player, stack, terminalItem)));
         this.knowledgeCoreInventory = new SupplierInternalInventory<>(
             new StackDependentSupplier<>(this::getItemStack,
                 stack -> createKnowledgeCoreInventory(player, stack, terminalItem)));
@@ -65,6 +70,25 @@ public class WirelessArcaneInscriberGuiHost extends WirelessTerminalGuiHost<Wire
             craftingInventory.readFromNBT(data, TAG_ARCANE_MATRIX);
         }
         return craftingInventory;
+    }
+
+    private static InternalInventory createArmorInventory(EntityPlayer player, ItemStack stack, WirelessTerminalItem terminal) {
+        var armorInventory = new AppEngInternalInventory(new InternalInventoryHost() {
+            @Override
+            public void saveChangedInventory(AppEngInternalInventory inv) {
+                inv.writeToNBT(WirelessTerminals.getTerminalData(stack, terminal), TAG_ARMOR);
+            }
+
+            @Override
+            public boolean isClientSide() {
+                return player.world.isRemote;
+            }
+        }, 4, 1);
+        NBTTagCompound data = WirelessTerminals.getExistingTerminalData(stack, terminal);
+        if (data != null) {
+            armorInventory.readFromNBT(data, TAG_ARMOR);
+        }
+        return armorInventory;
     }
 
     private static InternalInventory createKnowledgeCoreInventory(EntityPlayer player, ItemStack stack,
@@ -105,6 +129,11 @@ public class WirelessArcaneInscriberGuiHost extends WirelessTerminalGuiHost<Wire
     @Override
     public InternalInventory getArcaneCraftingInventory() {
         return this.craftingInventory;
+    }
+
+    @Override
+    public InternalInventory getArmorInventory() {
+        return this.armorInventory;
     }
 
     @Override

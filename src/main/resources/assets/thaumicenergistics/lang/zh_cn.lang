@@ -13,6 +13,7 @@ item.thaumicenergistics.essentia_component_1k.name=1k-ME源质存储组件
 item.thaumicenergistics.essentia_component_4k.name=4k-ME源质存储组件
 item.thaumicenergistics.essentia_component_16k.name=16k-ME源质存储组件
 item.thaumicenergistics.essentia_component_64k.name=64k-ME源质存储组件
+item.thaumicenergistics.essentia_cell_housing.name=ME源质元件外壳
 
 item.thaumicenergistics.essentia_storage_cell_1k.name=1k-ME源质存储元件
 item.thaumicenergistics.essentia_storage_cell_4k.name=4k-ME源质存储元件
@@ -43,9 +44,12 @@ tooltip.thaumicenergistics.arcane_assembler.busy=状态：繁忙
 tooltip.thaumicenergistics.arcane_assembler.progress=正在处理：%s
 tooltip.thaumicenergistics.arcane_assembler.no_aspect=错误：缺少源质
 tooltip.thaumicenergistics.arcane_assembler.no_vis=错误：缺少Vis
+tooltip.thaumicenergistics.knowledge_core.recipes=已存配方：%s
+tooltip.thaumicenergistics.knowledge_core.hold_shift=按住 Shift 查看列表
 
 # GUI
 gui.thaumicenergistics.Essentias=源质
+gui.thaumicenergistics.all_essentia=提供所有源质（未标记）
 gui.thaumicenergistics.arcane_vis=灵气
 gui.thaumicenergistics.arcane_terminal=奥术合成终端
 gui.thaumicenergistics.arcane_inscriber=奥术记录仪
@@ -60,6 +64,13 @@ gui.thaumicenergistics.knowledge_core_is_blank=知识核心空白
 gui.thaumicenergistics.recipe_already_stored=配方已存储
 gui.thaumicenergistics.recipe_not_arcane=非奥术配方
 gui.thaumicenergistics.no_recipe=无选中配方
+gui.thaumicenergistics.add=存储配方
+gui.thaumicenergistics.del=删除配方
+gui.thaumicenergistics.view=查看已存配方
+
+gui.thaumicenergistics.knowledge_core=知识核心
+gui.thaumicenergistics.missing_ingredients=缺少原料
+gui.thaumicenergistics.transfer_rejected=该配方无法转移到终端
 
 gui.thaumicenergistics.out_of_aspect=缺少源质！
 gui.thaumicenergistics.out_of_vis=缺少Vis！
@@ -123,19 +134,14 @@ research.essentiastorage64k.stage.2=我现在可以在存储组件上存储大�
 
 # Research Essentia Buses
 research.essentiabuses.title=数位化源质传输
-research.essentiabuses.stage.1=我现在已经拥有了用ME网络安全运输源质的存储组件，可以着手于创造源质总线了。
-research.essentiabuses.stage.2=我现在可以合成源质输入、输出和存储总线了。它们的功能与物品总线完全相同。
+research.essentiabuses.stage.1=既然我已经能安全地把源质存进 ME 网络，搬运它应该也不必再发明新的总线——现有的总线应该就能像处理物品和流体那样处理源质。
+research.essentiabuses.stage.2=确实如此：ME 输入总线会把它面对的源质容器中的源质抽进网络，ME 存储总线则会把这样容器里的源质暴露给我的网络。源质现在只是 ME 系统能够搬运的又一种资源。
 research.essentiabuses.addenda.1=经过进一步调谐，P2P 隧道可以通过 ME 网络在远处的灵气点之间移动 Vis。
-
-# Research Essentia Terminal
-research.essentiaterminal.title=源质监控
-research.essentiaterminal.stage.1=虽然我现在可以将源质数位化，但我意识到这意味着我无法再观察到已经数位化的源质的数量了——这是个紧迫的问题。
-research.essentiaterminal.stage.2=通过ME源质终端，我可以看到ME网络可访问的所有源质。此外，我还可以通过它用玻璃安瓿存入和取出要素。
 
 # Research Infusion Provider
 research.infusionprovider.title=注魔供应器
-research.infusionprovider.stage.1=虽然能够用我的ME网络操纵源质已非常宝贵，但我对注魔所需的过程感到失望——我必须现场将所有要素提取到源质罐子里。如果能把我的源质供应给符文矩阵，就像源质终端一样的话……
-research.infusionprovider.stage.2=大功告成！源质注魔供应器可将整个ME网络的源质供应给注魔进程！此外，它还能与我的ME源质存储总线配合使用，让我可以创建源质子网络，以备不时之需。
+research.infusionprovider.stage.1=虽然能够用我的ME网络操纵源质已非常宝贵，但我对注魔所需的过程感到失望——我必须现场将所有要素提取到源质罐子里。如果我能像 ME 网络把源质呈现给我那样，把源质供应给符文矩阵的话……
+research.infusionprovider.stage.2=大功告成！源质注魔供应器可将整个ME网络的源质供应给注魔进程！此外，它还能与我的 ME 存储总线配合使用，让我可以创建源质子网络，以备不时之需。
 
 # Research Arcane Crafting Terminal
 research.arcaneterminal.title=奥术合成终端

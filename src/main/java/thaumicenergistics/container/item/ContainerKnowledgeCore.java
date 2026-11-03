@@ -23,6 +23,7 @@ import thaumicenergistics.container.part.ContainerArcaneInscriber;
 import thaumicenergistics.core.ThESounds;
 import thaumicenergistics.core.definitions.ThEItems;
 import thaumicenergistics.client.gui.ModGUIs;
+import thaumicenergistics.util.ThEUtil;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
 import java.util.Objects;
@@ -43,7 +44,7 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
     private final GuiHostLocator parentLocator;
     private final IArcaneInscriberHost parentHost;
     private final InternalInventory parentKnowledgeCoreInventory;
-    private final ItemStack knowledgeCoreStack;
+    private ItemStack knowledgeCoreStack;
     private final int managedInventorySlot;
     private AppEngInternalInventory inventory;
     private final IUpgradeInventory upgradeInventory;
@@ -204,7 +205,9 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
         if (slotId >= 0) {
             slotId += this.page * RECIPE_SLOTS_PER_PAGE;
         }
-        validateKnowledgeCoreIndex(actionName, slotId);
+        if (!this.validateKnowledgeCoreIndex(actionName, slotId)) {
+            return;
+        }
         EntityPlayer player = this.getPlayer();
         if (slotId > -1) {
             switch (actionName) {
@@ -227,7 +230,9 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
                     throw new IllegalArgumentException("Unsupported Knowledge Core client action: " + actionName);
             }
         }
-        parentHost.returnToMainContainer(player, this);
+        if (this.parentHost.hasVisSource()) {
+            parentHost.returnToMainContainer(player, this);
+        }
     }
 
     private void writeRecipeMutation(int slotId, KnowledgeCoreUtil.Recipe recipe) {
@@ -238,7 +243,11 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
                 updatedCore, ThEItems.BLANK_KNOWLEDGE_CORE.stack(1));
         }
         this.parentKnowledgeCoreInventory.setItemDirect(0, updatedCore);
+        this.knowledgeCoreStack = this.parentKnowledgeCoreInventory.getStackInSlot(0);
+        this.refreshRecipeSlots();
     }
+
+    private int lastRecipeHash = Integer.MIN_VALUE;
 
     @Override
     public void detectAndSendChanges() {
@@ -246,8 +255,16 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
             this.page = Math.min(this.page, this.getPageCount() - 1);
         }
         this.updateRecipeSlotState();
-        this.refreshRecipeSlots();
+        this.refreshRecipeSlotsIfChanged();
         super.detectAndSendChanges();
+    }
+
+    private void refreshRecipeSlotsIfChanged() {
+        int hash = this.knowledgeCoreStack.hasTagCompound() ? Objects.requireNonNull(this.knowledgeCoreStack.getTagCompound()).hashCode() : 0;
+        if (hash == this.lastRecipeHash) {
+            return;
+        }
+        this.refreshRecipeSlots();
     }
 
     private AppEngInternalInventory copyIngredients(InternalInventory source) {
@@ -271,19 +288,19 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
 
     @Override
     public boolean canInteractWith(EntityPlayer player) {
+        if (!super.canInteractWith(player)) {
+            return false;
+        }
         return this.managedInventorySlot < 0
-            || player.inventory.getStackInSlot(this.managedInventorySlot) == this.knowledgeCoreStack;
+            || ThEUtil.areItemStacksEqual(player.inventory.getStackInSlot(this.managedInventorySlot),
+                this.knowledgeCoreStack);
     }
 
-    private void validateKnowledgeCoreIndex(String actionName, int index) {
+    private boolean validateKnowledgeCoreIndex(String actionName, int index) {
         if (index == -1 && ACTION_VIEW_RECIPE.equals(actionName)) {
-            return;
+            return true;
         }
-        if (index < 0 || index >= KnowledgeCoreUtil.getRecipeSlotCount(knowledgeCoreStack)) {
-            throw new IllegalArgumentException("Invalid Knowledge Core recipe index " + index
-                + " for client action " + actionName + "; expected 0-"
-                + (KnowledgeCoreUtil.getRecipeSlotCount(knowledgeCoreStack) - 1));
-        }
+        return index >= 0 && index < KnowledgeCoreUtil.getRecipeSlotCount(knowledgeCoreStack);
     }
 
     private void changePage(int delta) {
@@ -321,6 +338,7 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
     }
 
     private void refreshRecipeSlots() {
+        this.lastRecipeHash = this.knowledgeCoreStack.hasTagCompound() ? Objects.requireNonNull(this.knowledgeCoreStack.getTagCompound()).hashCode() : 0;
         int activeSlots = this.getActiveRecipeSlots();
         for (int i = 0; i < this.inventory.size(); i++) {
             KnowledgeCoreUtil.Recipe recipe = i < activeSlots
@@ -378,6 +396,9 @@ public class ContainerKnowledgeCore extends AEBaseContainer implements ISubGui {
     public void playWriteSound(EntityPlayer player) {
         if (this.parentContainer == null) {
             throw new IllegalStateException("Knowledge Core inventory management does not support recipe write sounds");
+        }
+        if (!this.parentHost.hasVisSource()) {
+            return;
         }
         player.world.playSound(player, parentContainer.getPartPos(), new SoundEvent(ThESounds.instance().knowledgeCoreWrite()), SoundCategory.BLOCKS, 1, 1);
     }

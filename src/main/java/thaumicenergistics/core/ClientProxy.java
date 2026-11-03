@@ -3,9 +3,11 @@ package thaumicenergistics.core;
 import ae2.client.gui.pattern.PatternGuiHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import thaumicenergistics.client.gui.item.GuiKnowledgeCorePattern;
+import thaumicenergistics.client.particle.ArcaneParticlePass;
 import thaumicenergistics.client.render.ArcaneVisKeyRenderHandler;
 import thaumicenergistics.client.render.ArcaneAssemblerRenderer;
 import thaumicenergistics.client.render.EssentiaKeyRenderHandler;
@@ -13,6 +15,7 @@ import thaumicenergistics.container.ContainerKnowledgeCorePattern;
 import thaumicenergistics.tile.TileArcaneAssembler;
 import thaumicenergistics.util.knowledgeCoreUtil.KnowledgeCoreUtil;
 
+@SuppressWarnings("unused")
 public class ClientProxy extends CommonProxy {
 
     @Override
@@ -22,6 +25,7 @@ public class ClientProxy extends CommonProxy {
         ArcaneVisKeyRenderHandler.register();
         // Init TESR
         ClientRegistry.bindTileEntitySpecialRenderer(TileArcaneAssembler.class, new ArcaneAssemblerRenderer());
+        MinecraftForge.EVENT_BUS.register(ArcaneParticlePass.INSTANCE);
         // Init pattern view
         PatternGuiHandler.register(KnowledgeCoreUtil.KnowledgeCorePatternDetails.class, pattern -> {
             InventoryPlayer inventory = Minecraft.getMinecraft().player.inventory;

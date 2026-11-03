@@ -107,13 +107,18 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
         }
 
         if (mode == Actionable.SIMULATE) {
-            return available;
+            int simulated = (int) Math.min(amount, available);
+
+            int simulatedRemaining = available - simulated;
+            if (simulatedRemaining > 0) {
+                container.setAspects(single, new AspectList().add(aspect, simulatedRemaining));
+            } else {
+                clearAspects(single);
+            }
+            return context.canAddOverflow(single) ? simulated : 0;
         }
 
         int extracted = (int) Math.min(amount, available);
-        if (extracted <= 0) {
-            return 0;
-        }
 
         int remaining = available - extracted;
         if (remaining > 0) {
@@ -167,10 +172,8 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
         }
 
         if (mode == Actionable.SIMULATE) {
-            int simulated = getSimulatedInsertAmount(amount, remainingSpace);
-            if (simulated <= 0) {
-                return 0;
-            }
+            int simulated = (int) Math.min(amount, remainingSpace);
+
             container.setAspects(copy, new AspectList().add(aspect, current + simulated));
             if (!context.canAddOverflow(copy)) {
                 return 0;
@@ -179,9 +182,6 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
         }
 
         int inserted = (int) Math.min(amount, remainingSpace);
-        if (inserted <= 0) {
-            return 0;
-        }
 
         container.setAspects(copy, new AspectList().add(aspect, current + inserted));
         if (!context.canAddOverflow(copy) || !context.consumeSourceContainer(Actionable.MODULATE)) {
@@ -227,13 +227,6 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
             }
         }
         return true;
-    }
-
-    private static int getSimulatedInsertAmount(long amount, int remainingSpace) {
-        if (amount == 1) {
-            return remainingSpace;
-        }
-        return (int) Math.min(amount, remainingSpace);
     }
 
     static @Nullable Context findNetworkEmptyContainerContext(EntityPlayer player, MEStorage storage, IActionSource source) {
@@ -309,8 +302,6 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
     interface CarriedStackAccessor {
         ItemStack getCarried();
 
-        void setCarried(ItemStack stack);
-
         void addOverflow(ItemStack stack);
     }
 
@@ -373,11 +364,6 @@ public class EssentiaContainerItemStrategy implements ContainerItemStrategy<AEEs
         @Override
         public ItemStack getCarried() {
             return this.player.inventory.getItemStack();
-        }
-
-        @Override
-        public void setCarried(ItemStack stack) {
-            this.player.inventory.setItemStack(stack);
         }
 
         @Override

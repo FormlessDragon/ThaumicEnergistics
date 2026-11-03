@@ -16,8 +16,9 @@ import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
-import thaumicenergistics.util.ForgeUtil;
 import thaumicenergistics.core.ThELog;
+import thaumicenergistics.core.definitions.GuiText;
+import thaumicenergistics.util.ForgeUtil;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -32,7 +33,7 @@ import java.util.Map;
  */
 public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements IRecipeTransferHandler<C> {
 
-    private static final String MISSING_INGREDIENTS = "Missing ingredients";
+    private static final int MAX_SATISFY_STEPS = 4096;
 
     protected final Class<C> containerClass;
     private final IRecipeTransferHandlerHelper recipeTransferHelper;
@@ -58,7 +59,12 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
             return this.preflightTransfer(container, recipe);
         }
 
-        container.requestJEITransfer(ArcaneRecipeTransferPayload.fromStacks(recipe.normal(), recipe.crystal()));
+        try {
+            container.requestJEITransfer(ArcaneRecipeTransferPayload.fromStacks(recipe.normal(), recipe.crystal()));
+        } catch (IllegalArgumentException exception) {
+            ThELog.warn("Rejecting arcane JEI transfer: {}", exception.getMessage());
+            return this.recipeTransferHelper.createUserErrorWithTooltip(GuiText.transfer_rejected.getLocal());
+        }
         return null;
     }
 
@@ -67,7 +73,7 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
         if (missingSlots.isEmpty()) {
             return null;
         }
-        return this.recipeTransferHelper.createUserErrorForSlots(MISSING_INGREDIENTS, missingSlots);
+        return this.recipeTransferHelper.createUserErrorForSlots(GuiText.missing_ingredients.getLocal(), missingSlots);
     }
 
     private ExtractedArcaneRecipe extractRecipe(Map<Integer, ? extends IGuiIngredient<ItemStack>> ingredients) {
@@ -232,11 +238,25 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
             }
         }
 
+        private int remainingSatisfySteps;
+
         private boolean canSatisfy(List<List<ItemStack>> normal, List<List<ItemStack>> crystal) {
             List<List<ItemStack>> requiredSlots = new ArrayList<>(normal.size() + crystal.size());
             collectRequiredSlots(requiredSlots, normal);
             collectRequiredSlots(requiredSlots, crystal);
-            return this.canSatisfy(requiredSlots, 0);
+            List<List<ItemStack>> orderedSlots = new ArrayList<>(requiredSlots.size());
+            for (List<ItemStack> alternatives : requiredSlots) {
+                List<ItemStack> ordered = new ArrayList<>(alternatives);
+                ordered.sort(Comparator.comparingLong(this::availableAmount).reversed());
+                orderedSlots.add(ordered);
+            }
+            this.remainingSatisfySteps = MAX_SATISFY_STEPS;
+            return this.canSatisfy(orderedSlots, 0);
+        }
+
+        private long availableAmount(ItemStack stack) {
+            AEItemKey key = AEItemKey.of(stack);
+            return key == null ? 0L : this.available.getLong(key);
         }
 
         private static void collectRequiredSlots(List<List<ItemStack>> requiredSlots, List<List<ItemStack>> slots) {
@@ -251,6 +271,9 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
             if (slotIndex >= requiredSlots.size()) {
                 return true;
             }
+            if (this.remainingSatisfySteps <= 0) {
+                return false;
+            }
             for (ItemStack alternative : requiredSlots.get(slotIndex)) {
                 AEItemKey key = AEItemKey.of(alternative);
                 if (key == null) {
@@ -262,6 +285,7 @@ public class ACTRecipeTransferHandler<C extends ContainerArcaneTerm> implements 
                     continue;
                 }
 
+                this.remainingSatisfySteps--;
                 this.available.put(key, amount - required);
                 if (this.canSatisfy(requiredSlots, slotIndex + 1)) {
                     this.available.put(key, amount);

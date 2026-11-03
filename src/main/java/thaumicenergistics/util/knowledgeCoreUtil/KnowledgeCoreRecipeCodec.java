@@ -73,6 +73,8 @@ public interface KnowledgeCoreRecipeCodec {
      */
     boolean hasNoRecipes(NBTTagCompound knowledgeCoreTag, int recipeSlotCount);
 
+    int getRecipeCount(NBTTagCompound knowledgeCoreTag, int recipeSlotCount);
+
     /**
      * Encodes one recipe as a standalone strict sparse recipe compound.
      *

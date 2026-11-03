@@ -35,6 +35,9 @@ public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKe
         float y1 = scale / 2.0F;
 
         Aspect aspect = what.getAspect();
+        boolean blendEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
+        boolean lightingEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
+        boolean cullEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
         GlStateManager.pushMatrix();
         try {
             GlStateManager.enableBlend();
@@ -45,9 +48,9 @@ public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKe
 
             drawAspectQuad(x0, y0, x1, y1, new Color(aspect.getColor()));
         } finally {
-            GlStateManager.enableCull();
-            GlStateManager.enableLighting();
-            GlStateManager.disableBlend();
+            EssentiaKeyRenderHandler.restoreCull(cullEnabled);
+            EssentiaKeyRenderHandler.restoreLighting(lightingEnabled);
+            EssentiaKeyRenderHandler.restoreBlend(blendEnabled);
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
         }
@@ -70,6 +73,10 @@ public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKe
     }
 
     public static void renderAspect(Minecraft mc, int x, int y, Aspect aspect) {
+        boolean textureEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
+        boolean blendEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
+        boolean lightingEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
+        boolean depthEnabled = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
         GlStateManager.pushMatrix();
         try {
             GlStateManager.enableTexture2D();
@@ -85,17 +92,57 @@ public class EssentiaKeyRenderHandler implements AEKeyRenderHandler<AEEssentiaKe
 
             drawAspectQuad(x, y, x + 16.0D, y + 16.0D, new Color(aspect.getColor()));
         } finally {
-            GlStateManager.enableTexture2D();
-            GlStateManager.enableBlend();
+            EssentiaKeyRenderHandler.restoreDepth(depthEnabled);
+            EssentiaKeyRenderHandler.restoreLighting(lightingEnabled);
+            EssentiaKeyRenderHandler.restoreBlend(blendEnabled);
+            EssentiaKeyRenderHandler.restoreTexture(textureEnabled);
             GlStateManager.tryBlendFuncSeparate(
                 GL11.GL_SRC_ALPHA,
                 GL11.GL_ONE_MINUS_SRC_ALPHA,
                 GL11.GL_ONE,
                 GL11.GL_ZERO);
-            GlStateManager.disableDepth();
-            GlStateManager.disableLighting();
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
+        }
+    }
+
+    private static void restoreDepth(boolean enabled) {
+        if (enabled) {
+            GlStateManager.enableDepth();
+        } else {
+            GlStateManager.disableDepth();
+        }
+    }
+
+    private static void restoreLighting(boolean enabled) {
+        if (enabled) {
+            GlStateManager.enableLighting();
+        } else {
+            GlStateManager.disableLighting();
+        }
+    }
+
+    private static void restoreBlend(boolean enabled) {
+        if (enabled) {
+            GlStateManager.enableBlend();
+        } else {
+            GlStateManager.disableBlend();
+        }
+    }
+
+    private static void restoreTexture(boolean enabled) {
+        if (enabled) {
+            GlStateManager.enableTexture2D();
+        } else {
+            GlStateManager.disableTexture2D();
+        }
+    }
+
+    private static void restoreCull(boolean enabled) {
+        if (enabled) {
+            GlStateManager.enableCull();
+        } else {
+            GlStateManager.disableCull();
         }
     }
 

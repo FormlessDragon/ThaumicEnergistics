@@ -33,8 +33,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.wrapper.PlayerArmorInvWrapper;
-import net.minecraftforge.items.wrapper.PlayerInvWrapper;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aura.AuraHelper;
@@ -94,7 +92,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         this.craftingResult = new AppEngInternalInventory(1);
 
         this.addMatrixSlots(32, 36);
-        this.addArmorSlots(ip.player, new PlayerArmorInvWrapper(ip), 8, 19);
+        this.addArmorSlots(ip.player, this.host.getArmorInventory(), 8, 19);
         this.registerClientAction(ACTION_CLEAR_GRID, this::clearCraftingGrid);
         this.registerClientAction(ACTION_CLEAR_TO_PLAYER, this::clearToPlayerInventory);
         this.registerClientAction(ACTION_SET_CLEAR_ON_CLOSE, Boolean.class, this::setClearGridOnClose);
@@ -109,7 +107,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     public BlockPos getPartPos() {
-        return this.host.getReturnPos();
+        return this.host == null ? null : this.host.getReturnPos();
     }
 
     public float getCurrentRequiredVis() {
@@ -170,10 +168,6 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         return this.getCraftingInventory().toItemHandler();
     }
 
-    protected IItemHandler getPlayerItemHandler() {
-        return new PlayerInvWrapper(this.getPlayerInventory());
-    }
-
     @Override
     public void onMatrixChanged() {
         if (this.isClientSide()) {
@@ -217,7 +211,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         }
 
         Slot slot = this.getSlot(slotID);
-        if (slot instanceof SlotArcaneResult) {
+        if (slot instanceof SlotArcaneResult && (clickType == ClickType.PICKUP || clickType == ClickType.QUICK_MOVE)) {
             this.handleArcaneResultSlotClick(slot, clickType, player);
             return ItemStack.EMPTY;
         }
@@ -232,7 +226,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
         ItemStack result = slot.getStack();
         ItemStack held = player.inventory.getItemStack();
-        if (result.isEmpty() || (!held.isEmpty() && !result.isItemEqual(held))) {
+        if (result.isEmpty() || !held.isEmpty() && !canMergeResultWithHeld(result, held)) {
             return;
         }
         if (clickType != ClickType.QUICK_MOVE && result.getMaxStackSize() - held.getCount() < result.getCount()) {
@@ -265,6 +259,10 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         if (player instanceof EntityPlayerMP serverPlayer && serverPlayer.openContainer == this) {
             this.syncInventoryActionState(serverPlayer);
         }
+    }
+
+    private static boolean canMergeResultWithHeld(ItemStack result, ItemStack held) {
+        return ItemStack.areItemsEqual(result, held) && ItemStack.areItemStackTagsEqual(result, held);
     }
 
     @Override
@@ -356,10 +354,12 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
         for (int i = 0; i < remaining.size(); i++) {
             if (i < 9) {
-                boolean hasLeftover = !remaining.get(i).isEmpty();
+                ItemStack leftover = remaining.get(i);
                 ItemStack existing = inv.getStackInSlot(i);
                 if (existing.getCount() > 1) {
-                    if (!hasLeftover) {
+                    boolean selfReturned = !leftover.isEmpty() && ItemStack.areItemsEqual(existing, leftover)
+                        && ItemStack.areItemStackTagsEqual(existing, leftover);
+                    if (!selfReturned) {
                         existing.shrink(1);
                     }
                     remaining.set(i, existing);
@@ -454,7 +454,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     protected float getDiscount(EntityPlayer player) {
-        return TCCraftingManager.getDiscount(player);
+        return TCCraftingManager.getDiscount(player, this.host.getArmorInventory());
     }
 
     protected ItemStack extractItem(MEStorage storage, ItemStack stack, int amount, Actionable mode) {
@@ -495,7 +495,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
         return remainder;
     }
 
-    public void handleJEITransfer(EntityPlayer player, NBTTagCompound tag) {
+    public void handleJEITransfer(NBTTagCompound tag) {
         if (tag == null || tag.isEmpty()) {
             return;
         }
@@ -532,10 +532,10 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             tag = payload.toValidatedTag();
         } catch (IllegalArgumentException e) {
             ThELog.warn("Rejecting invalid JEI recipe transfer payload: {}", e.getMessage());
-            throw e;
+            return;
         }
 
-        this.handleJEITransfer(this.getPlayer(), tag);
+        this.handleJEITransfer(tag);
     }
 
     private void handleJEITags(NBTBase normalGroup, NBTBase crystalGroup) {
@@ -637,7 +637,7 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
                 ? ItemStack.EMPTY
                 : this.extractItem(this.storage, requested, requestedCount, this.getJEIStorageExtractionAction());
         if (!aeExtract.isEmpty()) {
-            crafting.insertItem(slot, aeExtract, false);
+            this.refundJEIStorage(crafting.insertItem(slot, aeExtract, false));
         }
 
         int insertedCount = crafting.getStackInSlot(slot).getCount();
@@ -651,7 +651,10 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
 
         ItemStack invExtract = this.extractUnlockedPlayerItem(playerRequest, this.shouldSimulateJEIPlayerExtraction());
         if (!invExtract.isEmpty()) {
-            crafting.insertItem(slot, invExtract, false);
+            ItemStack leftover = crafting.insertItem(slot, invExtract, false);
+            if (!leftover.isEmpty() && !this.shouldSimulateJEIPlayerExtraction()) {
+                ForgeUtil.addStackToPlayerInventory(this.getPlayer(), leftover, false);
+            }
         }
 
         if (this.allowJEIIngredientFallback() && crafting.getStackInSlot(slot).getCount() < requestedCount) {
@@ -659,6 +662,17 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             fallback.setCount(requestedCount - crafting.getStackInSlot(slot).getCount());
             ThELog.debug("Using JEI ingredient as ghost fallback for slot {}", slot);
             crafting.insertItem(slot, fallback, false);
+        }
+    }
+
+    private void refundJEIStorage(ItemStack leftover) {
+        if (leftover.isEmpty() || this.storage == null
+                || this.getJEIStorageExtractionAction() != Actionable.MODULATE) {
+            return;
+        }
+        ItemStack remainder = this.insertItem(this.storage, leftover, leftover.getCount(), Actionable.MODULATE);
+        if (!remainder.isEmpty()) {
+            ThELog.warn("JEI recipe transfer could not return {} to ME storage", remainder);
         }
     }
 
@@ -824,7 +838,6 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
             if (inserted > 0) {
                 crafting.extractItem(slot, inserted, false);
             }
-            crafting.getStackInSlot(slot);
         }
     }
 
@@ -928,11 +941,11 @@ public class ContainerArcaneTerm extends ContainerMEStorage implements ICrafting
     }
 
     @SuppressWarnings("SameParameterValue")
-    protected void addArmorSlots(EntityPlayer player, IItemHandler inventory, int offsetX, int offsetY) {
-        this.addSlot(new SlotArmor(player, inventory, 3, offsetX, offsetY), ThESlotSemantics.PLAYER_ARMOR);
-        this.addSlot(new SlotArmor(player, inventory, 2, offsetX, offsetY + 18), ThESlotSemantics.PLAYER_ARMOR);
-        this.addSlot(new SlotArmor(player, inventory, 1, offsetX, offsetY + 18 * 2), ThESlotSemantics.PLAYER_ARMOR);
-        this.addSlot(new SlotArmor(player, inventory, 0, offsetX, offsetY + 18 * 3), ThESlotSemantics.PLAYER_ARMOR);
+    protected void addArmorSlots(EntityPlayer player, InternalInventory inventory, int offsetX, int offsetY) {
+        this.addSlot(new SlotArmor(player, inventory, 3, offsetX, offsetY), ThESlotSemantics.TERMINAL_ARMOR);
+        this.addSlot(new SlotArmor(player, inventory, 2, offsetX, offsetY + 18), ThESlotSemantics.TERMINAL_ARMOR);
+        this.addSlot(new SlotArmor(player, inventory, 1, offsetX, offsetY + 18 * 2), ThESlotSemantics.TERMINAL_ARMOR);
+        this.addSlot(new SlotArmor(player, inventory, 0, offsetX, offsetY + 18 * 3), ThESlotSemantics.TERMINAL_ARMOR);
     }
 
     private record NetworkReservation(int slot, ItemStack stack) {

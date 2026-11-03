@@ -1,4 +1,66 @@
-﻿# 2023/04/30 - 2.2.7
+# 2026/11/03 - 2.3.0
+## Features
+* Added the ME Essentia Cell Housing and rebuilt Essentia Storage Cell crafting around it: components, cells and the
+  "housing + component" assembly are now Arcane Crafting recipes, the research pages list them, and cell disassembly
+  returns the new housing instead of the AE2 housing
+* Creative Essentia Cells that are not marked now provide every essentia instead of nothing, with a tooltip line for
+  the unmarked state; marking the cell still limits it to the marked aspects
+* Knowledge Core items now report the number of stored recipes in their tooltip, and holding Shift lists the stored
+  results
+* Arcane Terminals keep their own armor slots: armor placed there is stored on the terminal (wireless terminals keep it
+  in the terminal item's NBT) and provides its Vis discount, together with Baubles and potion effects
+* Valid destination slots are highlighted while an item, upgrade or JEI preview is selected (terminal armor/upgrades,
+  inscriber knowledge core, assembler knowledge core/upgrades, knowledge core upgrades)
+* Vis amounts shown by the terminal and the assembler now match the terminal type's real values
+* The internal Vis key is no longer offered in the terminal key-type selection, while still being registered so it can
+  be serialized over the network
+## Bugs
+* Fixed the Knowledge Core GUI not refreshing after storing/deleting a recipe, showing stale contents, and throwing on
+  invalid client actions
+* Fixed Knowledge Core tooltips and GUI work: recipe slots are only rebuilt when the core actually changes, the tooltip
+  only decodes stored recipes when expanded, and the inscriber's action buttons cache their enabled state
+* Fixed JEI/HEI integration failing when ThaumicJEI is not installed: the Essentia Smelting category, its recipes, its
+  catalyst items and the aspect converter are only registered when the mod is present
+* Fixed the JEI recipe transfer preflight freezing on recipes it cannot satisfy (bounded search) and throwing instead of
+  reporting a transfer error, and localized the transfer messages
+* Fixed Knowledge Core/JEI transfer: malformed payloads are rejected with a message, leftovers from matrix writes return
+  to ME storage, and player items that no longer fit go back to the inventory
+* Fixed the Arcane Crafting Terminal result slot only handling pickup and quick move, results merging into stacks with
+  different NBT, and self-returning ingredients being consumed
+* Fixed Arcane Assembler particles corrupting the shared particle batch and leaking GL state; they now render in their
+  own pass with independent spawn timers per assembler
+* Fixed the Infusion Provider rescanning the whole network on every essentia change
+* Fixed NPEs around parts without a tile or world (Vis access, wrench use, returning from a sub GUI)
+* Fixed the Arcane Assembler container accepting interaction with a removed or out-of-range block
+* Fixed the "Invalid shaped ore recipe" crash from the new arcane cell and housing recipes (AE2 block definitions have
+  to be unwrapped to blocks before they can be used as recipe keys)
+* Fixed item rendering leaving GL color, depth and blend state modified (essentia/vis icons, JEI category overlay,
+  assembler GUI colors, particle colors)
+* Fixed sound registration running before the sound registry event (empty sound registry) and sound ids being
+  registered without the mod's namespace
+* Fixed `ForgeUtil.areNBTTagsEqual` throwing on stacks without NBT and treating non-equal tags as equal
+* Fixed `TCUtil.getCrystalAspect` throwing on empty or missing aspect lists
+* Fixed ME storage simulation reporting more essentia than can actually be extracted from or inserted into containers
+## API Changes
+* `IArcaneTerminalHost` gained `getArmorInventory()`; third-party terminal hosts must implement it
+* Added `IAEKeyViewable` so key types can opt out of the key-type selection screen
+* `SlotArmor` now takes an `InternalInventory` instead of a Forge `IItemHandler`
+* `TCCraftingManager.getDiscount` now takes the armor stacks to consider
+* Renamed `ArcaneVisKeyType` to `ArcaneVisKeys`
+* Renamed the terminal armor slot semantic id from `THE_PLAYER_ARMOR` to `THE_TERMINAL_ARMOR` (style JSONs updated)
+* Removed the unused `KnowledgeCoreUtil.getRecipeMap` and the dead `sparseToCompressed` mapping
+## Misc
+* Mixin configuration renamed to `thaumicenergistics.mixins.json`; dropped `thaumicenergistics.default.mixin.json` and
+  the unused pattern access mixin and accessor
+* Textures overhauled (storage cells, components, knowledge cores, infusion provider, wireless items), with animated
+  icons for the knowledge core, creative cell, diffusion core and coalescence core
+* Removed unused textures (essentia bus faces and the old essentia terminal sprites)
+* Added and corrected localizations (en_us, zh_cn), including JEI messages, the knowledge core tooltip, the unmarked
+  creative cell and the cell housing
+* Reworked the build scripts and CI workflows for the new toolchain setup, including the Gradle wrapper update
+* Updated dependencies: AE2 Supergiant 1.1.0, JEI 4.35.0, and ThaumicJEI is now an optional (compile only) dependency
+
+# 2023/04/30 - 2.2.7
 ## Features
 * Jars and Void Jars can now be filled with the Essentia Terminal
 ## Bugs

@@ -16,7 +16,7 @@
       "bottom": 158,
       "grid": "BREAK_AFTER_2COLS"
     },
-    "THE_PLAYER_ARMOR": {
+    "THE_TERMINAL_ARMOR": {
       "left": 8,
       "bottom": 167,
       "grid": "VERTICAL"

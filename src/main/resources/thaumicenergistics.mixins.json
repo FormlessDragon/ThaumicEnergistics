@@ -5,10 +5,11 @@
 	"compatibilityLevel": "JAVA_25",
 	"plugin": "thaumicenergistics.core.ThEMixinConfigPlugin",
 	"target": "@env(MOD)",
+	"refmap": "thaumicenergistics.refmap.json",
 	"mixins": [
 		"ae2.CraftingCalculationMixin",
 		"ae2.CraftingServiceMixin",
-		"ae2.accessor.PatternAccessSessionTrackerAccessor"
+		"ae2.KeyTypeSelectionMixin"
 	],
 	"client": [
 		"hei.MixinBookmarkItem"

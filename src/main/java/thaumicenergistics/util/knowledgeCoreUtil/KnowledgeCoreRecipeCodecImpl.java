@@ -135,7 +135,33 @@ final class KnowledgeCoreRecipeCodecImpl implements KnowledgeCoreRecipeCodec {
 
     @Override
     public boolean hasNoRecipes(NBTTagCompound knowledgeCoreTag, int recipeSlotCount) {
-        return this.getRecipes(knowledgeCoreTag, recipeSlotCount).isEmpty();
+        return this.getRecipeCount(knowledgeCoreTag, recipeSlotCount) == 0;
+    }
+
+    @Override
+    public int getRecipeCount(NBTTagCompound knowledgeCoreTag, int recipeSlotCount) {
+        Objects.requireNonNull(knowledgeCoreTag, "knowledgeCoreTag");
+        if (recipeSlotCount < 0) {
+            throw new IllegalArgumentException("Knowledge Core recipe slot count cannot be negative: "
+                + recipeSlotCount);
+        }
+
+        NBTTagCompound recipes = this.getRecipesForRead(knowledgeCoreTag);
+        if (recipes == null) {
+            return 0;
+        }
+
+        int count = 0;
+        for (String recipeKey : recipes.getKeySet()) {
+            int recipeSlot = this.parseRecipeSlot(recipeKey);
+            if (recipeSlot == INVALID_RECIPE_SLOT || recipeSlot >= recipeSlotCount) {
+                continue;
+            }
+            if (recipes.hasKey(recipeKey, Constants.NBT.TAG_COMPOUND)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     @Override

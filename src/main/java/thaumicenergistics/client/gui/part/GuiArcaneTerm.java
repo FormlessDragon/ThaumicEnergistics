@@ -5,11 +5,14 @@ import ae2.client.gui.me.common.GuiMEStorage;
 import ae2.client.gui.style.GuiStyle;
 import ae2.client.gui.style.GuiStyleManager;
 import ae2.client.gui.widgets.ActionButton;
+import ae2.container.SlotSemantics;
 import ae2.core.AEConfig;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.text.ITextComponent;
+import thaumicenergistics.client.gui.ThESlotHints;
 import thaumicenergistics.container.part.ArcaneTerminalVisState;
 import thaumicenergistics.container.part.ContainerArcaneTerm;
+import thaumicenergistics.container.slot.SlotArmor;
 import thaumicenergistics.core.definitions.GuiText;
 
 public class GuiArcaneTerm<C extends ContainerArcaneTerm> extends GuiMEStorage<C> {
@@ -60,6 +63,11 @@ public class GuiArcaneTerm<C extends ContainerArcaneTerm> extends GuiMEStorage<C
                     this.ySize - 94,
                     4210752);
         }
+
+        ThESlotHints.highlightOnlyFromPlayerInv(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
+                slot -> slot instanceof SlotArmor);
+        ThESlotHints.highlightOnlyFromPlayerInv(this.container.inventorySlots, offsetX, offsetY, mouseX, mouseY,
+                slot -> this.container.getSlotSemantic(slot) == SlotSemantics.UPGRADE);
     }
 
     protected void drawVisInfo() {
